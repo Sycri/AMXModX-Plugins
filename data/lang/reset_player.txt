@@ -1,3 +1,4 @@
 [en]
-ADMIN_RESETED_PLAYER_CASE1 = ADMIN: reseted player %s
-ADMIN_RESETED_PLAYER_CASE2 = ADMIN %s: reseted player %s
+ADMIN_RESET_PLAYER_1 = ADMIN: reset %s
+ADMIN_RESET_PLAYER_2 = ADMIN %s: reset %s
+RESET_PLAYER_CMD_INFO = <target> <money> <weapons> <health> <armor> <frags> <deaths> - Reset player's stats

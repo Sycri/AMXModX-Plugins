@@ -1,96 +1,82 @@
 
 #include <amxmodx>
 #include <amxmisc>
-#include <fakemeta_util>
+#include <fun>
+#include <hamsandwich>
 
-new const PLUGIN_VERSION[] = "1.8"
+#pragma semicolon 1
 
-// Consts
-new const REQUIRED_FLAG = ADMIN_MAP
+new const PLUGIN_VERSION[] = "1.9";
 
-// Cvars
-new cvar_invisible_amount
+new const InvisibleCommand[] = "amx_invisible";
 
-// Pointers
-new pointer_showactivity
+new CvarInvisibleAmount;
 
-// Bools
-new bool:g_is_invisible[33]
+new bool:g_IsInvisible[MAX_PLAYERS + 1];
 
-public plugin_init() {
-	register_plugin("Invisible Player", PLUGIN_VERSION, "Kristaps08")
+public plugin_init()
+{
+	register_plugin("Invisible Player", PLUGIN_VERSION, "Sycri (Kristaps08)");
+	register_dictionary("invisible_player.txt");
 	
-	// CVARS - General
-	cvar_invisible_amount = register_cvar("amx_invisible_amount","20")
+	register_concmd(InvisibleCommand, "@ConsoleCommand_Invisible", ADMIN_LEVEL_A, "INVISIBLE_CMD_INFO", .info_ml = true);
+
+	bind_pcvar_num(create_cvar("amx_invisible_amount", "20", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 255.0), CvarInvisibleAmount);
 	
-	// CVARS - Other
-	register_cvar("amx_invisible_version", PLUGIN_VERSION, FCVAR_SERVER)
-	
-	// CVARS - Pointers
-	pointer_showactivity = get_cvar_pointer("amx_show_activity")
-	
-	// FM Forwards
-	register_forward(FM_PlayerPreThink, "fw_PlayerPreThink")
-	
-	// Admin Commands
-	register_concmd("amx_invisible", "cmd_invisible", REQUIRED_FLAG, "<target> [0|1] - 0=OFF 1=ON")
-	
-	// Language File
-	register_dictionary("invisible_player.txt")
+	RegisterHamPlayer(Ham_Spawn, "@Forward_PlayerSpawn_Post", 1);
+
+	create_cvar("amx_invisible_version", PLUGIN_VERSION, FCVAR_SERVER);
 }
 
-public client_disconnect(id) {
-	if(g_is_invisible[id])
-		g_is_invisible[id] = false
+public client_disconnected(id)
+{
+	g_IsInvisible[id] = false;
 }
 
-public fw_PlayerPreThink(id) {
-	if(!is_user_alive(id) || !g_is_invisible[id]) return PLUGIN_HANDLED
+@ConsoleCommand_Invisible(id, level, cid)
+{
+	if (!cmd_access(id, level, cid, 2))
+		return PLUGIN_HANDLED;
 	
-	fm_set_user_rendering(id, kRenderFxGlowShell, 0, 0, 0, kRenderTransAlpha, get_pcvar_num(cvar_invisible_amount))
-	return PLUGIN_HANDLED
-}
+	new arg[32];
+	read_argv(1, arg, charsmax(arg));
+	
+	new player = cmd_target(id, arg, CMDTARGET_OBEY_IMMUNITY | CMDTARGET_ALLOW_SELF);
+	if (!player)
+		return PLUGIN_HANDLED;
+	
+	new name[32];
+	new admin[32];
+	get_user_name(player, name, charsmax(name));
+	get_user_name(id, admin, charsmax(admin));
+	
+	if (read_argv_int(2) == 1) {
+		if (!g_IsInvisible[player]) {
+			show_activity_key("ADMIN_INVISIBLE_ON_1", "ADMIN_INVISIBLE_ON_2", admin, name);
+			g_IsInvisible[player] = true;
 
-public cmd_invisible(id, level, cid) {
-	if(!cmd_access(id, level, cid, 2))
-		return PLUGIN_HANDLED
-	
-	new arg[32]
-	new arg2[2]
-	read_argv(1, arg, 31)
-	read_argv(2, arg2, 1)
-	
-	new player = cmd_target(id, arg, 7)
-	if(!player)
-		return PLUGIN_HANDLED
-	
-	new name[32]
-	new admin[32]
-	get_user_name(player, name, 31)
-	get_user_name(id, admin, 31)
-	
-	if(equal(arg2, "1")) {
-		if(!g_is_invisible[player]) {
-			switch(get_pcvar_num(pointer_showactivity)) {
-				case 1: client_print(0, print_chat, "%L", LANG_PLAYER, "ADMIN_INVISIBLE_ON_PLAYER_CASE1", name)
-				case 2: client_print(0, print_chat, "%L", LANG_PLAYER, "ADMIN_INVISIBLE_ON_PLAYER_CASE2", admin, name)
-			}
-			g_is_invisible[player] = true
+			set_user_rendering(player, kRenderFxGlowShell, 0, 0, 0, kRenderTransAlpha, CvarInvisibleAmount);
+		} else {
+			console_print(id, "%l", "ADMIN_ALREADY_IS");
 		}
-		else
-			client_print(0, print_console, "%L", LANG_PLAYER, "ADMIN_ALREADY_IS")
-	}
-	else if(equal(arg2, "0")) {
-		if(g_is_invisible[player]) {
-			switch(get_pcvar_num(pointer_showactivity)) {
-				case 1: client_print(0, print_chat, "%L", LANG_PLAYER, "ADMIN_INVISIBLE_OFF_PLAYER_CASE1", name)
-				case 2: client_print(0, print_chat, "%L", LANG_PLAYER, "ADMIN_INVISIBLE_OFF_PLAYER_CASE2", admin, name)
-			}
-			g_is_invisible[player] = false
-			fm_set_user_rendering(player, kRenderFxGlowShell, 0, 0, 0, kRenderTransAlpha, 255)
+	} else {
+		if (g_IsInvisible[player]) {
+			show_activity_key("ADMIN_INVISIBLE_OFF_1", "ADMIN_INVISIBLE_OFF_2", admin, name);
+			g_IsInvisible[player] = false;
+
+			set_user_rendering(player, kRenderFxGlowShell, 0, 0, 0, kRenderTransAlpha, 255);
+		} else {
+			console_print(id, "%l", "ADMIN_ALREADY_IS_NOT");
 		}
-		else
-			client_print(0, print_console, "%L", LANG_PLAYER, "ADMIN_DOESNT_HAVE")
 	}
-	return PLUGIN_HANDLED
+	return PLUGIN_HANDLED;
+}
+
+@Forward_PlayerSpawn_Post(id)
+{
+	if (!is_user_alive(id) || !g_IsInvisible[id])
+		return HAM_IGNORED;
+	
+	set_user_rendering(id, kRenderFxGlowShell, 0, 0, 0, kRenderTransAlpha, CvarInvisibleAmount);
+	return HAM_HANDLED;
 }

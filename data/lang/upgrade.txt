@@ -1,12 +1,13 @@
 [en]
-ADMIN_TOOK_UPGRADE_PLAYER_CASE1 = ADMIN: de-upgraded player %s
-ADMIN_TOOK_UPGRADE_PLAYER_CASE2 = ADMIN %s: de-upgraded player %s
-ADMIN_GIVE_UPGRADE_PLAYER_CASE1 = ADMIN: upgraded player %s
-ADMIN_GIVE_UPGRADE_PLAYER_CASE2 = ADMIN %s: upgraded player %s
-ADMIN_ALREADY_HAS = This target already is upgraded.
-ADMIN_DOESNT_HAVE = This target isn't upgraded.
-LOST_UPGRADE = You have been de-upgraded.
-NOT_ENOUGH = You don't have enough money to upgrade yourself. You need $%d
-ALREADY_HAS = You have already upgraded yourself.
-BOUGHT_UPGRADE = You have upgraded yourself.
+ADMIN_ALREADY_IS = This target already is upgraded.
+ADMIN_ALREADY_IS_NOT = This target isn't upgraded.
+ADMIN_TOOK_UPGRADE_1 = ADMIN: de-upgrade %s
+ADMIN_TOOK_UPGRADE_2 = ADMIN %s: de-upgrade %s
+ADMIN_GIVE_UPGRADE_1 = ADMIN: upgrade %s
+ADMIN_GIVE_UPGRADE_2 = ADMIN %s: upgrade %s
+UPGRADE_CMD_INFO = <target> [0|1] - 0=TAKE 1=GIVE
+ALREADY_IS = You already are upgraded.
+GAIN_UPGRADE = You have been upgraded.
+LOST_UPGRADE = You have lost your upgrade.
 NOT_ALIVE = You can't be upgraded because you are dead.
+NOT_ENOUGH = You don't have enough money to upgrade yourself. You need $%d

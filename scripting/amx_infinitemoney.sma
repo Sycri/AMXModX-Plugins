@@ -1,96 +1,84 @@
 
 #include <amxmodx>
 #include <amxmisc>
-#include <fakemeta>
+#include <cstrike>
 
-new const PLUGIN_VERSION[] = "1.2"
+#pragma semicolon 1
 
-// Consts
-const OFFSET_CSMONEY = 115
-const OFFSET_LINUX = 5
-const REQUIRED_FLAG = ADMIN_MAP
+new const PLUGIN_VERSION[] = "1.3";
 
-// Bools
-new bool:g_has_infinitemoney[33]
+new const InfiniteMoneyCommand[] = "amx_infinitemoney";
 
-// Pointers
-new pointer_showactivity
+new CvarStartmoney;
 
-public plugin_init() { 
-	register_plugin("AMX Infinite Money", PLUGIN_VERSION, "Kristaps08")
+new bool:g_HasInfiniteMoney[MAX_PLAYERS + 1];
+
+public plugin_init()
+{ 
+	register_plugin("AMX Infinite Money", PLUGIN_VERSION, "Sycri (Kristaps08)");
+	register_dictionary("amx_infinitemoney.txt");
 	
-	// CVARS - Pointers
-	pointer_showactivity = get_cvar_pointer("amx_show_activity")
-	
-	// CVARS - Other
-	register_cvar("amx_infinitemoney_version", PLUGIN_VERSION, FCVAR_SERVER)
-	
-	// FM Forwards
-	register_forward(FM_PlayerPreThink, "fw_PlayerPreThink")
-	
-	// Admin Commands
-	register_concmd("amx_infinitemoney", "cmd_infinitemoney", REQUIRED_FLAG, "<target> [0|1] - 0=OFF 1=ON")
+	register_concmd(InfiniteMoneyCommand, "@ConsoleCommand_InfiniteMoney", ADMIN_LEVEL_A, "INFINITE_MONEY_CMD_INFO", .info_ml = true);
+
+	register_event_ex("Money", "@Forward_MoneyChange", RegisterEvent_Single, "1!99999");
+
+	create_cvar("amx_infinitemoney_version", PLUGIN_VERSION, FCVAR_SERVER);
 } 
 
-public client_disconnect(id)
-	g_has_infinitemoney[id] = false
+public OnConfigsExecuted()
+{
+	bind_pcvar_num(get_cvar_pointer("mp_startmoney"), CvarStartmoney);
+}
 
-public cmd_infinitemoney(id, level, cid) {
+public client_disconnected(id)
+{
+	g_HasInfiniteMoney[id] = false;
+}
+
+@ConsoleCommand_InfiniteMoney(id, level, cid)
+{
 	if (!cmd_access(id, level, cid, 2))
-		return PLUGIN_HANDLED
+		return PLUGIN_HANDLED;
 	
-	new arg[32]
-	new arg2[2]
-	read_argv(1, arg, 31)
-	read_argv(2, arg2, 1)
+	new arg[32];
+	read_argv(1, arg, charsmax(arg));
 	
-	new player = cmd_target(id, arg, 3)
-	if(!player) 
-		return PLUGIN_HANDLED
+	new player = cmd_target(id, arg, CMDTARGET_OBEY_IMMUNITY | CMDTARGET_ALLOW_SELF);
+	if (!player) 
+		return PLUGIN_HANDLED;
 	
-	new name[32]
-	new admin[32]
-	get_user_name(player, name, 31)
-	get_user_name(id, admin, 31)
+	new name[32];
+	new admin[32];
+	get_user_name(player, name, charsmax(name));
+	get_user_name(id, admin, charsmax(admin));
 	
-	if(equal(arg2, "1")) {
-		if(!g_has_infinitemoney[player]) {
-			switch(get_pcvar_num(pointer_showactivity)) {
-				case 1: client_print(0, print_chat, "ADMIN: turned on infinite money for player %s", name)
-				case 2: client_print(0, print_chat, "ADMIN %s: turned on infinite money for player %s", admin, name)
-			}
-			g_has_infinitemoney[player] = true
+	if (read_argv_int(2) == 1) {
+		if (!g_HasInfiniteMoney[player]) {
+			show_activity_key("ADMIN_INFINITE_MONEY_ON_1", "ADMIN_INFINITE_MONEY_ON_2", admin, name);
+
+			g_HasInfiniteMoney[player] = true;
+			cs_set_user_money(id, 99999, 0);
+		} else {
+			console_print(id, "%l", "ADMIN_ALREADY_IS");
 		}
-		else
-			client_print(id, print_console, "This target already has infinite money.")
-	}
-	else if(equal(arg2, "0")) {
-		if(g_has_infinitemoney[player]) {
-			switch(get_pcvar_num(pointer_showactivity)) {
-				case 1: client_print(0, print_chat, "ADMIN: turned off infinite money for player %s", name)
-				case 2: client_print(0, print_chat, "ADMIN %s: turned off infinite money for player %s", admin, name)
-			}
-			g_has_infinitemoney[player] = false
-			fm_set_user_money(player, get_cvar_num("mp_startmoney"), 0)
+	} else {
+		if (g_HasInfiniteMoney[player]) {
+			show_activity_key("ADMIN_INFINITE_MONEY_OFF_1", "ADMIN_INFINITE_MONEY_OFF_2", admin, name);
+
+			g_HasInfiniteMoney[player] = false;
+			cs_set_user_money(player, CvarStartmoney, 0);
+		} else {
+			console_print(id, "%l", "ADMIN_ALREADY_IS_NOT");
 		}
-		else
-			client_print(id, print_console, "This target doesn't have infinite money.")
 	}
-	return PLUGIN_HANDLED
+	return PLUGIN_HANDLED;
 }
 
-public fw_PlayerPreThink(id) {
-	if(!g_has_infinitemoney[id]) return PLUGIN_HANDLED
+@Forward_MoneyChange(id)
+{
+	if (!g_HasInfiniteMoney[id])
+		return PLUGIN_HANDLED;
 
-	fm_set_user_money(id, 999999, 0)
-	return PLUGIN_HANDLED
-}
-
-stock fm_set_user_money(id, money, flash = 1) {
-	set_pdata_int(id, OFFSET_CSMONEY, money, OFFSET_LINUX)
-	
-	message_begin(MSG_ONE, get_user_msgid("Money"), {0, 0, 0}, id)
-	write_long(money)
-	write_byte(flash)
-	message_end()
+	cs_set_user_money(id, 99999, 0);
+	return PLUGIN_HANDLED;
 }

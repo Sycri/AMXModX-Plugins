@@ -1,160 +1,197 @@
 
 #include <amxmodx>
 #include <amxmisc>
+#include <fun>
 #include <cstrike>
-#include <fakemeta_util>
 #include <hamsandwich>
 
-new const PLUGIN_VERSION[] = "1.6"
+#pragma semicolon 1
 
-// Consts
-const REQUIRED_FLAG = ADMIN_SLAY
+new const PLUGIN_VERSION[] = "1.7";
 
-// Cvars
-new cvar_cost, cvar_hp, cvar_ap,
-cvar_gravity, cvar_speed
+new const UpgradeCommand[] = "amx_upgrade";
 
-// Pointers
-new pointer_showactivity
+new CvarCost;
+new CvarHealth;
+new CvarArmor;
+new Float:CvarGravity;
+new Float:CvarSpeed;
 
-// Bools
-new bool:g_has_upgrade[33]
+new bool:g_HasUpgrade[MAX_PLAYERS + 1];
+new bool:g_IsFreezetime;
 
-// Vars
-new g_freezetime
+new Ham:Ham_Player_ResetMaxSpeed = Ham_Item_PreFrame;
 
-public plugin_init() {
-	register_plugin("Upgrade", PLUGIN_VERSION, "Kristaps08")
+public plugin_init()
+{
+	register_plugin("Upgrade", PLUGIN_VERSION, "Sycri (Kristaps08)");
+	register_dictionary("upgrade.txt");
 	
-	// Client Commands
-	register_clcmd("say /upgrade","cmd_buyupgrade")
-	register_clcmd("say_team /upgrade","cmd_buyupgrade")
+	register_clcmd("say /upgrade", "@ClientCommand_BuyUpgrade");
+	register_clcmd("say_team /upgrade", "@ClientCommand_BuyUpgrade");
 	
-	// Admin Commands
-	register_concmd("amx_upgrade", "cmd_upgrade", REQUIRED_FLAG, "<target> [0|1] - 0=TAKE 1=GIVE")
+	register_concmd(UpgradeCommand, "@ConsoleCommand_Upgrade", ADMIN_LEVEL_A, "UPGRADE_CMD_INFO", .info_ml = true);
 	
-	// Ham Forwards
-	RegisterHam(Ham_Killed, "player", "fw_PlayerKilled")
-	RegisterHam(Ham_Spawn, "player", "fw_PlayerSpawn_Post", 1)
+	RegisterHamPlayer(Ham_Killed, "@Forward_PlayerKilled");
+	RegisterHamPlayer(Ham_Spawn, "@Forward_PlayerSpawn_Post", 1);
+	RegisterHamPlayer(Ham_Player_ResetMaxSpeed, "@Forward_Player_ResetMaxSpeed_Post", 1);
 	
-	// FM Forwards
-	register_forward(FM_PlayerPreThink, "fw_PlayerPreThink")
+	register_event_ex("HLTV", "@Forward_NewRound", RegisterEvent_Global, "1=0", "2=0");
+
+	register_logevent("@Forward_RoundStart", 2, "1=Round_Start");
 	
-	// Events
-	register_event("HLTV", "event_newround", "a", "1=0", "2=0")
+	bind_pcvar_num(create_cvar("upgrade_cost", "4000", .has_min = true, .min_val = 0.0), CvarCost);
+	bind_pcvar_num(create_cvar("upgrade_hp", "150", .has_min = true, .min_val = 1.0), CvarHealth);
+	bind_pcvar_num(create_cvar("upgrade_ap", "150", .has_min = true, .min_val = 0.0), CvarArmor);
+	bind_pcvar_float(create_cvar("upgrade_gravity", "0.75", .has_min = true, .min_val = 0.0), CvarGravity);
+	bind_pcvar_float(create_cvar("upgrade_speed", "300.0", .has_min = true, .min_val = 0.0), CvarSpeed);
 	
-	// Logevents
-	register_logevent("logevent_roundstart", 2, "1=Round_Start")  
-	
-	// Language File
-	register_dictionary("upgrade.txt")
-	
-	// CVARS - General
-	cvar_cost = register_cvar("upgrade_cost", "4000")
-	cvar_hp = register_cvar("upgrade_hp", "150")
-	cvar_ap = register_cvar("upgrade_ap", "150")
-	cvar_gravity = register_cvar("upgrade_gravity", "0.75")
-	cvar_speed = register_cvar("upgrade_speed", "300.0")
-	
-	// CVARS - Other
-	register_cvar("upgrade_version", PLUGIN_VERSION, FCVAR_SERVER)
-	
-	// CVARS - Pointers
-	pointer_showactivity = get_cvar_pointer("amx_show_activity")
+	create_cvar("upgrade_version", PLUGIN_VERSION, FCVAR_SERVER);
 }
 
-public client_disconnect(id)
-	g_has_upgrade[id] = false
+public client_disconnected(id)
+{
+	g_HasUpgrade[id] = false;
+}
 
-public event_newround()
-	g_freezetime = true
-
-public logevent_roundstart()
-	g_freezetime = false
-
-public cmd_buyupgrade(id) {
-	if(!is_user_alive(id))
-		client_print(id, print_chat, "[AMXX] %L", LANG_PLAYER, "NOT_ALIVE")
-	else if(g_has_upgrade[id])
-		client_print(id, print_chat, "[AMXX] %L", LANG_PLAYER, "ALREADY_HAS")
-	else if(cs_get_user_money(id) < get_pcvar_num(cvar_cost))
-		client_print(id, print_chat, "[AMXX] %L", LANG_PLAYER, "NOT_ENOUGH", get_pcvar_num(cvar_cost))
-	else {
-		cs_set_user_money(id, cs_get_user_money(id) - get_pcvar_num(cvar_cost))
-		g_has_upgrade[id] = true
-		client_print(id, print_chat, "[AMXX] %L", LANG_PLAYER, "BOUGHT_UPGRADE")
-		fm_set_user_health(id, get_pcvar_num(cvar_hp))
-		cs_set_user_armor(id, get_pcvar_num(cvar_ap), CS_ARMOR_VESTHELM)
-		fm_set_user_gravity(id, get_pcvar_float(cvar_gravity))
+@ClientCommand_BuyUpgrade(id)
+{
+	if (!is_user_alive(id)) {
+		client_print(id, print_chat, "%l", "NOT_ALIVE");
+		return PLUGIN_HANDLED;
 	}
+	
+	if (g_HasUpgrade[id]) {
+		client_print(id, print_chat, "%l", "ALREADY_IS");
+		return PLUGIN_HANDLED;
+	}
+	
+	if (cs_get_user_money(id) < CvarCost) {
+		client_print(id, print_chat, "%l", "NOT_ENOUGH", CvarCost);
+		return PLUGIN_HANDLED;
+	}
+	
+	cs_set_user_money(id, cs_get_user_money(id) - CvarCost);
+	g_HasUpgrade[id] = true;
+	client_print(id, print_chat, "%l", "GAIN_UPGRADE");
+
+	upgradePlayer(id);
+	return PLUGIN_HANDLED;
 }
 
-public fw_PlayerKilled(id) {
-	if(!g_has_upgrade[id]) return PLUGIN_HANDLED
+@ConsoleCommand_Upgrade(id, level, cid)
+{
+	if (!cmd_access(id, level, cid, 2))
+		return PLUGIN_HANDLED;
 	
-	client_print(id, print_chat, "[AMXX] %L", LANG_PLAYER, "LOST_UPGRADE")
-	g_has_upgrade[id] = false
-	return PLUGIN_HANDLED
-}
+	new arg[32];
+	read_argv(1, arg, charsmax(arg));
+	
+	new player = cmd_target(id, arg, CMDTARGET_OBEY_IMMUNITY | CMDTARGET_ALLOW_SELF | CMDTARGET_ONLY_ALIVE);
+	if (!player) 
+		return PLUGIN_HANDLED;
+	
+	new name[32];
+	new admin[32];
+	get_user_name(player, name, charsmax(name));
+	get_user_name(id, admin, charsmax(admin));
+	
+	if (read_argv_int(2) == 1) {
+		if (!g_HasUpgrade[player]) {
+			show_activity_key("ADMIN_GIVE_UPGRADE_1", "ADMIN_GIVE_UPGRADE_2", admin, name);
+			g_HasUpgrade[player] = true;
+			client_print(player, print_chat, "%l", "GAIN_UPGRADE");
 
-public fw_PlayerSpawn_Post(id) {
-	if(!is_user_alive(id) || !g_has_upgrade[id]) return PLUGIN_HANDLED
-	
-	fm_set_user_health(id, get_pcvar_num(cvar_hp))
-	cs_set_user_armor(id, get_pcvar_num(cvar_ap), CS_ARMOR_VESTHELM)
-	fm_set_user_gravity(id, get_pcvar_float(cvar_gravity))
-	return PLUGIN_HANDLED
-}
-
-public fw_PlayerPreThink(id) {
-	if(!is_user_alive(id) || !g_has_upgrade[id] || g_freezetime) return PLUGIN_HANDLED
-	
-	fm_set_user_maxspeed(id, get_pcvar_float(cvar_speed))
-	return PLUGIN_HANDLED
-}
-
-public cmd_upgrade(id, level, cid) {
-	if(!cmd_access(id, level, cid, 2))
-		return PLUGIN_HANDLED
-	
-	new arg[32]
-	new arg2[2]
-	read_argv(1, arg, 31)
-	read_argv(2, arg2, 1)
-	
-	new player = cmd_target(id, arg, 7)
-	if(!player) 
-		return PLUGIN_HANDLED
-	
-	new name[32]
-	new admin[32]
-	get_user_name(player, name, 31)
-	get_user_name(id, admin, 31)
-	
-	if(equal(arg2, "1")) {
-		if(!g_has_upgrade[player]) {
-			switch(get_pcvar_num(pointer_showactivity)) {
-				case 1: client_print(0, print_chat, "%L", LANG_PLAYER, "ADMIN_GIVE_UPGRADE_PLAYER_CASE1", name)
-				case 2: client_print(0, print_chat, "%L", LANG_PLAYER, "ADMIN_GIVE_UPGRADE_PLAYER_CASE2", admin, name)
-			}
-			g_has_upgrade[player] = true
-			fm_set_user_health(player, get_pcvar_num(cvar_hp))
-			cs_set_user_armor(player, get_pcvar_num(cvar_ap), CS_ARMOR_VESTHELM)
-			fm_set_user_gravity(id, get_pcvar_float(cvar_gravity))
+			upgradePlayer(player);
+		} else {
+			console_print(id, "%l", "ADMIN_ALREADY_IS");
 		}
-		else
-			client_print(id, print_console, "%L", LANG_PLAYER, "ADMIN_ALREADY_HAS")
-	}
-	else if(equal(arg2, "0")) {
-		if(g_has_upgrade[player]) {
-			switch(get_pcvar_num(pointer_showactivity)) {
-				case 1: client_print(0, print_chat, "%L", LANG_PLAYER, "ADMIN_TOOK_UPGRADE_PLAYER_CASE1", name)
-				case 2: client_print(0, print_chat, "%L", LANG_PLAYER, "ADMIN_TOOK_UPGRADE_PLAYER_CASE2", admin, name)
-			}
-			g_has_upgrade[player] = false
+	} else {
+		if (g_HasUpgrade[player]) {
+			show_activity_key("ADMIN_TOOK_UPGRADE_1", "ADMIN_TOOK_UPGRADE_2", admin, name);
+			g_HasUpgrade[player] = false;
+			client_print(player, print_chat, "%l", "LOST_UPGRADE");
+
+			deupgradePlayer(player);
+		} else {
+			console_print(id, "%l", "ADMIN_ALREADY_IS_NOT");
 		}
-		else
-			client_print(id, print_console, "%L", LANG_PLAYER, "ADMIN_DOESNT_HAVE")
 	}
-	return PLUGIN_HANDLED
+	return PLUGIN_HANDLED;
+}
+
+@Forward_PlayerKilled(id)
+{
+	if (!g_HasUpgrade[id])
+		return HAM_IGNORED;
+	
+	client_print(id, print_chat, "%l", "LOST_UPGRADE");
+	g_HasUpgrade[id] = false;
+	return HAM_HANDLED;
+}
+
+@Forward_PlayerSpawn_Post(id)
+{
+	if (!is_user_alive(id) || !g_HasUpgrade[id])
+		return HAM_IGNORED;
+	
+	upgradePlayer(id);
+	return HAM_HANDLED;
+}
+
+@Forward_Player_ResetMaxSpeed_Post(id)
+{
+	if (!is_user_alive(id) || !g_HasUpgrade[id] || g_IsFreezetime)
+		return HAM_IGNORED;
+	
+	set_user_maxspeed(id, CvarSpeed);
+	return HAM_HANDLED;
+}
+
+@Forward_NewRound()
+{
+	g_IsFreezetime = true;
+}
+
+@Forward_RoundStart()
+{
+	g_IsFreezetime = false;
+}
+
+upgradePlayer(index)
+{
+	set_user_health(index, CvarHealth);
+	cs_set_user_armor(index, CvarArmor, CS_ARMOR_VESTHELM);
+	set_user_gravity(index, CvarGravity);
+	set_user_maxspeed(index, CvarSpeed);
+}
+
+deupgradePlayer(index)
+{
+
+	if (get_user_health(index) > 100)
+		set_user_health(index, 100);
+	
+	if (get_user_armor(index) > 100)
+		set_user_armor(index, 100);
+
+	set_user_gravity(index, 1.0);
+	cs_reset_user_maxspeed(index);
+}
+
+cs_reset_user_maxspeed(index)
+{
+    new Float:maxSpeed;
+    switch (get_user_weapon(index)) {
+        case CSW_SG550, CSW_AWP, CSW_G3SG1: maxSpeed = 210.0;
+        case CSW_M249: maxSpeed = 220.0;
+        case CSW_AK47: maxSpeed = 221.0;
+        case CSW_M3, CSW_M4A1: maxSpeed = 230.0;
+        case CSW_SG552: maxSpeed = 235.0;
+        case CSW_XM1014, CSW_AUG, CSW_GALIL, CSW_FAMAS: maxSpeed = 240.0;
+        case CSW_P90: maxSpeed = 245.0;
+        case CSW_SCOUT: maxSpeed = 260.0;
+        default: maxSpeed = 250.0;
+    }
+    set_user_maxspeed(index, maxSpeed);
 }

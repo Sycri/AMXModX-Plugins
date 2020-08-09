@@ -1,0 +1,8 @@
+[en]
+ADMIN_ALREADY_IS = This target already has infinite money.
+ADMIN_ALREADY_IS_NOT = This target does not have infinite money.
+ADMIN_INFINITE_MONEY_ON_1 = ADMIN: enable infinite money for %s
+ADMIN_INFINITE_MONEY_ON_2 = ADMIN %s: enable infinite money for %s
+ADMIN_INFINITE_MONEY_OFF_1 = ADMIN: disable infinite money for %s
+ADMIN_INFINITE_MONEY_OFF_2 = ADMIN %s: disable infinite money for %s
+INFINITE_MONEY_CMD_INFO = <target> [0|1] - 0=OFF 1=ON
