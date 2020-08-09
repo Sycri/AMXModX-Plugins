@@ -1,0 +1,15 @@
+[en]
+ADMIN_DOESNT_HAVE = This target is already visible.
+ADMIN_ALREADY_IS = This target is already invisible.
+ADMIN_INVISIBLE_ON_PLAYER_CASE1 = ADMIN: turned on invisibility for player %s
+ADMIN_INVISIBLE_ON_PLAYER_CASE2 = ADMIN %s: turned on invisibility for player %s
+ADMIN_INVISIBLE_OFF_PLAYER_CASE1 = ADMIN: turned off invisibility for player %s
+ADMIN_INVISIBLE_OFF_PLAYER_CASE2 = ADMIN %s: turned off invisibility for player %s
+
+[hu]
+ADMIN_DOESNT_HAVE = A celszemely mar nem lathatatlan.
+ADMIN_ALREADY_IS = A celszemely mar lathatatlan.
+ADMIN_INVISIBLE_ON_PLAYER_CASE1 = ADMIN: lathatatlanna valtoztatta %s -t
+ADMIN_INVISIBLE_ON_PLAYER_CASE2 = ADMIN %s: lathatatlanna valtoztatta %s -t
+ADMIN_INVISIBLE_OFF_PLAYER_CASE1 = ADMIN: kikapcsolta %s lathatatlansagat
+ADMIN_INVISIBLE_OFF_PLAYER_CASE2 = ADMIN %s: kikapcsolta %s lathatatlansagat
