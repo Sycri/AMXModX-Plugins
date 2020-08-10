@@ -21,9 +21,9 @@ public plugin_init()
 	
 	register_concmd(InvisibleCommand, "@ConsoleCommand_Invisible", ADMIN_LEVEL_A, "INVISIBLE_CMD_INFO", .info_ml = true);
 
-	bind_pcvar_num(create_cvar("amx_invisible_amount", "20", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 255.0), CvarInvisibleAmount);
-	
 	RegisterHamPlayer(Ham_Spawn, "@Forward_PlayerSpawn_Post", 1);
+
+	bind_pcvar_num(create_cvar("amx_invisible_amount", "20", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 255.0), CvarInvisibleAmount);
 
 	create_cvar("amx_invisible_version", PLUGIN_VERSION, FCVAR_SERVER);
 }

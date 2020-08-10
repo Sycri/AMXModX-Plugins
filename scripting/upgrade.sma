@@ -37,7 +37,6 @@ public plugin_init()
 	RegisterHamPlayer(Ham_Player_ResetMaxSpeed, "@Forward_Player_ResetMaxSpeed_Post", 1);
 	
 	register_event_ex("HLTV", "@Forward_NewRound", RegisterEvent_Global, "1=0", "2=0");
-
 	register_logevent("@Forward_RoundStart", 2, "1=Round_Start");
 	
 	bind_pcvar_num(create_cvar("upgrade_cost", "4000", .has_min = true, .min_val = 0.0), CvarCost);
@@ -168,7 +167,6 @@ upgradePlayer(index)
 
 deupgradePlayer(index)
 {
-
 	if (get_user_health(index) > 100)
 		set_user_health(index, 100);
 	
