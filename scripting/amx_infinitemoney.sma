@@ -3,42 +3,42 @@
 					by Sycri (Kristaps08)
 
 	Description:
-		With this plugin you can make a player have infinite money.
+		With this plugin you can make a player have infinite money
 
 	Cvars:
-		None.
+		None
 
 	Admin Commands:
 		amx_infinitemoney <target> [0|1] - 0=OFF 1=ON
 
 	Credits:
-		None.
+		None
 
 	Changelog:
 		- v1.0
-		* First release.
+		* First release
 
 		- v1.1
-		* Added support to give infinite money while the target is dead.
-		* Changed and cleaned up some code.
+		* Added support to give infinite money while the target is dead
+		* Changed and cleaned up some code
 
 		- v1.2 (29th August 2012)
-		* Added description.
-		* Optimized the code a little bit.
-		* First public release.
+		* Added description
+		* Optimized the code a little bit
+		* First public release
 
 		- v1.3 (10th August 2020)
 		* Added multilingual support to the description of the command amx_infinitemoney
-		* Added FCVAR_SPONLY to cvar amx_infinitemoney_version to make it unchangeable.
-		* Changed from fakemeta to cstrike because the functions of the latter are native.
+		* Added FCVAR_SPONLY to cvar amx_infinitemoney_version to make it unchangeable
+		* Changed from fakemeta to cstrike because the functions of the latter are native
 		* Changed the required admin level of the command amx_infinitemoney from ADMIN_MAP to ADMIN_LEVEL_A
-		* Forced usage of semicolons for better clarity.
+		* Forced usage of semicolons for better clarity
 		* Replaced amx_show_activity checking with show_activity_key
-		* Replaced FM_PlayerPreThink with Money event since the former gets called too frequently.
-		* Replaced read_argv with read_argv_int where appropriate.
+		* Replaced FM_PlayerPreThink with Money event since the former gets called too frequently
+		* Replaced read_argv with read_argv_int where appropriate
 		* Replaced register_cvar with create_cvar
-		* Replaced register_event with register_event_ex for better code readability.
-		* Revamped the entire plugin for better code style.
+		* Replaced register_event with register_event_ex for better code readability
+		* Revamped the entire plugin for better code style
 
 =================================================================================*/
 

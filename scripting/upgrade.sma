@@ -3,65 +3,65 @@
 					by Sycri (Kristaps08)
 
 	Description:
-		With this plugin you can make a player have infinite money.
+		With this plugin you can make a player have infinite money
 
 	Cvars:
-		upgrade_speed "300.0"	// The player's speed with an upgrade.
-		upgrade_hp "150"		// The player's health with an upgrade.
-		upgrade_ap "150"		// The player's armor with an upgrade.
-		upgrade_gravity "0.75"	// The player's gravity with an upgrade.
-		upgrade_cost "4000"		// The cost of an upgrade.
+		upgrade_speed "300.0"	// The player's speed with an upgrade
+		upgrade_hp "150"		// The player's health with an upgrade
+		upgrade_ap "150"		// The player's armor with an upgrade
+		upgrade_gravity "0.75"	// The player's gravity with an upgrade
+		upgrade_cost "4000"		// The cost of an upgrade
 
 	Admin Commands:
 		amx_upgrade <target> [0|1] - 0=TAKE 1=GIVE
 
 	Credits:
-		None.
+		None
 
 	Changelog:
 		- v1.0
-		* First public release.
+		* First public release
 
 		- v1.1
 		* Removed client_connect()
 		* Changed from CurWeapon event to Ham_Item_PreFrame
-		* Code changes and cleanup.
+		* Code changes and cleanup
 
 		- v1.2
-		* Removed cmd_upgradehelp() because it was not needed.
-		* Added automatic message that will display after some time.
+		* Removed cmd_upgradehelp() because it was not needed
+		* Added automatic message that will display after some time
 		* Combined amx_give_upgrade and amx_take_upgrade commands together into amx_upgrade
 		* Added support for amx_show_activity
 
 		- v1.3
-		* Changed and cleaned up some code.
-		* Added fakemeta.
+		* Changed and cleaned up some code
+		* Added fakemeta
 
 		- v1.4
-		* Optimized code.
+		* Optimized code
 
 		- v1.5
-		* Fixed freezetime bug.
-		* Optimized a little bit of the code.
-		* Added description.
+		* Fixed freezetime bug
+		* Optimized a little bit of the code
+		* Added description
 
 		- v1.6 (29th August 2012)
-		* Optimized the code a little bit again.
+		* Optimized the code a little bit again
 
 		- v1.7 (10th August 2020)
 		* Added multilingual support to the description of the command amx_upgrade
-		* Added FCVAR_SPONLY to cvar upgrade_version to make it unchangeable.
-		* Changed from fakemeta to fun because the functions of the latter are native.
-		* Changed from get_pcvar_num to bind_pcvar_num so variables could be used directly.
+		* Added FCVAR_SPONLY to cvar upgrade_version to make it unchangeable
+		* Changed from fakemeta to fun because the functions of the latter are native
+		* Changed from get_pcvar_num to bind_pcvar_num so variables could be used directly
 		* Changed the required admin level of the command amx_upgrade from ADMIN_SLAY to ADMIN_LEVEL_A
-		* Forced usage of semicolons for better clarity.
+		* Forced usage of semicolons for better clarity
 		* Replaced amx_show_activity checking with show_activity_key
-		* Replaced FM_PlayerPreThink with Ham_Player_ResetMaxSpeed since the former gets called too frequently.
-		* Replaced RegisterHam with RegisterHamPlayer to add special bot support.
-		* Replaced read_argv with read_argv_int where appropriate.
+		* Replaced FM_PlayerPreThink with Ham_Player_ResetMaxSpeed since the former gets called too frequently
+		* Replaced RegisterHam with RegisterHamPlayer to add special bot support
+		* Replaced read_argv with read_argv_int where appropriate
 		* Replaced register_cvar with create_cvar
-		* Replaced register_event with register_event_ex for better code readability.
-		* Revamped the entire plugin for better code style.
+		* Replaced register_event with register_event_ex for better code readability
+		* Revamped the entire plugin for better code style
 
 =================================================================================*/
 
