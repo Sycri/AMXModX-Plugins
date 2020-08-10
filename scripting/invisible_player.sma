@@ -1,3 +1,75 @@
+/*=================================================================================
+						Invisible Player
+					by Sycri (Kristaps08)
+
+	Description:
+		With this plugin you can make a player invisible.
+
+	Cvars:
+		amx_invisible_amount "20" // Alpha level of an invisible player (0-255).
+
+	Admin Commands:
+		amx_invisible_player <target> [0|1] - 0=OFF 1=ON
+
+	Credits:
+		None.
+
+	Changelog:
+		- v1.0
+		* First release.
+
+		- v1.1
+		* First public release.
+		* Code cleanup.
+		* Command amx_invisible is changed to command amx_give_invisibility and command amx_remove_invisibility.
+		* Added hamsandwich module.
+		* Command amx_invisible is working again.
+
+		- v1.2
+		* Changed from (g_is_invisible[player]==false) to (!g_is_invisible[player])
+		
+		- v1.3
+		* Changed engine module to fun module.
+		* Added command amx_check_invisibility to check if the player is invisible.
+		* Added cvar to control how much will be invisible.
+		* Changed from set_entity_visibility to set_user_rendering.
+		* Commands amx_give_invisibility and command amx_remove_invisibility is changed to command amx_invisible.
+		* Cleaned up some code.
+
+		- v1.4
+		* Code changes and cleanup.
+		* Added support for amx_show_activity.
+		* Changed from hamsandwich to fakemeta.
+
+		- v1.5
+		* Optimized code.
+
+		- v1.6
+		* Removed fun module.
+		* Optimized a little bit the code.
+		* Added description.
+
+		- v1.7
+		* Optimized code a tiny little bit.
+
+		- v1.8 (26th September 2012)
+		* Addded a new translation.
+		* Changed a tiny little bit of code.
+
+		- v1.9 (10th August 2020)
+		* Added multilingual support to the description of the command amx_invisible
+		* Added FCVAR_SPONLY to cvar amx_invisible_version to make it unchangeable.
+		* Changed from fakemeta to fun because the functions of the latter are native.
+		* Changed from get_pcvar_num to bind_pcvar_num so variables could be used directly.
+		* Changed the required admin level of the command amx_invisible from ADMIN_MAP to ADMIN_LEVEL_A
+		* Forced usage of semicolons for better clarity.
+		* Replaced amx_show_activity checking with show_activity_key
+		* Replaced FM_PlayerPreThink with Ham_Spawn since the former gets called too frequently.
+		* Replaced read_argv with read_argv_int where appropriate.
+		* Replaced register_cvar with create_cvar
+		* Revamped the entire plugin for better code style.
+
+=================================================================================*/
 
 #include <amxmodx>
 #include <amxmisc>
@@ -25,7 +97,7 @@ public plugin_init()
 
 	bind_pcvar_num(create_cvar("amx_invisible_amount", "20", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 255.0), CvarInvisibleAmount);
 
-	create_cvar("amx_invisible_version", PLUGIN_VERSION, FCVAR_SERVER);
+	create_cvar("amx_invisible_version", PLUGIN_VERSION, FCVAR_SERVER | FCVAR_SPONLY);
 }
 
 public client_disconnected(id)
@@ -74,9 +146,12 @@ public client_disconnected(id)
 
 @Forward_PlayerSpawn_Post(id)
 {
-	if (!is_user_alive(id) || !g_IsInvisible[id])
+	if (!is_user_alive(id) || get_user_team(id) == 0)
+		return HAM_IGNORED;
+
+	if (!g_IsInvisible[id])
 		return HAM_IGNORED;
 	
 	set_user_rendering(id, kRenderFxGlowShell, 0, 0, 0, kRenderTransAlpha, CvarInvisibleAmount);
-	return HAM_HANDLED;
+	return HAM_IGNORED;
 }

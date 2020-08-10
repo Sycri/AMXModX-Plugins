@@ -1,3 +1,69 @@
+/*=================================================================================
+						Reset Player
+					by Sycri (Kristaps08)
+
+	Description:
+		With this plugin you can reset players items, money, health, armor, deaths, and/or frags.
+
+	Cvars:
+		None.
+
+	Admin Commands:
+		amx_reset_player <target> <money> <weapons> <health> <armor> <frags> <deaths> - Reset player's stats
+
+	Credits:
+		ConnorMcLeod: For his suggestions.
+
+	Changelog:
+		- v1.0
+		* First public release.
+
+		- v1.1
+		* Added reset_player_frags to reset frags for player.
+		* Added reset_player_deaths to reset deaths for player.
+		* Added reset_player_again to reset again the player in the same round.
+
+		- v1.2
+		* Changed from set_user_armor to cs_set_user_armor
+		* Changed from give_item to cs_set_user_bpammo
+
+		- v1.3
+		* Code changes and cleanup.
+		* Changed cvars from reset_player_ to rp_
+
+		- v1.4
+		* Added support for amx_show_activity.
+		* Changed and cleaned up some code.
+
+		- v1.5
+		* Optimized code.
+		* Added get_cvar_pointer.
+
+		- v1.6
+		* Added description.
+		* Optimized a little bit of the code.
+
+		- v1.7
+		* Removed rp_again so admins could reset player all the time.
+		* Optimized code again.
+
+		- v1.8 (8th May 2013)
+		* Added pev_max_health.
+		* Removed all the cvars except rp_version.
+		* Changed the command amx_reset_player so the player could reset different parts of the player's stats.
+
+		- v1.9 (10th August 2020)
+		* Added multilingual support to the description of the command amx_reset_player
+		* Added FCVAR_SPONLY to cvar rp_version to make it unchangeable.
+		* Changed the required admin level of the command amx_reset_player from ADMIN_BAN to ADMIN_SLAY
+		* Fixed the command amx_reset_player only checking the first toggle.
+		* Forced usage of semicolons for better clarity.
+		* Replaced amx_show_activity checking with show_activity_key
+		* Replaced read_argv with read_argv_int where appropriate.
+		* Replaced register_cvar with create_cvar
+		* Revamped the entire plugin for better code style.
+
+=================================================================================*/
 
 #include <amxmodx>
 #include <amxmisc>
@@ -20,7 +86,7 @@ public plugin_init()
 	
 	register_concmd(ResetPlayerCommand, "@ConsoleCommand_ResetPlayer", ADMIN_SLAY, "RESET_PLAYER_CMD_INFO", .info_ml = true);
 	
-	create_cvar("rp_version", PLUGIN_VERSION, FCVAR_SERVER);
+	create_cvar("rp_version", PLUGIN_VERSION, FCVAR_SERVER | FCVAR_SPONLY);
 }
 
 public OnConfigsExecuted()

@@ -1,3 +1,69 @@
+/*=================================================================================
+						Upgrade
+					by Sycri (Kristaps08)
+
+	Description:
+		With this plugin you can make a player have infinite money.
+
+	Cvars:
+		upgrade_speed "300.0"	// The player's speed with an upgrade.
+		upgrade_hp "150"		// The player's health with an upgrade.
+		upgrade_ap "150"		// The player's armor with an upgrade.
+		upgrade_gravity "0.75"	// The player's gravity with an upgrade.
+		upgrade_cost "4000"		// The cost of an upgrade.
+
+	Admin Commands:
+		amx_upgrade <target> [0|1] - 0=TAKE 1=GIVE
+
+	Credits:
+		None.
+
+	Changelog:
+		- v1.0
+		* First public release.
+
+		- v1.1
+		* Removed client_connect()
+		* Changed from CurWeapon event to Ham_Item_PreFrame
+		* Code changes and cleanup.
+
+		- v1.2
+		* Removed cmd_upgradehelp() because it was not needed.
+		* Added automatic message that will display after some time.
+		* Combined amx_give_upgrade and amx_take_upgrade commands together into amx_upgrade
+		* Added support for amx_show_activity
+
+		- v1.3
+		* Changed and cleaned up some code.
+		* Added fakemeta.
+
+		- v1.4
+		* Optimized code.
+
+		- v1.5
+		* Fixed freezetime bug.
+		* Optimized a little bit of the code.
+		* Added description.
+
+		- v1.6 (29th August 2012)
+		* Optimized the code a little bit again.
+
+		- v1.7 (10th August 2020)
+		* Added multilingual support to the description of the command amx_upgrade
+		* Added FCVAR_SPONLY to cvar upgrade_version to make it unchangeable.
+		* Changed from fakemeta to fun because the functions of the latter are native.
+		* Changed from get_pcvar_num to bind_pcvar_num so variables could be used directly.
+		* Changed the required admin level of the command amx_upgrade from ADMIN_SLAY to ADMIN_LEVEL_A
+		* Forced usage of semicolons for better clarity.
+		* Replaced amx_show_activity checking with show_activity_key
+		* Replaced FM_PlayerPreThink with Ham_Player_ResetMaxSpeed since the former gets called too frequently.
+		* Replaced RegisterHam with RegisterHamPlayer to add special bot support.
+		* Replaced read_argv with read_argv_int where appropriate.
+		* Replaced register_cvar with create_cvar
+		* Replaced register_event with register_event_ex for better code readability.
+		* Revamped the entire plugin for better code style.
+
+=================================================================================*/
 
 #include <amxmodx>
 #include <amxmisc>
@@ -45,7 +111,7 @@ public plugin_init()
 	bind_pcvar_float(create_cvar("upgrade_gravity", "0.75", .has_min = true, .min_val = 0.0), CvarGravity);
 	bind_pcvar_float(create_cvar("upgrade_speed", "300.0", .has_min = true, .min_val = 0.0), CvarSpeed);
 	
-	create_cvar("upgrade_version", PLUGIN_VERSION, FCVAR_SERVER);
+	create_cvar("upgrade_version", PLUGIN_VERSION, FCVAR_SERVER | FCVAR_SPONLY);
 }
 
 public client_disconnected(id)
@@ -126,25 +192,31 @@ public client_disconnected(id)
 	
 	client_print(id, print_chat, "%l", "LOST_UPGRADE");
 	g_HasUpgrade[id] = false;
-	return HAM_HANDLED;
+	return HAM_IGNORED;
 }
 
 @Forward_PlayerSpawn_Post(id)
 {
-	if (!is_user_alive(id) || !g_HasUpgrade[id])
+	if (!is_user_alive(id) || cs_get_user_team(id) == CS_TEAM_UNASSIGNED)
+		return HAM_IGNORED;
+
+	if (!g_HasUpgrade[id])
 		return HAM_IGNORED;
 	
 	upgradePlayer(id);
-	return HAM_HANDLED;
+	return HAM_IGNORED;
 }
 
 @Forward_Player_ResetMaxSpeed_Post(id)
 {
-	if (!is_user_alive(id) || !g_HasUpgrade[id] || g_IsFreezetime)
+	if (!is_user_alive(id) || !g_HasUpgrade[id])
+		return HAM_IGNORED;
+
+	if (g_IsFreezetime)
 		return HAM_IGNORED;
 	
 	set_user_maxspeed(id, CvarSpeed);
-	return HAM_HANDLED;
+	return HAM_IGNORED;
 }
 
 @Forward_NewRound()
