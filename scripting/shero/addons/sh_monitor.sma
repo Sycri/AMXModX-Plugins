@@ -61,6 +61,14 @@
 *          at 800x600 to 1280x1024.
 *
 *  Changelog:
+*   v1.7 - Sycri - 08/13/20
+*		- Readded HUD removement as it is now possible
+*		- Revamped the code
+*
+*   v1.6 - Jelle - 07/15/13
+*	    - Fixed problem where plugin would only show up to 255 health
+*	    - Replace HUD removed as that is no possible anymore
+*
 *   v1.5 - vittu - 10/28/10
 *	    - Fixed possible issue with get_players array size.
 *
@@ -101,267 +109,264 @@
 
 
 /********* Uncomment to replace HUD hp/ap **********/
-//#define REPLACE_HUD
+// #define REPLACE_HUD
 
 /********* Uncomment the ones you want to display **********/
 #define MONITOR_HP
 #define MONITOR_AP
-//#define MONITOR_GRAVITY
-//#define MONITOR_SPEED
-//#define MONITOR_GODMODE
+#define MONITOR_GRAVITY
+#define MONITOR_SPEED
+#define MONITOR_GODMODE
 #define MONITOR_SPEC
 
 
 /************* Do Not Edit Below Here **************/
 
-
 #include <superheromod>
+#include <amxmisc>
+
+#pragma semicolon 1
 
 #if defined MONITOR_HP || defined MONITOR_SPEC
-	new UserHealth[SH_MAXSLOTS+1]
+	new gUserHealth[MAX_PLAYERS + 1];
 #endif
 
 #if defined MONITOR_AP || defined MONITOR_SPEC
-	new UserArmor[SH_MAXSLOTS+1]
+	new gUserArmor[MAX_PLAYERS + 1];
 #endif
 
 #if defined MONITOR_SPEC
-	new ServerMaxLevel
+	new gServerMaxLevel;
 #endif
 
 #if defined REPLACE_HUD
-	new MsgHideWeapon
-	#define HIDE_HUD_HEALTH (1<<3)
+	new gmsgHideWeapon;
+	#define HIDE_HUD_HEALTH (1 << 3)
 #endif
 
-new MonitorHudSync
-new const TaskClassname[] = "monitorloop"
+new gMonitorHudSync;
+new const gTaskClassname[] = "monitorloop";
 //----------------------------------------------------------------------------------------------
 public plugin_init()
 {
-	register_plugin("SuperHero Monitor", "1.5", "vittu")
+	register_plugin("SuperHero Monitor", "1.7", "vittu");
 
-	#if defined MONITOR_HP || defined MONITOR_SPEC
-		register_event("Health", "health_change", "b")
-	#endif
+#if defined MONITOR_HP || defined MONITOR_SPEC
+	register_event_ex("Health", "@Event_Health", RegisterEvent_Single);
+#endif
 
-	#if defined MONITOR_AP || defined MONITOR_SPEC
-		register_event("Battery", "armor_change", "b")
-	#endif
+#if defined MONITOR_AP || defined MONITOR_SPEC
+	register_event_ex("Battery", "@Event_Battery", RegisterEvent_Single);
+#endif
 
-	#if defined REPLACE_HUD
-		MsgHideWeapon = get_user_msgid("HideWeapon")
-		register_message(MsgHideWeapon, "msg_hideweapon")
-	#endif
+#if defined REPLACE_HUD
+	gmsgHideWeapon = get_user_msgid("HideWeapon");
+	register_message(gmsgHideWeapon, "@Message_HideWeapon");
+#endif
 
-	MonitorHudSync = CreateHudSyncObj()
+	gMonitorHudSync = CreateHudSyncObj();
 
-	new monitor = engfunc(EngFunc_CreateNamedEntity, engfunc(EngFunc_AllocString, "info_target"))
-	if ( monitor )
-	{
-		set_pev(monitor, pev_classname, TaskClassname)
-		set_pev(monitor, pev_nextthink, get_gametime() + 0.1)
-		register_forward(FM_Think, "monitor_think")
+	new monitor = engfunc(EngFunc_CreateNamedEntity, engfunc(EngFunc_AllocString, "info_target"));
+	if (monitor) {
+		set_pev(monitor, pev_classname, gTaskClassname);
+		set_pev(monitor, pev_nextthink, get_gametime() + 0.1);
+		register_forward(FM_Think, "@Forward_Monitor_Think");
 	}
 }
 //----------------------------------------------------------------------------------------------
 #if defined MONITOR_SPEC
 public plugin_cfg()
 {
-	ServerMaxLevel = sh_get_num_lvls()
+	gServerMaxLevel = sh_get_num_lvls();
 }
 #endif
 //----------------------------------------------------------------------------------------------
 public sh_client_spawn(id)
 {
-	if ( !sh_is_active() || !is_user_alive(id) ) return
+	if (!sh_is_active() || !is_user_alive(id))
+		return;
 
-	#if !defined MONITOR_SPEC
-		if ( is_user_bot(id) ) return
-	#endif
+#if !defined MONITOR_SPEC
+	if (is_user_bot(id))
+		return;
+#endif
 
 	// Check varibles initially when spawned, mainly so hp doesn't start at 0
-	#if defined MONITOR_HP || defined MONITOR_SPEC
-		UserHealth[id] = get_user_health(id)
-	#endif
-	#if defined MONITOR_AP || defined MONITOR_SPEC
-		UserArmor[id] = get_user_armor(id)
-	#endif
+#if defined MONITOR_HP || defined MONITOR_SPEC
+	gUserHealth[id] = get_user_health(id);
+#endif
+#if defined MONITOR_AP || defined MONITOR_SPEC
+	gUserArmor[id] = get_user_armor(id);
+#endif
 
-	#if defined REPLACE_HUD
-		#if defined MONITOR_SPEC
-			if ( !is_user_bot(id) )
-			{
-		#endif
-				// Remove HP and AP from screen, however radar is removed aswell
-				message_begin(MSG_ONE_UNRELIABLE, MsgHideWeapon, _, id)
-				write_byte(HIDE_HUD_HEALTH)
-				message_end()
-		#if defined MONITOR_SPEC
-			}
-		#endif
-	#endif
+#if defined REPLACE_HUD
+#if defined MONITOR_SPEC
+	if (!is_user_bot(id)) {
+#endif
+		// Remove HP and AP from screen, however radar is removed aswell
+		message_begin(MSG_ONE_UNRELIABLE, gmsgHideWeapon, _, id);
+		write_byte(HIDE_HUD_HEALTH);
+		message_end();
+#if defined MONITOR_SPEC
+	}
+#endif
+#endif
 }
 //----------------------------------------------------------------------------------------------
 #if defined MONITOR_HP || defined MONITOR_SPEC
-public health_change(id)
+@Event_Health(id)
 {
-	if ( !sh_is_active() || !is_user_alive(id) ) return
+	if (!sh_is_active() || !is_user_alive(id))
+		return;
 
-	#if !defined MONITOR_SPEC
-		if ( is_user_bot(id) ) return
-	#endif
+#if !defined MONITOR_SPEC
+	if (is_user_bot(id))
+		return;
+#endif
 
-	UserHealth[id] = read_data(1)
+	gUserHealth[id] = get_user_health(id);
 }
 #endif
 //----------------------------------------------------------------------------------------------
 #if defined MONITOR_AP || defined MONITOR_SPEC
-public armor_change(id)
+@Event_Battery(id)
 {
-	if ( !sh_is_active() || !is_user_alive(id) ) return
+	if (!sh_is_active() || !is_user_alive(id))
+		return;
 
-	#if !defined MONITOR_SPEC
-		if ( is_user_bot(id) ) return
-	#endif
+#if !defined MONITOR_SPEC
+	if (is_user_bot(id))
+		return;
+#endif
 
-	UserArmor[id] = read_data(1)
+	gUserArmor[id] = read_data(1);
 }
 #endif
 //----------------------------------------------------------------------------------------------
-public monitor_think(ent)
+@Forward_Monitor_Think(ent)
 {
-	if ( !pev_valid(ent) ) return FMRES_IGNORED
+	if (!pev_valid(ent))
+		return FMRES_IGNORED;
 
-	static class[32]
-	pev(ent, pev_classname, class, charsmax(class))
+	static class[32];
+	pev(ent, pev_classname, class, charsmax(class));
 
-	if ( equal(class, TaskClassname) )
-	{
-		if ( sh_is_active() )
-		{
-			#if defined MONITOR_SPEED || defined MONITOR_SPEC
-				static Float:velocity[3]
-			#endif
-			#if defined MONITOR_GRAVITY || defined MONITOR_SPEC
-				static Float:gravity
-			#endif
-			#if defined MONITOR_GODMODE
-				static Float:takeDamage
-			#endif
+	if (!equal(class, gTaskClassname))
+		return FMRES_IGNORED;
 
-			#if defined MONITOR_SPEC
-				static specPlayer, specPlayerLevel
-			#endif
+	if (sh_is_active()) {
+#if defined MONITOR_SPEED || defined MONITOR_SPEC
+		static Float:velocity[3];
+#endif
+#if defined MONITOR_GRAVITY || defined MONITOR_SPEC
+		static Float:gravity;
+#endif
+#if defined MONITOR_GODMODE
+		static Float:takeDamage;
+#endif
 
-			#if defined MONITOR_HP || defined MONITOR_AP || defined MONITOR_GRAVITY || defined MONITOR_SPEED || defined MONITOR_GODMODE
-				static len
-			#endif
+#if defined MONITOR_SPEC
+		static specPlayer, specPlayerLevel;
+#endif
 
-			static players[32], count, i, id
-			static temp[128]
-			get_players(players, count, "ch")
+#if defined MONITOR_HP || defined MONITOR_AP || defined MONITOR_GRAVITY || defined MONITOR_SPEED || defined MONITOR_GODMODE
+		static len;
+#endif
 
-			for ( i = 0; i < count; i++ )
-			{
-				id = players[i]
-				temp[0] = '^0'
+		static players[MAX_PLAYERS], playerCount, player, i;
+		static tmp[128];
+		get_players_ex(players, playerCount, GetPlayers_ExcludeBots | GetPlayers_ExcludeHLTV);
 
-				if ( is_user_alive(id) )
-				{
-					#if defined MONITOR_HP || defined MONITOR_AP || defined MONITOR_GRAVITY || defined MONITOR_SPEED || defined MONITOR_GODMODE
-						len = 0
-						#if defined MONITOR_HP
-							len += formatex(temp, charsmax(temp), "HP %d", UserHealth[id])
-						#endif
+		for (i = 0; i < playerCount; i++) {
+			player = players[i];
+			tmp[0] = '^0';
 
-						#if defined MONITOR_AP
-							#if defined MONITOR_HP
-								len += formatex(temp[len], charsmax(temp) - len, "  |  ")
-							#endif
+			if (is_user_alive(player)) {
+#if defined MONITOR_HP || defined MONITOR_AP || defined MONITOR_GRAVITY || defined MONITOR_SPEED || defined MONITOR_GODMODE
+				len = 0;
+#if defined MONITOR_HP
+				len += formatex(tmp, charsmax(tmp), "HP %d", gUserHealth[player]);
+#endif
 
-							len += formatex(temp[len], charsmax(temp) - len, "AP %d", UserArmor[id])
-						#endif
+#if defined MONITOR_AP
+#if defined MONITOR_HP
+				len += formatex(tmp[len], charsmax(tmp) - len, "  |  ");
+#endif
+				len += formatex(tmp[len], charsmax(tmp) - len, "AP %d", gUserArmor[player]);
+#endif
 
-						#if defined MONITOR_GRAVITY
-							#if defined MONITOR_HP || defined MONITOR_AP
-								len += formatex(temp[len], charsmax(temp) - len, "  |  ")
-							#endif
+#if defined MONITOR_GRAVITY
+#if defined MONITOR_HP || defined MONITOR_AP
+				len += formatex(tmp[len], charsmax(tmp) - len, "  |  ");
+#endif
+				pev(player, pev_gravity, gravity);
+				len += formatex(tmp[len], charsmax(tmp) - len, "G %d%%", floatround(gravity * 100.0));
+#endif
 
-							pev(id, pev_gravity, gravity)
-							len += formatex(temp[len], charsmax(temp) - len, "G %d%%", floatround(gravity*100.0))
-						#endif
+#if defined MONITOR_SPEED
+#if defined MONITOR_HP || defined MONITOR_AP || defined MONITOR_GRAVITY
+				len += formatex(tmp[len], charsmax(tmp) - len, "  |  ");
+#endif
+				pev(player, pev_velocity, velocity);
+				len += formatex(tmp[len], charsmax(tmp) - len, "SPD %d", floatround(vector_length(velocity)));
+#endif
 
-						#if defined MONITOR_SPEED
-							#if defined MONITOR_HP || defined MONITOR_AP || defined MONITOR_GRAVITY
-								len += formatex(temp[len], charsmax(temp) - len, "  |  ")
-							#endif
-
-							pev(id, pev_velocity, velocity)
-							len += formatex(temp[len], charsmax(temp) - len, "SPD %d", floatround(vector_length(velocity)) )
-						#endif
-
-						#if defined MONITOR_GODMODE
-							pev(id, pev_takedamage, takeDamage)
+#if defined MONITOR_GODMODE
+				pev(player, pev_takedamage, takeDamage);
 							
-							// GODMODE will only show if godmode is on
-							if ( takeDamage == DAMAGE_NO )
-							{
-								#if defined MONITOR_HP || defined MONITOR_AP || defined MONITOR_GRAVITY || defined MONITOR_SPEED
-									len += formatex(temp[len], charsmax(temp) - len, "  |  ")
-								#endif
-								formatex(temp[len], charsmax(temp) - len, "GODMODE")
-							}
-						#endif
-
-						// Sets Y location
-						#if defined REPLACE_HUD
-							set_hudmessage(255, 180, 0, 0.02, 0.97, 0, 0.0, 0.3, 0.0, 0.0)
-						#else
-							set_hudmessage(255, 180, 0, 0.02, 0.73, 0, 0.0, 0.3, 0.0, 0.0)
-						#endif
-
-						ShowSyncHudMsg(id, MonitorHudSync, "[SH]  %s", temp)
-					#endif
+				// GODMODE will only show if godmode is on
+				if (takeDamage == DAMAGE_NO) {
+#if defined MONITOR_HP || defined MONITOR_AP || defined MONITOR_GRAVITY || defined MONITOR_SPEED
+					len += formatex(tmp[len], charsmax(tmp) - len, "  |  ");
+#endif
+					formatex(tmp[len], charsmax(tmp) - len, "GODMODE");
 				}
-				#if defined MONITOR_SPEC
-					else
-					{
-						// Who is the id specing
-						specPlayer = pev(id, pev_iuser2)
-
-						if ( !specPlayer || id == specPlayer ) continue
-
-						pev(specPlayer, pev_velocity, velocity)
-						pev(specPlayer, pev_gravity, gravity)
-						specPlayerLevel = sh_get_user_lvl(specPlayer)
-
-						if ( specPlayerLevel < ServerMaxLevel ) {
-							formatex(temp, charsmax(temp), "/%d", sh_get_lvl_xp(specPlayerLevel+1))
-						}
-
-						set_hudmessage(255, 255, 255, 0.018, 0.9, 2, 0.05, 0.1, 0.01, 3.0)
-						ShowSyncHudMsg(id, MonitorHudSync, "[SH] Level: %d/%d  |  XP: %d%s^nHealth: %d  |  Armor: %d^nGravity: %d%%  |  Speed: %d", specPlayerLevel, ServerMaxLevel, sh_get_user_xp(specPlayer), temp, UserHealth[specPlayer], UserArmor[specPlayer], floatround(gravity*100.0), floatround(vector_length(velocity)))
-					}
-				#endif
+#endif
+				// Sets Y location
+#if defined REPLACE_HUD
+				set_hudmessage(255, 180, 0, 0.02, 0.97, 0, 0.0, 0.3, 0.0, 0.0);
+#else
+				set_hudmessage(255, 180, 0, 0.02, 0.73, 0, 0.0, 0.3, 0.0, 0.0);
+#endif
+				ShowSyncHudMsg(player, gMonitorHudSync, "[SH]  %s", tmp);
+#endif
 			}
+#if defined MONITOR_SPEC
+			else {
+				// Who is the id specing
+				specPlayer = pev(player, pev_iuser2);
 
+				if (!specPlayer || player == specPlayer)
+					continue;
+
+				pev(specPlayer, pev_velocity, velocity);
+				pev(specPlayer, pev_gravity, gravity);
+				specPlayerLevel = sh_get_user_lvl(specPlayer);
+
+				if (specPlayerLevel < gServerMaxLevel)
+					formatex(tmp, charsmax(tmp), "/%d", sh_get_lvl_xp(specPlayerLevel + 1));
+
+				set_hudmessage(255, 255, 255, 0.018, 0.9, 2, 0.05, 0.1, 0.01, 3.0);
+				ShowSyncHudMsg(player, gMonitorHudSync, "[SH] Level: %d/%d  |  XP: %d%s^nHealth: %d  |  Armor: %d^nGravity: %d%%  |  Speed: %d", specPlayerLevel, gServerMaxLevel, sh_get_user_xp(specPlayer), tmp, gUserHealth[specPlayer], gUserArmor[specPlayer], floatround(gravity * 100.0), floatround(vector_length(velocity)));
+			}
+#endif
 		}
-
-		// Keep monitorloop active even if shmod is not, incase sh is turned back on
-		set_pev(ent, pev_nextthink, get_gametime() + 0.1)
 	}
 
-	return FMRES_IGNORED
+	// Keep monitorloop active even if shmod is not, incase sh is turned back on
+	set_pev(ent, pev_nextthink, get_gametime() + 0.1);
+
+	return FMRES_IGNORED;
 }
 //----------------------------------------------------------------------------------------------
 #if defined REPLACE_HUD
-public msg_hideweapon()
+@Message_HideWeapon()
 {
-	if ( !sh_is_active() ) return
+	if (!sh_is_active())
+		return;
 
 	// Block HP/AP/Radar if not being blocked, must block all 3 can not individually be done
-	set_msg_arg_int(1, ARG_BYTE, get_msg_arg_int(1) | HIDE_HUD_HEALTH)
+	set_msg_arg_int(1, ARG_BYTE, get_msg_arg_int(1) | HIDE_HUD_HEALTH);
 }
-//----------------------------------------------------------------------------------------------
 #endif
+//----------------------------------------------------------------------------------------------

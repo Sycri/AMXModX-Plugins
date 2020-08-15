@@ -1,5 +1,5 @@
 // SuperHero Constants Include File
-// Version 1.2.0
+// Version 1.3.0
 
 #if defined _sheroconst_included
   #endinput
@@ -19,24 +19,21 @@
 // Potential of power1-power9 but limited by sh_maxbinds (3 default)
 #define SH_MAXBINDPOWERS 9
 
-// Comment out for new optimized coding only, old coded heroes will break
-#define SH_BACKCOMPAT
-
 //----------------------------------------------------------------------------------------------
 // DO NOT EDIT BELOW HERE
 //----------------------------------------------------------------------------------------------
 
-#define SH_VERSION		1.20
-stock const SH_VERSION_STR[] =	"1.2.0.14";
+#define SH_VERSION		1.30
+stock const SH_VERSION_STR[] =	"1.3.0.0";
 
 // Cooldown task id, required to allow core to stop task
 #define SH_COOLDOWN_TASKID	572910
 
 // Max player slots
-#define SH_MAXSLOTS		32
+#define SH_MAXSLOTS		MAX_PLAYERS
 
 // sh_hero_init(id, heroID, mode) modes
-#define SH_HERO_DROP		0	//Hero is dropped
+#define SH_HERO_DROP	0	//Hero is dropped
 #define SH_HERO_ADD		1	//Hero is added
 
 // sh_hero_key(id, heroID, key) keys
@@ -49,7 +46,7 @@ stock const SH_VERSION_STR[] =	"1.2.0.14";
 #define SH_DMG_KILL		2	// Kill damage, instantly kills if damage is possible (Note: godmode can block this)
 
 // From HLSDK for sh_screenfade
-#define SH_FFADE_IN		0x0000	// Just here so we don't pass 0 into the function
+#define SH_FFADE_IN			0x0000	// Just here so we don't pass 0 into the function
 #define SH_FFADE_OUT		0x0001	// Fade out (not in)
 #define SH_FFADE_MODULATE	0x0002	// Modulate (don't blend)
 #define SH_FFADE_STAYOUT	0x0004	// Ignores the duration, stays faded out until new ScreenFade message received
