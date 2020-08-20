@@ -77,7 +77,7 @@ new const PLUGIN_VERSION[] = "1.9";
 
 new const ResetPlayerCommand[] = "amx_reset_player";
 
-new CvarStartmoney;
+new CvarStartMoney;
 
 public plugin_init()
 {
@@ -85,13 +85,10 @@ public plugin_init()
 	register_dictionary("reset_player.txt");
 	
 	register_concmd(ResetPlayerCommand, "@ConsoleCommand_ResetPlayer", ADMIN_SLAY, "RESET_PLAYER_CMD_INFO", .info_ml = true);
+
+	bind_pcvar_num(get_cvar_pointer("mp_startmoney"), CvarStartMoney);
 	
 	create_cvar("rp_version", PLUGIN_VERSION, FCVAR_SERVER | FCVAR_SPONLY);
-}
-
-public OnConfigsExecuted()
-{
-	bind_pcvar_num(get_cvar_pointer("mp_startmoney"), CvarStartmoney);
 }
 
 @ConsoleCommand_ResetPlayer(id, level, cid)
@@ -113,7 +110,7 @@ public OnConfigsExecuted()
 	show_activity_key("ADMIN_RESET_PLAYER_1", "ADMIN_RESET_PLAYER_2", admin, name);
 	
 	if (read_argv_int(2) == 1) // Money
-		cs_set_user_money(player, CvarStartmoney);
+		cs_set_user_money(player, CvarStartMoney);
 	
 	if (is_user_alive(player)) {
 		if (read_argv_int(3) == 1) { // Weapons

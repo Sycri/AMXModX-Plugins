@@ -84,7 +84,7 @@ new const InvisibleCommand[] = "amx_invisible";
 
 new CvarInvisibleAmount;
 
-new bool:g_IsInvisible[MAX_PLAYERS + 1];
+new bool:gIsInvisible[MAX_PLAYERS + 1];
 
 public plugin_init()
 {
@@ -102,7 +102,7 @@ public plugin_init()
 
 public client_disconnected(id)
 {
-	g_IsInvisible[id] = false;
+	gIsInvisible[id] = false;
 }
 
 @ConsoleCommand_Invisible(id, level, cid)
@@ -123,18 +123,18 @@ public client_disconnected(id)
 	get_user_name(id, admin, charsmax(admin));
 	
 	if (read_argv_int(2) == 1) {
-		if (!g_IsInvisible[player]) {
+		if (!gIsInvisible[player]) {
 			show_activity_key("ADMIN_INVISIBLE_ON_1", "ADMIN_INVISIBLE_ON_2", admin, name);
-			g_IsInvisible[player] = true;
+			gIsInvisible[player] = true;
 
 			set_user_rendering(player, kRenderFxGlowShell, 0, 0, 0, kRenderTransAlpha, CvarInvisibleAmount);
 		} else {
 			console_print(id, "%l", "ADMIN_ALREADY_IS");
 		}
 	} else {
-		if (g_IsInvisible[player]) {
+		if (gIsInvisible[player]) {
 			show_activity_key("ADMIN_INVISIBLE_OFF_1", "ADMIN_INVISIBLE_OFF_2", admin, name);
-			g_IsInvisible[player] = false;
+			gIsInvisible[player] = false;
 
 			set_user_rendering(player, kRenderFxGlowShell, 0, 0, 0, kRenderTransAlpha, 255);
 		} else {
@@ -149,7 +149,7 @@ public client_disconnected(id)
 	if (!is_user_alive(id) || get_user_team(id) == 0)
 		return HAM_IGNORED;
 
-	if (!g_IsInvisible[id])
+	if (!gIsInvisible[id])
 		return HAM_IGNORED;
 	
 	set_user_rendering(id, kRenderFxGlowShell, 0, 0, 0, kRenderTransAlpha, CvarInvisibleAmount);

@@ -52,12 +52,12 @@ new const PLUGIN_VERSION[] = "1.3";
 
 new const InfiniteMoneyCommand[] = "amx_infinitemoney";
 
-new CvarStartmoney;
+new CvarStartMoney;
 
-new bool:g_HasInfiniteMoney[MAX_PLAYERS + 1];
+new bool:gHasInfiniteMoney[MAX_PLAYERS + 1];
 
 public plugin_init()
-{ 
+{
 	register_plugin("AMX Infinite Money", PLUGIN_VERSION, "Sycri (Kristaps08)");
 	register_dictionary("amx_infinitemoney.txt");
 	
@@ -65,17 +65,14 @@ public plugin_init()
 
 	register_event_ex("Money", "@Event_Money", RegisterEvent_Single, "1!99999");
 
-	create_cvar("amx_infinitemoney_version", PLUGIN_VERSION, FCVAR_SERVER | FCVAR_SPONLY);
-} 
+	bind_pcvar_num(get_cvar_pointer("mp_startmoney"), CvarStartMoney);
 
-public OnConfigsExecuted()
-{
-	bind_pcvar_num(get_cvar_pointer("mp_startmoney"), CvarStartmoney);
+	create_cvar("amx_infinitemoney_version", PLUGIN_VERSION, FCVAR_SERVER | FCVAR_SPONLY);
 }
 
 public client_disconnected(id)
 {
-	g_HasInfiniteMoney[id] = false;
+	gHasInfiniteMoney[id] = false;
 }
 
 @ConsoleCommand_InfiniteMoney(id, level, cid)
@@ -96,20 +93,20 @@ public client_disconnected(id)
 	get_user_name(id, admin, charsmax(admin));
 	
 	if (read_argv_int(2) == 1) {
-		if (!g_HasInfiniteMoney[player]) {
+		if (!gHasInfiniteMoney[player]) {
 			show_activity_key("ADMIN_INFINITE_MONEY_ON_1", "ADMIN_INFINITE_MONEY_ON_2", admin, name);
 
-			g_HasInfiniteMoney[player] = true;
+			gHasInfiniteMoney[player] = true;
 			cs_set_user_money(id, 99999, 0);
 		} else {
 			console_print(id, "%l", "ADMIN_ALREADY_IS");
 		}
 	} else {
-		if (g_HasInfiniteMoney[player]) {
+		if (gHasInfiniteMoney[player]) {
 			show_activity_key("ADMIN_INFINITE_MONEY_OFF_1", "ADMIN_INFINITE_MONEY_OFF_2", admin, name);
 
-			g_HasInfiniteMoney[player] = false;
-			cs_set_user_money(player, CvarStartmoney, 0);
+			gHasInfiniteMoney[player] = false;
+			cs_set_user_money(player, CvarStartMoney, 0);
 		} else {
 			console_print(id, "%l", "ADMIN_ALREADY_IS_NOT");
 		}
@@ -119,7 +116,7 @@ public client_disconnected(id)
 
 @Event_Money(id)
 {
-	if (!g_HasInfiniteMoney[id])
+	if (!gHasInfiniteMoney[id])
 		return PLUGIN_HANDLED;
 
 	cs_set_user_money(id, 99999, 0);

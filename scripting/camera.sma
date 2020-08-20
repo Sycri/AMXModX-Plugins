@@ -6,15 +6,15 @@
 
 #define USE_TOGGLE 3
 
-new g_PlayerCamera[MAX_PLAYERS + 1];
+new gPlayerCamera[MAX_PLAYERS + 1];
 
-new g_UsingCamera;
-//#define MarkUserUsingCamera(%0)   g_UsingCamera |= 1 << (%0 & 31)
-#define ClearUserUsingCamera(%0)    g_UsingCamera &= ~(1 << (%0 & 31))
-#define IsUserUsingCamera(%0)       (g_UsingCamera & 1 << (%0 & 31))
-#define ToggleUserCameraState(%0)   g_UsingCamera ^= 1 << (%0 & 31)
+new gUsingCamera;
+//#define MarkUserUsingCamera(%0)   gUsingCamera |= 1 << (%0 & 31)
+#define ClearUserUsingCamera(%0)    gUsingCamera &= ~(1 << (%0 & 31))
+#define IsUserUsingCamera(%0)       (gUsingCamera & 1 << (%0 & 31))
+#define ToggleUserCameraState(%0)   gUsingCamera ^= 1 << (%0 & 31)
 
-new g_MaxPlayers;
+new gMaxPlayers;
 
 public plugin_init()
 {
@@ -22,23 +22,23 @@ public plugin_init()
 
     register_clcmd("say /cam", "@ClientCommand_Camera");
 
-    g_MaxPlayers = get_maxplayers();
+    gMaxPlayers = get_maxplayers();
 }
 
 public client_disconnected(id)
 {
-    new ent = g_PlayerCamera[id];
+    new ent = gPlayerCamera[id];
     if(pev_valid(ent))
         engfunc(EngFunc_RemoveEntity, ent);
     
-    g_PlayerCamera[id] = 0;
+    gPlayerCamera[id] = 0;
     ClearUserUsingCamera(id);
     checkForwards();
 }
 
 public client_putinserver(id)
 {
-    g_PlayerCamera[id] = 0;
+    gPlayerCamera[id] = 0;
     ClearUserUsingCamera(id);
 }
 
@@ -47,7 +47,7 @@ public client_putinserver(id)
     if(!is_user_alive(id))
         return;
 
-    new ent = g_PlayerCamera[id];
+    new ent = gPlayerCamera[id];
     if (!pev_valid(ent)) {
         static triggerCam;
         if(!triggerCam)
@@ -65,7 +65,7 @@ public client_putinserver(id)
 
         dllfunc(DLLFunc_Spawn, ent);
 
-        g_PlayerCamera[id] = ent;
+        gPlayerCamera[id] = ent;
     }
 
     ToggleUserCameraState(id);
@@ -124,8 +124,8 @@ public client_putinserver(id)
 get_cam_owner(ent)
 {
     static id;
-    for (id = 1; id <= g_MaxPlayers; id++) {
-        if (g_PlayerCamera[id] == ent)
+    for (id = 1; id <= gMaxPlayers; id++) {
+        if (gPlayerCamera[id] == ent)
             return id;
     }
     return 0;
@@ -134,7 +134,7 @@ get_cam_owner(ent)
 @Forward_SetView(id, ent)
 {
     if (IsUserUsingCamera(id) && is_user_alive(id)) {
-        new cam = g_PlayerCamera[id];
+        new cam = gPlayerCamera[id];
         if (cam && ent != cam) {
             new className[16];
             pev(ent, pev_classname, className, charsmax(className));
@@ -151,7 +151,7 @@ get_cam_owner(ent)
 checkForwards()
 {
     static HamHook:cameraThink, setView;
-    if (g_UsingCamera) {
+    if (gUsingCamera) {
         if(!setView)
             setView = register_forward(FM_SetView, "@Forward_SetView");
             

@@ -78,13 +78,11 @@ new const PLUGIN_VERSION[] = "1.7";
 new const UpgradeCommand[] = "amx_upgrade";
 
 new CvarCost;
-new CvarHealth;
-new CvarArmor;
-new Float:CvarGravity;
-new Float:CvarSpeed;
+new CvarHealth, CvarArmor;
+new Float:CvarGravity, Float:CvarSpeed;
 
-new bool:g_HasUpgrade[MAX_PLAYERS + 1];
-new bool:g_IsFreezetime;
+new bool:gHasUpgrade[MAX_PLAYERS + 1];
+new bool:gIsFreezetime;
 
 new Ham:Ham_Player_ResetMaxSpeed = Ham_Item_PreFrame;
 
@@ -116,7 +114,7 @@ public plugin_init()
 
 public client_disconnected(id)
 {
-	g_HasUpgrade[id] = false;
+	gHasUpgrade[id] = false;
 }
 
 @ClientCommand_BuyUpgrade(id)
@@ -126,7 +124,7 @@ public client_disconnected(id)
 		return PLUGIN_HANDLED;
 	}
 	
-	if (g_HasUpgrade[id]) {
+	if (gHasUpgrade[id]) {
 		client_print(id, print_chat, "%l", "ALREADY_IS");
 		return PLUGIN_HANDLED;
 	}
@@ -137,7 +135,7 @@ public client_disconnected(id)
 	}
 	
 	cs_set_user_money(id, cs_get_user_money(id) - CvarCost);
-	g_HasUpgrade[id] = true;
+	gHasUpgrade[id] = true;
 	client_print(id, print_chat, "%l", "GAIN_UPGRADE");
 
 	upgradePlayer(id);
@@ -162,9 +160,9 @@ public client_disconnected(id)
 	get_user_name(id, admin, charsmax(admin));
 	
 	if (read_argv_int(2) == 1) {
-		if (!g_HasUpgrade[player]) {
+		if (!gHasUpgrade[player]) {
 			show_activity_key("ADMIN_GIVE_UPGRADE_1", "ADMIN_GIVE_UPGRADE_2", admin, name);
-			g_HasUpgrade[player] = true;
+			gHasUpgrade[player] = true;
 			client_print(player, print_chat, "%l", "GAIN_UPGRADE");
 
 			upgradePlayer(player);
@@ -172,9 +170,9 @@ public client_disconnected(id)
 			console_print(id, "%l", "ADMIN_ALREADY_IS");
 		}
 	} else {
-		if (g_HasUpgrade[player]) {
+		if (gHasUpgrade[player]) {
 			show_activity_key("ADMIN_TOOK_UPGRADE_1", "ADMIN_TOOK_UPGRADE_2", admin, name);
-			g_HasUpgrade[player] = false;
+			gHasUpgrade[player] = false;
 			client_print(player, print_chat, "%l", "LOST_UPGRADE");
 
 			deupgradePlayer(player);
@@ -187,11 +185,11 @@ public client_disconnected(id)
 
 @Forward_PlayerKilled(id)
 {
-	if (!g_HasUpgrade[id])
+	if (!gHasUpgrade[id])
 		return HAM_IGNORED;
 	
 	client_print(id, print_chat, "%l", "LOST_UPGRADE");
-	g_HasUpgrade[id] = false;
+	gHasUpgrade[id] = false;
 	return HAM_IGNORED;
 }
 
@@ -200,7 +198,7 @@ public client_disconnected(id)
 	if (!is_user_alive(id) || cs_get_user_team(id) == CS_TEAM_UNASSIGNED)
 		return HAM_IGNORED;
 
-	if (!g_HasUpgrade[id])
+	if (!gHasUpgrade[id])
 		return HAM_IGNORED;
 	
 	upgradePlayer(id);
@@ -209,10 +207,10 @@ public client_disconnected(id)
 
 @Forward_Player_ResetMaxSpeed_Post(id)
 {
-	if (!is_user_alive(id) || !g_HasUpgrade[id])
+	if (!is_user_alive(id) || !gHasUpgrade[id])
 		return HAM_IGNORED;
 
-	if (g_IsFreezetime)
+	if (gIsFreezetime)
 		return HAM_IGNORED;
 	
 	set_user_maxspeed(id, CvarSpeed);
@@ -221,12 +219,12 @@ public client_disconnected(id)
 
 @Event_NewRound()
 {
-	g_IsFreezetime = true;
+	gIsFreezetime = true;
 }
 
 @LogEvent_RoundStart()
 {
-	g_IsFreezetime = false;
+	gIsFreezetime = false;
 }
 
 upgradePlayer(index)
