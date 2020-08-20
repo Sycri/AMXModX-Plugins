@@ -53,7 +53,8 @@
 *
 *  Changelog:
 *
-*  v1.3.0 - Sycri (Kristaps08) - 08/10/20
+*  v1.3.0 - Sycri (Kristaps08) - 08/20/20
+*	- Changed the function chatMessage so that it uses client_print_color
 *	- Changed most cvars from get_pcvar_num to bind_pcvar_num so variables could be used directly
 *	- Changed from RegisterHamFromEntity to RegisterHamPlayer for cleaner code
 *	- Forced usage of semicolons for better clarity
@@ -61,12 +62,16 @@
 *	- Removed all backwards compatibility
 *	- Removed code that uses old syntax for MySQL 3.23
 *	- Removed cvar sh_adminaccess in favor of cmdaccess.ini
+*	- Removed repetitive checks in natives
 *	- Removed variables which cache cvars since AMX Mod X 1.9.0 does it now itself
+*	- Renamed nearly all functions for a unified style
 *	- Replaced client command buy blocking with forward CS_OnBuy
 *	- Replaced deprecated function client_disconnect with client_disconnected
 *	- Replaced deprecated function strbreak with argbreak
+*	- Replaced event CurWeapon with forward Ham_CS_Item_GetMaxSpeed for more reliable speed change
 *	- Replaced forward FM_Touch with Ham_Touch since the former is less efficient
 *	- Replaced register_cvar with create_cvar
+*	- Replaced variable gServersMaxPlayers with MaxClients which is available in AMX Mod X since version 1.8.3
 *	- Rewrote parts of the SuperHero Core and included heroes
 *
 *  v1.2.1 - vittu - ??/??/??
@@ -74,7 +79,7 @@
 *	- Changed SH_ARMOR_RATIO to 0.5 since in cs armor seems to reduce damage by 50% not 80%
 *	- Added native sh_set_hero_dmgmult for weapon multipliers to directly hook damage instead of faking damage with sh_extra_damage
 *	- Added removal of all Monster Mod monsters on new round, stops monster freezetime attacks
-*	- Added option to force save by IP or save by name with cvar sh_saveby 
+*	- Added option to force save by IP or save by name with cvar sh_saveby
 *	- Added option for Free For All servers to gain money/frags/xp on tk instead of losing money/frags/xp on tk with cvar sh_ffa
 *	- Fixed shield restrict forcing drop of shield to actually drop shield not just active weapon
 *	- Removed /savexp say command due to complaint of the xp removal it has done since version 1.17.4
@@ -428,8 +433,6 @@ new gPlayerFlags[MAX_PLAYERS + 1];
 new gPlayerMenuOffset[MAX_PLAYERS + 1];
 new gPlayerMenuChoices[MAX_PLAYERS + 1][SH_MAXHEROS + 1]; // This will be filled in with # of heroes available
 new gMaxPowersLeft[MAX_PLAYERS + 1][SH_MAXLEVELS + 1];
-new gCurrentWeapon[MAX_PLAYERS + 1];
-new gCurrentFOV[MAX_PLAYERS + 1];
 new gPlayerStunTimer[MAX_PLAYERS + 1];
 new Float:gPlayerStunSpeed[MAX_PLAYERS + 1];
 new gPlayerGodTimer[MAX_PLAYERS + 1];
@@ -457,7 +460,6 @@ new gXpBonusVIP;
 // Other miscellaneous global variables
 new gHelpHudMsg[340];
 new gmsgStatusText, gmsgScoreInfo, gmsgDeathMsg, gmsgDamage;
-new gmsgSayText, gmsgTeamInfo;
 new bool:gRoundFreeze;
 new bool:gRoundStarted;
 new bool:gBetweenRounds;
@@ -469,7 +471,6 @@ new gXpBonusC4ID = -1;
 new gHelpHudSync, gHeroHudSync;
 new bool:gMapBlockWeapons[31]; //1-30 CSW_ constants
 new bool:gXrtaDmgClientKill;
-new gServersMaxPlayers;
 new gXrtaDmgWpnName[32];
 new gXrtaDmgAttacker;
 new gXrtaDmgHeadshot;
@@ -491,8 +492,11 @@ new CvarSuperHeros, CvarAliveDrop, CvarAutoBalance, CvarObjectiveXP, CvarCmdProj
 new CvarDebugMessages, CvarEndRoundSave, Float:CvarHSMult, CvarLoadImmediate, CvarLvlLimit;
 new CvarMaxBinds, CvarMaxPowers, CvarMenuMode, CvarMercyXPMode, CvarSaveXP;
 new CvarSaveBy, CvarXPSaveDays, CvarMinPlayersXP, CvarReloadMode, CvarBlockVIP[8], CvarFreeForAll;
+new CvarFriendlyFire, CvarLan;
+
+//PCVARs
 new sh_mercyxp, sh_minlevel;
-new mp_friendlyfire, sv_maxspeed, sv_lan;
+new sv_maxspeed;
 
 //Forwards
 new fwdReturn;
@@ -501,14 +505,6 @@ new fwd_RoundStart, fwd_RoundEnd, fwd_NewRound;
 
 //Level up sound
 new const gSoundLevel[] = "plats/elevbell1.wav";
-
-//Used to reset players team for colored text
-new const gTeamName[4][] =  {
-	"",
-	"TERRORIST",
-	"CT",
-	"SPECTATOR"
-};
 
 //==============================================================================================
 // XP Saving Method, do not modify this here, please see the top of the file.
@@ -570,9 +566,9 @@ public plugin_init()
 	bind_pcvar_num(create_cvar("sh_ffa", "0"), CvarFreeForAll);
 
 	// Server cvars checked by core
-	mp_friendlyfire = get_cvar_pointer("mp_friendlyfire");
+	bind_pcvar_num(get_cvar_pointer("mp_friendlyfire"), CvarFriendlyFire);
 	sv_maxspeed = get_cvar_pointer("sv_maxspeed");
-	sv_lan = get_cvar_pointer("sv_lan");
+	bind_pcvar_num(get_cvar_pointer("sv_lan"), CvarLan);
 
 
 	// API - Register a bunch of forwards that heroes can use
@@ -591,8 +587,6 @@ public plugin_init()
 	setupConfig();
 
 	// Events to Capture
-	register_event("CurWeapon", "event_CurWeapon", "be", "1=1");
-	register_event("SetFOV", "event_SetFOV", "be");
 	register_event("DeathMsg", "event_DeathMsg", "a");
 	register_event("HLTV", "event_HLTV", "a", "1=0", "2=0"); // New Round
 	register_logevent("round_Start", 2, "1=Round_Start");
@@ -611,6 +605,11 @@ public plugin_init()
 	// Must use RegisterHamPlayer for special bots to hook
 	RegisterHamPlayer(Ham_Spawn, "ham_PlayerSpawn_Post", 1);
 	RegisterHamPlayer(Ham_TakeDamage, "ham_TakeDamage_Pre");
+	new weaponName[32];
+	for (new id = CSW_P228; id <= CSW_P90; id++) {
+		if (get_weaponname(id, weaponName, charsmax(weaponName)))
+			RegisterHam(Ham_CS_Item_GetMaxSpeed, weaponName, "@Forward_CS_Item_GetMaxSpeed_Pre", 0);
+	}
 
 	// Touch Forward
 	RegisterHam(Ham_Touch, "weapon_shield", "@Forward_Shield_Touch_Pre");
@@ -657,12 +656,9 @@ public plugin_init()
 	gmsgScoreInfo = get_user_msgid("ScoreInfo");
 	gmsgDeathMsg = get_user_msgid("DeathMsg");
 	gmsgDamage = get_user_msgid("Damage");
-	gmsgSayText = get_user_msgid("SayText");
-	gmsgTeamInfo = get_user_msgid("TeamInfo");
-	gServersMaxPlayers = get_maxplayers();
 
 	// Set the game description
-	register_forward(FM_GetGameDescription, "@Forward_GetGameDesc");
+	register_forward(FM_GetGameDescription, "@Forward_GetGameDescription");
 
 	// Block committed suicide hl log messages caused by extradamage
 	register_forward(FM_AlertMessage, "fm_AlertMessage");
@@ -693,42 +689,42 @@ public plugin_natives()
 {
 	register_library(SH_CORE_STR);
 
-	register_native("sh_create_hero", "_sh_create_hero");
-	register_native("sh_set_hero_info", "_sh_set_hero_info");
-	register_native("sh_set_hero_bind", "_sh_set_hero_bind");
-	register_native("sh_set_hero_shield", "_sh_set_hero_shield");
-	register_native("sh_set_hero_hpap", "_sh_set_hero_hpap");
-	register_native("sh_set_hero_speed", "_sh_set_hero_speed");
-	register_native("sh_set_hero_grav", "_sh_set_hero_grav");
-	register_native("sh_set_hero_dmgmult", "_sh_set_hero_dmgmult");
-	register_native("sh_get_max_ap", "_sh_get_max_ap");
-	register_native("sh_get_max_hp", "_sh_get_max_hp");
-	register_native("sh_get_num_lvls", "_sh_get_num_lvls");
-	register_native("sh_get_lvl_xp", "_sh_get_lvl_xp");
-	register_native("sh_get_user_lvl", "_sh_get_user_lvl");
-	register_native("sh_set_user_lvl", "_sh_set_user_lvl");
-	register_native("sh_get_user_xp", "_sh_get_user_xp");
-	register_native("sh_set_user_xp", "_sh_set_user_xp");
-	register_native("sh_add_kill_xp", "_sh_add_kill_xp");
-	register_native("sh_get_hero_id", "_sh_get_hero_id");
-	register_native("sh_user_has_hero", "_sh_user_has_hero");
-	register_native("sh_chat_message", "_sh_chat_message");
-	register_native("sh_debug_message", "_sh_debug_message");
-	register_native("sh_extra_damage", "_sh_extra_damage");
-	register_native("sh_set_stun", "_sh_set_stun");
-	register_native("sh_get_stun", "_sh_get_stun");
-	register_native("sh_set_godmode", "_sh_set_godmode");
-	register_native("sh_is_freezetime", "_sh_is_freezetime");
-	register_native("sh_is_inround", "_sh_is_inround");
-	register_native("sh_reload_ammo", "_sh_reload_ammo");
-	register_native("sh_drop_weapon", "_sh_drop_weapon");
-	register_native("sh_give_weapon", "_sh_give_weapon");
-	register_native("sh_give_item", "_sh_give_item");
-	register_native("sh_reset_max_speed", "_sh_reset_max_speed");
-	register_native("sh_reset_min_gravity", "_sh_reset_min_gravity");
+	register_native("sh_create_hero", "@Native_CreateHero");
+	register_native("sh_set_hero_info", "@Native_SetHeroInfo");
+	register_native("sh_set_hero_bind", "@Native_SetHeroBind");
+	register_native("sh_set_hero_shield", "@Native_SetHeroShield");
+	register_native("sh_set_hero_hpap", "@Native_SetHeroHpAp");
+	register_native("sh_set_hero_speed", "@Native_SetHeroSpeed");
+	register_native("sh_set_hero_grav", "@Native_SetHeroGravity");
+	register_native("sh_set_hero_dmgmult", "@Native_SetHeroDamageMultiplier");
+	register_native("sh_get_max_ap", "@Native_GetMaxAP");
+	register_native("sh_get_max_hp", "@Native_GetMaxHP");
+	register_native("sh_get_num_lvls", "@Native_GetNumLvls");
+	register_native("sh_get_lvl_xp", "@Native_GetLvlXP");
+	register_native("sh_get_user_lvl", "@Native_GetUserLvl");
+	register_native("sh_set_user_lvl", "@Native_SetUserLvl");
+	register_native("sh_get_user_xp", "@Native_GetUserXP");
+	register_native("sh_set_user_xp", "@Native_SetUserXP");
+	register_native("sh_add_kill_xp", "@Native_AddKillXP");
+	register_native("sh_get_hero_id", "@Native_GetHeroID");
+	register_native("sh_user_has_hero", "@Native_UserHasHero");
+	register_native("sh_chat_message", "@Native_ChatMessage");
+	register_native("sh_debug_message", "@Native_DebugMessage");
+	register_native("sh_extra_damage", "@Native_ExtraDamage");
+	register_native("sh_set_stun", "@Native_SetStun");
+	register_native("sh_get_stun", "@Native_GetStun");
+	register_native("sh_set_godmode", "@Native_SetGodmode");
+	register_native("sh_is_freezetime", "@Native_IsFreezeTime");
+	register_native("sh_is_inround", "@Native_IsInRound");
+	register_native("sh_reload_ammo", "@Native_ReloadAmmo");
+	register_native("sh_drop_weapon", "@Native_DropWeapon");
+	register_native("sh_give_weapon", "@Native_GiveWeapon");
+	register_native("sh_give_item", "@Native_GiveItem");
+	register_native("sh_reset_max_speed", "@Native_ResetMaxSpeed");
+	register_native("sh_reset_min_gravity", "@Native_ResetMinGravity");
 }
 //----------------------------------------------------------------------------------------------
-@Forward_GetGameDesc()
+@Forward_GetGameDescription()
 {
 	if (!CvarSuperHeros)
 		return FMRES_IGNORED;
@@ -957,22 +953,26 @@ public setSvMaxspeed()
 	}
 }
 //----------------------------------------------------------------------------------------------
-public bool:_sh_is_inround()
+//native sh_is_inround()
+bool:@Native_IsInRound()
 {
 	return gBetweenRounds ? false : true;
 }
 //----------------------------------------------------------------------------------------------
-public bool:_sh_is_freezetime()
+//native sh_is_freezetime()
+bool:@Native_IsFreezeTime()
 {
 	return gRoundStarted ? false : true;
 }
 //----------------------------------------------------------------------------------------------
-public _sh_get_num_lvls()
+//native sh_get_num_lvls()
+@Native_GetNumLvls()
 {
 	return gNumLevels;
 }
 //----------------------------------------------------------------------------------------------
-public _sh_get_lvl_xp()
+//native sh_get_lvl_xp()
+@Native_GetLvlXP()
 {
 	new level = get_param(1);
 
@@ -984,12 +984,12 @@ public _sh_get_lvl_xp()
 }
 //----------------------------------------------------------------------------------------------
 //native sh_get_user_lvl(id)
-public _sh_get_user_lvl()
+@Native_GetUserLvl()
 {
 	new id = get_param(1);
 
 	//stupid check - but checking prevents crashes
-	if (id < 1 || id > gServersMaxPlayers)
+	if (id < 1 || id > MaxClients)
 		return -1;
 
 	//Check if data has loaded yet
@@ -999,37 +999,37 @@ public _sh_get_user_lvl()
 	return gPlayerLevel[id];
 }
 //----------------------------------------------------------------------------------------------
-//sh_get_max_hp(id)
-public _sh_get_max_hp()
+//native sh_get_max_hp(id)
+@Native_GetMaxHP()
 {
 	new id = get_param(1);
 
 	//stupid check - but checking prevents crashes
-	if (id < 1 || id > gServersMaxPlayers)
+	if (id < 1 || id > MaxClients)
 		return 0;
 
 	return gMaxHealth[id];
 }
 //----------------------------------------------------------------------------------------------
-//sh_get_max_ap(id)
-public _sh_get_max_ap()
+//native sh_get_max_ap(id)
+@Native_GetMaxAP()
 {
 	new id = get_param(1);
 
 	//stupid check - but checking prevents crashes
-	if (id < 1 || id > gServersMaxPlayers)
+	if (id < 1 || id > MaxClients)
 		return 0;
 
 	return gMaxArmor[id];
 }
 //----------------------------------------------------------------------------------------------
 //native sh_set_user_lvl(id, setlevel)
-public _sh_set_user_lvl()
+@Native_SetUserLvl()
 {
 	new id = get_param(1);
 
 	//stupid check - but checking prevents crashes
-	if (id < 1 || id > gServersMaxPlayers)
+	if (id < 1 || id > MaxClients)
 		return -1;
 
 	new setlevel = get_param(2);
@@ -1044,24 +1044,24 @@ public _sh_set_user_lvl()
 }
 //----------------------------------------------------------------------------------------------
 //native sh_get_user_xp(id)
-public _sh_get_user_xp()
+@Native_GetUserXP()
 {
 	new id = get_param(1);
 
 	//stupid check - but checking prevents crashes
-	if (id < 1 || id > gServersMaxPlayers)
+	if (id < 1 || id > MaxClients)
 		return -1;
 
 	return gPlayerXP[id];
 }
 //----------------------------------------------------------------------------------------------
 //native sh_set_user_xp(id, xp, bool:addtoxp = false)
-public _sh_set_user_xp()
+@Native_SetUserXP()
 {
 	new id = get_param(1);
 
 	//stupid check - but checking prevents crashes
-	if (id < 1 || id > gServersMaxPlayers)
+	if (id < 1 || id > MaxClients)
 		return -1;
 
 	new xp = get_param(2);
@@ -1069,7 +1069,8 @@ public _sh_set_user_xp()
 	// Add to XP or set a value
 	if (get_param(3))
 		localAddXP(id, xp);
-	else // Set to xp, by finding what must be added to users current xp
+	else
+		// Set to xp, by finding what must be added to users current xp
 		localAddXP(id, (xp - gPlayerXP[id]));
 
 	displayPowers(id, false);
@@ -1078,11 +1079,11 @@ public _sh_set_user_xp()
 }
 //----------------------------------------------------------------------------------------------
 //native sh_chat_message(id, heroID = -1, const msg[], any:...)
-public _sh_chat_message()
+@Native_ChatMessage()
 {
 	new id = get_param(1);
 
-	if (id < 0 || id > gServersMaxPlayers)
+	if (id < 0 || id > MaxClients)
 		return;
 
 	if (is_user_bot(id))
@@ -1101,35 +1102,11 @@ public _sh_chat_message()
 // Thanks to teame06's ColorChat method which this is based on
 chatMessage(id, heroIndex = -1, const msg[], any:...)
 {
-	if (id < 0 || id > gServersMaxPlayers)
+	if (id < 0 || id > MaxClients)
 		return;
 
 	if (is_user_bot(id))
 		return;
-
-	// Make sure we have a valid index
-	new msgType, index;
-	if (!id) {
-		new i;
-		while (i < gServersMaxPlayers) {
-			if (gPlayerPutInServer[++i]) {
-				index = i;
-				break;
-			}
-		}
-
-		if (!index)
-			return;
-
-		msgType = MSG_BROADCAST;
-	} else {
-		// Make sure this id is actually in the server
-		if (!gPlayerPutInServer[id])
-			return;
-
-		msgType = MSG_ONE_UNRELIABLE;
-		index = id;
-	}
 
 	// Now we build our message
 	static message[191], heroName[27];
@@ -1146,35 +1123,15 @@ chatMessage(id, heroIndex = -1, const msg[], any:...)
 		// Set hero name in parentheses
 		formatex(heroName, charsmax(heroName), "(%s)",  gSuperHeros[heroIndex][hero]);
 
-	len += formatex(message[len], charsmax(message)-len, "[SH]%s^x01 ", (heroName[0] == '^0') ? "" : heroName);
+	len += formatex(message[len], charsmax(message) - len, "[SH]%s^x01 ", (heroName[0] == '^0') ? "" : heroName);
 
-	vformat(message[len], charsmax(message)-len, msg, 4);
+	vformat(message[len], charsmax(message) - len, msg, 4);
 
-	// Temporarily set teaminfo of player to send message from that player as if on the set team
-	// index is in server at this point
-	new indexTeam = _:cs_get_user_team(index);
-	chatSetTeamInfo(index, msgType, gTeamName[3]);
-
-	// Send message
-	message_begin(msgType, gmsgSayText, _, index);
-	write_byte(index);
-	write_string(message);
-	message_end();
-
-	// Reset player's teaminfo
-	chatSetTeamInfo(index, msgType, gTeamName[indexTeam]);
-}
-//----------------------------------------------------------------------------------------------
-chatSetTeamInfo(id, type, const team[])
-{
-	message_begin(type, gmsgTeamInfo, _, id);
-	write_byte(id);
-	write_string(team);
-	message_end();
+	client_print_color(id, print_team_grey, message);
 }
 //----------------------------------------------------------------------------------------------
 //native sh_debug_message(id, level, const message[], any:...)
-public _sh_debug_message()
+@Native_DebugMessage()
 {
 	new level = get_param(2);
 
@@ -1203,7 +1160,7 @@ debugMsg(id, level, const message[], any:...)
 	if (output[0] == '^0')
 		return;
 
-	if (0 < id <= gServersMaxPlayers) {
+	if (0 < id <= MaxClients) {
 		new name[32], userid, authid[32], team[32];
 		get_user_name(id, name,  charsmax(name));
 		userid = get_user_userid(id);
@@ -1220,7 +1177,7 @@ debugMsg(id, level, const message[], any:...)
 }
 //----------------------------------------------------------------------------------------------
 //native sh_get_hero_id(const heroName[])
-public _sh_get_hero_id()
+@Native_GetHeroID()
 {
 	new pHero[25];
 	get_string(1, pHero, charsmax(pHero));
@@ -1238,12 +1195,12 @@ getHeroID(const heroName[])
 }
 //----------------------------------------------------------------------------------------------
 //native sh_user_has_hero(id, heroIndex)
-public _sh_user_has_hero()
+@Native_UserHasHero()
 {
 	new id = get_param(1);
 
 	//stupid check - but checking prevents crashes
-	if (id < 1 || id > gServersMaxPlayers)
+	if (id < 1 || id > MaxClients)
 		return 0;
 
 	new heroIndex = get_param(2);
@@ -1265,33 +1222,12 @@ bool:playerHasPower(id, heroIndex)
 }
 //----------------------------------------------------------------------------------------------
 //native sh_drop_weapon(id, weaponID, bool:remove = false)
-public _sh_drop_weapon()
+@Native_DropWeapon()
 {
-	if (!CvarSuperHeros)
-		return;
-
 	new id = get_param(1);
-
-	if (!is_user_alive(id))
-		return;
-
-	//If VIPs are not allowed other weapons, protect them from losing what they have
-	if (id == gXpBonusVIP && getVipFlags() & VIP_BLOCK_WEAPONS)
-		return;
-
 	new weaponID = get_param(2);
-
-	if (!user_has_weapon(id, weaponID))
-		return;
-
-	new slot = sh_get_weapon_slot(weaponID);
-	if (slot == 1 || slot == 2 || slot == 5) {
-		//Don't drop/remove the main c4
-		if (weaponID == CSW_C4 && pev_valid(gXpBonusC4ID) && id == pev(gXpBonusC4ID, pev_owner))
-			return;
 	
-		dropWeapon(id, weaponID, get_param(3) ? true : false);
-	}
+	dropWeapon(id, weaponID, get_param(3) ? true : false);
 }
 //---------------------------------------------------------------------------------------------
 dropWeapon(id, weaponID, bool:remove)
@@ -1302,7 +1238,7 @@ dropWeapon(id, weaponID, bool:remove)
 	if (!is_user_alive(id))
 		return;
 
-	// If VIPs are not allowed other weapons protect them from losing what they have
+	// If VIPs are not allowed other weapons, protect them from losing what they have
 	if (id == gXpBonusVIP && getVipFlags() & VIP_BLOCK_WEAPONS)
 		return;
 
@@ -1326,46 +1262,29 @@ dropWeapon(id, weaponID, bool:remove)
 		new Float:weaponVel[3];
 		new weaponBox = -1;
 
-		while ((weaponBox = cs_find_ent_by_class(weaponBox, "weaponbox")) > 0) {
+		while ((weaponBox = cs_find_ent_by_owner(weaponBox, "weaponbox", id)) > 0) {
 			// Skip anything not owned by this client
-			if (pev_valid(weaponBox) && pev(weaponBox, pev_owner) == id) {
-				// If Velocities are all Zero its on the ground already and should stay there
-				pev(weaponBox, pev_velocity, weaponVel);
-				if (weaponVel[0] == 0.0 && weaponVel[1] == 0.0 && weaponVel[2] == 0.0)
-					continue;
+			if (pev_valid(weaponBox))
+				continue;
 
-				// Forcing a think cleanly removes weaponbox and it's contents
-				dllfunc(DLLFunc_Think, weaponBox);
-			}
+			// If Velocities are all zero its on the ground already and should stay there
+			pev(weaponBox, pev_velocity, weaponVel);
+			if (weaponVel[0] == 0.0 && weaponVel[1] == 0.0 && weaponVel[2] == 0.0)
+				continue;
+
+			// Forcing a think cleanly removes weaponbox and it's contents
+			dllfunc(DLLFunc_Think, weaponBox);
 		}
 	}
 }
 //---------------------------------------------------------------------------------------------
 //native sh_give_weapon(id, weaponID, bool:switchTo = false)
-public _sh_give_weapon()
+@Native_GiveWeapon()
 {
-	if (!CvarSuperHeros)
-		return 0;
-
 	new id = get_param(1);
-
-	if (!is_user_alive(id))
-		return 0;
-
-	if (id == gXpBonusVIP && getVipFlags() & VIP_BLOCK_WEAPONS)
-		return 0;
-
 	new weaponID = get_param(2);
-	if (weaponID < CSW_P228 || weaponID > CSW_P90)
-		return 0;
 
-	if (gMapBlockWeapons[weaponID])
-		return 0;
-
-	if (!user_has_weapon(id, weaponID))
-		return giveWeapon(id, weaponID, get_param(3) ? true : false);
-
-	return 0;
+	return giveWeapon(id, weaponID, get_param(3) ? true : false);
 }
 //---------------------------------------------------------------------------------------------
 giveWeapon(id, weaponID, bool:switchTo)
@@ -1402,7 +1321,7 @@ giveWeapon(id, weaponID, bool:switchTo)
 }
 //---------------------------------------------------------------------------------------------
 //native sh_give_item(id, const itemName[], bool:switchTo = false)
-public _sh_give_item()
+@Native_GiveItem()
 {
 	if (!CvarSuperHeros)
 		return 0;
@@ -1438,7 +1357,7 @@ public _sh_give_item()
 }
 //---------------------------------------------------------------------------------------------
 //native sh_create_hero(const heroName[], pcvarMinLevel)
-public _sh_create_hero()
+@Native_CreateHero()
 {
 	//Heroes Name
 	new pHero[25];
@@ -1466,7 +1385,8 @@ public _sh_create_hero()
 	return idx;
 }
 //----------------------------------------------------------------------------------------------
-public _sh_set_hero_info()
+//native sh_set_hero_info(heroID, const powerInfo[] = "", const powerHelp[] = "")
+@Native_SetHeroInfo()
 {
 	new heroIndex = get_param(1);
 
@@ -1483,7 +1403,8 @@ public _sh_set_hero_info()
 	copy(gSuperHeros[heroIndex][help], 127, pHelp);
 }
 //----------------------------------------------------------------------------------------------
-public _sh_set_hero_bind()
+//native sh_set_hero_bind(heroID)
+@Native_SetHeroBind()
 {
 	new heroIndex = get_param(1);
 
@@ -1495,7 +1416,8 @@ public _sh_set_hero_bind()
 	gSuperHeros[heroIndex][requiresKeys] = true;
 }
 //----------------------------------------------------------------------------------------------
-public _sh_set_hero_shield()
+//native sh_set_hero_shield(heroID, bool:restricted = false)
+@Native_SetHeroShield()
 {
 	new heroIndex = get_param(1);
 
@@ -1580,8 +1502,8 @@ initHero(id, heroIndex, mode)
 	gChangedHeroes[id] = true;
 }
 //----------------------------------------------------------------------------------------------
-//native sh_set_hero_hpap(heroID, pcvarHealth, pcvarArmor)
-public _sh_set_hero_hpap()
+//native sh_set_hero_hpap(heroID, pcvarHealth = 0, pcvarArmor = 0)
+@Native_SetHeroHpAp()
 {
 	new heroIndex = get_param(1);
 
@@ -1601,7 +1523,7 @@ public _sh_set_hero_hpap()
 }
 //----------------------------------------------------------------------------------------------
 //native sh_set_hero_speed(heroID, pcvarSpeed, const weapons[] = {0}, numofwpns = 1)
-public _sh_set_hero_speed()
+@Native_SetHeroSpeed()
 {
 	new heroIndex = get_param(1);
 
@@ -1635,7 +1557,7 @@ public _sh_set_hero_speed()
 }
 //----------------------------------------------------------------------------------------------
 //native sh_set_hero_grav(heroID, pcvarGravity, const weapons[] = {0}, numofwpns = 1)
-public _sh_set_hero_grav()
+@Native_SetHeroGravity()
 {
 	new heroIndex = get_param(1);
 
@@ -1670,17 +1592,6 @@ public _sh_set_hero_grav()
 //----------------------------------------------------------------------------------------------
 Float:getMaxSpeed(id, weapon)
 {
-	if (id == gXpBonusVIP && getVipFlags() & VIP_BLOCK_SPEED)
-		return 227.0;
-
-	switch (weapon) {
-		// If weapon is a zoomed sniper rifle set default speeds
-		case CSW_SCOUT, CSW_SG550, CSW_AWP, CSW_G3SG1: {
-			if (gCurrentFOV[id] <= 45)
-				return sh_get_weapon_speed(weapon, true);
-		}
-	}
-
 	static Float:returnSpeed, Float:heroSpeed, x, i;
 	static playerPowerCount, heroIndex, heroWeapon, heroSpeedPointer;
 	returnSpeed = -1.0;
@@ -1688,6 +1599,7 @@ Float:getMaxSpeed(id, weapon)
 
 	for (x = 1; x <= playerPowerCount; x++) {
 		heroIndex = gPlayerPowers[id][x];
+		
 		if (-1 < heroIndex < gSuperHeroCount) {
 			heroSpeedPointer = gHeroMaxSpeed[heroIndex];
 			if (!heroSpeedPointer)
@@ -2256,7 +2168,7 @@ public round_Start()
 //----------------------------------------------------------------------------------------------
 public roundStartDelay()
 {
-	for (new x = 1; x <= gServersMaxPlayers; x++) {
+	for (new x = 1; x <= MaxClients; x++) {
 		displayPowers(x, true);
 		//Prevents People from going invisible randomly
 		if (is_user_alive(x))
@@ -2284,7 +2196,7 @@ public round_End()
 
 	new CsTeams:idTeam;
 
-	for (new id = 1; id <= gServersMaxPlayers; id++) {
+	for (new id = 1; id <= MaxClients; id++) {
 		gNewRoundSpawn[id] = true;
 
 		if (!is_user_connected(id))
@@ -2414,43 +2326,43 @@ public powerKeyUp(id)
 	return PLUGIN_HANDLED;
 }
 //----------------------------------------------------------------------------------------------
-public event_CurWeapon(id)
+@Forward_CS_Item_GetMaxSpeed_Pre(weapon, Float:newSpeed)
 {
-	// Change Weapon gets called  even when a player fires a weapon
-	// To avoid spamming - set speed only when weapon is not the current weapon
-	// Changing Weapons Resets the User speed!
+	if (!CvarSuperHeros)
+		return HAM_IGNORED;
 
-	if (!CvarSuperHeros || !is_user_alive(id))
-		return;
+	static owner;
+	owner = pev(weapon, pev_owner);
 
-	new weaponid = read_data(2);
+	if (!is_user_alive(owner) || gRoundFreeze || gReadXPNextRound[owner])
+		return HAM_IGNORED;
 
-	if (gCurrentWeapon[id] != weaponid) {
-		gCurrentWeapon[id] = weaponid;
-		setSpeedPowers(id, false);
-		//setGravityPowers(id);
+	if (gPlayerStunTimer[owner] > 0) {
+		static Float:stunSpeed;
+		stunSpeed = gPlayerStunSpeed[owner];
+
+		SetHamReturnFloat(stunSpeed);
+		debugMsg(owner, 5, "Setting Stun Speed To %f", stunSpeed);
+		return HAM_SUPERCEDE;
 	}
-}
-//----------------------------------------------------------------------------------------------
-public event_SetFOV(id)
-{
-	// Sniper rifle scoping can reset user speed lets fix that
 
-	if (!CvarSuperHeros || !is_user_alive(id))
-		return;
+	if (owner == gXpBonusVIP && getVipFlags() & VIP_BLOCK_SPEED)
+		return HAM_IGNORED;
 
-	new fov = read_data(1);
+	if (cs_get_user_zoom(owner) != CS_SET_NO_ZOOM)
+		return HAM_IGNORED;
 
-	if (gCurrentFOV[id] != fov) {
-		gCurrentFOV[id] = fov;
+	static Float:heroSpeed;
+	heroSpeed = getMaxSpeed(owner, cs_get_weapon_id(weapon));
 
-		switch (gCurrentWeapon[id]) {
-			// Only need to check speed for sniper rifles
-			case CSW_SCOUT, CSW_SG550, CSW_AWP, CSW_G3SG1: {
-				setSpeedPowers(id, false);
-			}
-		}
-	}
+	debugMsg(owner, 10, "Checking Speeds - New: %f - Hero: %f", newSpeed, heroSpeed);
+
+	if (heroSpeed == newSpeed || heroSpeed == -1.0)
+		return HAM_IGNORED;
+
+	SetHamReturnFloat(heroSpeed);
+	debugMsg(owner, 5, "Setting Speed To %f", heroSpeed);
+	return HAM_SUPERCEDE;
 }
 //----------------------------------------------------------------------------------------------
 public setPowers(id)
@@ -2465,7 +2377,7 @@ public setPowers(id)
 }
 //----------------------------------------------------------------------------------------------
 //native sh_reset_max_speed(id)
-public _sh_reset_max_speed()
+@Native_ResetMaxSpeed()
 {
 	if (!CvarSuperHeros)
 		return;
@@ -2489,13 +2401,25 @@ setSpeedPowers(id, bool:checkDefault)
 	if (gPlayerStunTimer[id] > 0) {
 		new Float:stunSpeed = gPlayerStunSpeed[id];
 		set_user_maxspeed(id, stunSpeed);
+
 		debugMsg(id, 5, "Setting Stun Speed To %f", stunSpeed);
 		return;
 	}
 
-	new currentWeapon = gCurrentWeapon[id];
+	new weapon = cs_get_user_weapon(id);
 	new Float:oldSpeed = get_user_maxspeed(id);
-	new Float:newSpeed = getMaxSpeed(id, currentWeapon);
+	new Float:newSpeed;
+
+	if (id == gXpBonusVIP && getVipFlags() & VIP_BLOCK_SPEED) {
+		newSpeed = 227.0;
+	} else if (cs_get_user_zoom(id) != CS_SET_NO_ZOOM) {
+		switch (weapon) {
+			// If weapon is a zoomed sniper rifle set default speeds
+			case CSW_SCOUT, CSW_SG550, CSW_AWP, CSW_G3SG1: newSpeed = sh_get_weapon_speed(weapon, true);
+		}
+	} else {
+		newSpeed = getMaxSpeed(id, weapon);
+	}
 
 	debugMsg(id, 10, "Checking Speeds - Old: %f - New: %f", oldSpeed, newSpeed);
 
@@ -2512,7 +2436,7 @@ setSpeedPowers(id, bool:checkDefault)
 						// Set default weapon speed
 						// Do not need to check for scoped sniper rifles as getMaxSpeed will
 						// return that value since heroes can not effect scoped sniper rifles.
-						set_user_maxspeed(id, sh_get_weapon_speed(currentWeapon));
+						set_user_maxspeed(id, sh_get_weapon_speed(weapon));
 				}
 			}
 			default: {
@@ -2578,7 +2502,7 @@ setArmorPowers(id)
 }
 //----------------------------------------------------------------------------------------------
 //native sh_reset_min_gravity(id)
-public _sh_reset_min_gravity()
+@Native_ResetMinGravity()
 {
 	if (!CvarSuperHeros)
 		return;
@@ -2746,13 +2670,13 @@ localAddXP(id, xp)
 }
 //----------------------------------------------------------------------------------------------
 //native sh_add_kill_xp(id, victim, Float:multiplier = 1.0)
-public _sh_add_kill_xp()
+@Native_AddKillXP()
 {
 	new id = get_param(1);
 	new victim = get_param(2);
 
 	// Stupid check - but checking prevents crashes
-	if (id < 1 || id > gServersMaxPlayers || victim < 1 || victim > gServersMaxPlayers)
+	if (id < 1 || id > MaxClients || victim < 1 || victim > MaxClients)
 		return;
 
 	//new Float:mult = get_param_f(3);
@@ -2761,7 +2685,7 @@ public _sh_add_kill_xp()
 }
 //----------------------------------------------------------------------------------------------
 //native sh_set_hero_dmgmult(heroID, pcvarDamage, const weaponID = 0)
-public _sh_set_hero_dmgmult()
+@Native_SetHeroDamageMultiplier()
 {
 	new heroIndex = get_param(1);
 
@@ -2843,7 +2767,7 @@ public ham_TakeDamage_Pre(victim, inflictor, attacker, Float:damage, damagebits)
 }
 //----------------------------------------------------------------------------------------------
 //native sh_extra_damage(victim, attacker, damage, const wpnDescription[], headshot = 0, dmgMode = SH_DMG_MULT, bool:dmgStun = false, bool:dmgFFmsg = true, const dmgOrigin[3] = {0,0,0});
-public _sh_extra_damage()
+@Native_ExtraDamage()
 {
 	new victim = get_param(1);
 
@@ -2893,8 +2817,8 @@ public _sh_extra_damage()
 	}
 
 	new newHealth = health - damage;
-	new FFon = get_pcvar_num(mp_friendlyfire);
-	new freeforall = CvarFreeForAll;
+	new friendlyFire = CvarFriendlyFire;
+	new freeForAll = CvarFreeForAll;
 	new CsTeams:victimTeam = cs_get_user_team(victim);
 	new CsTeams:attackerTeam = cs_get_user_team(attacker);
 
@@ -2906,7 +2830,7 @@ public _sh_extra_damage()
 
 		if (victim == attacker) {
 			kill = true;
-		} else if (victimTeam != attackerTeam || (FFon && freeforall)) {
+		} else if (victimTeam != attackerTeam || (friendlyFire && freeForAll)) {
 			kill = true;
 
 			if (headshot)
@@ -2921,7 +2845,7 @@ public _sh_extra_damage()
 				new money = min((attackerMoney + 300), 16000);
 				cs_set_user_money(attacker, money, 1);
 			}
-		} else if (FFon) {
+		} else if (friendlyFire) {
 			kill = true;
 
 			localAddXP(attacker, -gXPGiven[gPlayerLevel[attacker]]);
@@ -2992,9 +2916,9 @@ public _sh_extra_damage()
 		message_end();
 	} else {
 		new bool:hurt = false;
-		if (victimTeam != attackerTeam || victim == attacker || (FFon && freeforall)) {
+		if (victimTeam != attackerTeam || victim == attacker || (friendlyFire && freeForAll)) {
 			hurt = true;
-		} else if (FFon) {
+		} else if (friendlyFire) {
 			hurt = true;
 			//new bool:dmgFFmsg = get_param(6) ? true : false;
 			if (get_param(8)) {
@@ -3055,7 +2979,7 @@ public _sh_extra_damage()
 public fm_AlertMessage(atype, const msg[])
 {
 	// Keeps hl logs clean of commited suicide with world, caused by sh_extra_damage
-	 return gXrtaDmgClientKill ? FMRES_SUPERCEDE : FMRES_IGNORED;
+	return gXrtaDmgClientKill ? FMRES_SUPERCEDE : FMRES_IGNORED;
 }
 //---------------------------------------------------------------------------------------------
 logKill(id, victim, const weaponDescription[32])
@@ -3132,12 +3056,11 @@ public event_DeathMsg()
 		displayPowers(killer, false);
 	}
 
-	gCurrentWeapon[victim] = 0;
 	displayPowers(victim, false);
 }
 //----------------------------------------------------------------------------------------------
 //native sh_reload_ammo(id, mode = 0)
-public _sh_reload_ammo()
+@Native_ReloadAmmo()
 {
 	new id = get_param(1);
 
@@ -3173,13 +3096,13 @@ public _sh_reload_ammo()
 			if (clip != 0)
 				return;
 
-			new iWPNidx = -1;
+			new weaponEnt = -1;
 			new wpn[32];
 			get_weaponname(wpnid, wpn, charsmax(wpn));
 
-			while ((iWPNidx = engfunc(EngFunc_FindEntityByString, iWPNidx, "classname", wpn)) != 0) {
-				if (id == pev(iWPNidx, pev_owner)) {
-					cs_set_weapon_ammo(iWPNidx, sh_get_max_clipammo(wpnid));
+			while ((weaponEnt = engfunc(EngFunc_FindEntityByString, weaponEnt, "classname", wpn)) != 0) {
+				if (id == pev(weaponEnt, pev_owner)) {
+					cs_set_weapon_ammo(weaponEnt, sh_get_max_clipammo(wpnid));
 					break;
 				}
 			}
@@ -3197,24 +3120,24 @@ public _sh_reload_ammo()
 
 			new idSilence, idBurst;
 			if (wpnid == CSW_M4A1 || wpnid == CSW_USP) {
-				new iWPNidx = -1;
+				new weaponEnt = -1;
 				new wpn[32];
 				get_weaponname(wpnid, wpn, charsmax(wpn));
 
-				while ((iWPNidx = engfunc(EngFunc_FindEntityByString, iWPNidx, "classname", wpn)) != 0) {
-					if (id == pev(iWPNidx, pev_owner)) {
-						idSilence = cs_get_weapon_silen(iWPNidx);
+				while ((weaponEnt = engfunc(EngFunc_FindEntityByString, weaponEnt, "classname", wpn)) != 0) {
+					if (id == pev(weaponEnt, pev_owner)) {
+						idSilence = cs_get_weapon_silen(weaponEnt);
 						break;
 					}
 				}
 			} else if (wpnid == CSW_FAMAS || wpnid == CSW_GLOCK18) {
-				new iWPNidx = -1;
+				new weaponEnt = -1;
 				new wpn[32];
 				get_weaponname(wpnid, wpn, charsmax(wpn));
 
-				while ((iWPNidx = engfunc(EngFunc_FindEntityByString, iWPNidx, "classname", wpn)) != 0) {
-					if (id == pev(iWPNidx, pev_owner)) {
-						idBurst = cs_get_weapon_burst(iWPNidx);
+				while ((weaponEnt = engfunc(EngFunc_FindEntityByString, weaponEnt, "classname", wpn)) != 0) {
+					if (id == pev(weaponEnt, pev_owner)) {
+						idBurst = cs_get_weapon_burst(weaponEnt);
 						break;
 					}
 				}
@@ -3228,9 +3151,6 @@ public _sh_reload_ammo()
 				cs_set_weapon_silen(entityID, idSilence, 0);
 			else if (idBurst)
 				cs_set_weapon_burst(entityID, idBurst);
-
-			// Recheck speed just in case above not caught by CurWeapon
-			setSpeedPowers(id, false);
 		}
 	}
 }
@@ -3238,7 +3158,7 @@ public _sh_reload_ammo()
 timerAll()
 {
 	static id;
-	for (id = 1; id <= gServersMaxPlayers; id++) {
+	for (id = 1; id <= MaxClients; id++) {
 		if (is_user_alive(id)) {
 			// Switches are faster but we don't want to do anything with -1
 			switch (gPlayerStunTimer[id]) {
@@ -3272,7 +3192,7 @@ timerAll()
 }
 //----------------------------------------------------------------------------------------------
 //native sh_set_stun(id, Float:howLong, Float:speed = 0.0)
-public _sh_set_stun()
+@Native_SetStun()
 {
 	if (!CvarSuperHeros)
 		return;
@@ -3294,7 +3214,7 @@ public _sh_set_stun()
 }
 //----------------------------------------------------------------------------------------------
 //native sh_get_stun(id)
-public _sh_get_stun()
+@Native_GetStun()
 {
 	if (!CvarSuperHeros)
 		return 0;
@@ -3308,7 +3228,7 @@ public _sh_get_stun()
 }
 //----------------------------------------------------------------------------------------------
 //native sh_set_godmode(id, Float:howLong)
-public _sh_set_godmode()
+@Native_SetGodmode()
 {
 	if (!CvarSuperHeros)
 		return;
@@ -4198,7 +4118,7 @@ public adminEraseXP(id, level, cid)
 
 	console_print(id, "[SH] Please wait while the XP is erased");
 
-	for (new x = 1; x <= gServersMaxPlayers; x++) {
+	for (new x = 1; x <= MaxClients; x++) {
 		gPlayerXP[x] = 0;
 		gPlayerLevel[x] = 0;
 		writeStatusMessage(x, "All XP has been ERASED");
@@ -4397,7 +4317,7 @@ public client_disconnected(id)
 //----------------------------------------------------------------------------------------------
 public client_putinserver(id)
 {
-	if (id < 1 || id > gServersMaxPlayers)
+	if (id < 1 || id > MaxClients)
 		return;
 
 	gPlayerPutInServer[id] = true;
@@ -4424,7 +4344,7 @@ getAverageXP()
 	new count = 0;
 	new Float:sum = 0.0;
 
-	for (new i = 1; i <= gServersMaxPlayers; i++) {
+	for (new i = 1; i <= MaxClients; i++) {
 		if (is_user_connected(i) && gPlayerXP[i] > 0) {
 			count++;
 			sum += gPlayerXP[i];
@@ -4439,13 +4359,12 @@ getAverageXP()
 //----------------------------------------------------------------------------------------------
 initPlayer(id)
 {
-	if (id < 1 || id > gServersMaxPlayers)
+	if (id < 1 || id > MaxClients)
 		return;
 
 	gPlayerXP[id] = 0;
 	gPlayerPowers[id][0] = 0;
 	gPlayerBinds[id][0] = 0;
-	gCurrentWeapon[id] = 0;
 	gPlayerStunTimer[id] = -1;
 	gPlayerGodTimer[id] = -1;
 	setLevel(id, 0);
@@ -4585,7 +4504,7 @@ public host_Killed()
 
 	new id = getLoguserIndex();
 
-	if (id < 1 || id > gServersMaxPlayers)
+	if (id < 1 || id > MaxClients)
 		return;
 
 	localAddXP(id, -CvarObjectiveXP);
@@ -4647,17 +4566,15 @@ public bomb_HolderSpawned()
 {
 	new id = getLoguserIndex();
 
-	if (id < 1 || id > gServersMaxPlayers)
+	if (id < 1 || id > MaxClients)
 		return;
 
 	// Find the Index of the bomb entity and save to be used as the one that gives xp
-	new iWPNidx = -1;
-	while ((iWPNidx = engfunc(EngFunc_FindEntityByString, iWPNidx, "classname", "weapon_c4")) != 0) {
-		if (id == pev(iWPNidx, pev_owner) ) {
-			// set iWPNidx to XP bomb
-			gXpBonusC4ID = iWPNidx;
-			break;
-		}
+	new ent = -1;
+	while ((ent = cs_find_ent_by_owner(ent, "weapon_c4", id)) != 0) {
+		// set ent to XP bomb
+		gXpBonusC4ID = ent;
+		break;
 	}
 }
 //----------------------------------------------------------------------------------------------
@@ -4887,7 +4804,7 @@ getSaveKey(id, savekey[32])
 				// Hack for STEAM's retardedness with listen servers
 				if (id == 1 && !is_dedicated_server()) {
 					copy(savekey, charsmax(savekey), "loopback");
-				} else if (get_pcvar_num(sv_lan)) {
+				} else if (CvarLan) {
 					get_user_ip(id, savekey, charsmax(savekey), 1); // by ip without port
 				} else {
 					get_user_authid(id, savekey, charsmax(savekey)); // by steamid
