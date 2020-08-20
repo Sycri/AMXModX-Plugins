@@ -63,7 +63,7 @@ public plugin_init()
 	
 	register_concmd(InfiniteMoneyCommand, "@ConsoleCommand_InfiniteMoney", ADMIN_LEVEL_A, "INFINITE_MONEY_CMD_INFO", .info_ml = true);
 
-	register_event_ex("Money", "@Forward_MoneyChange", RegisterEvent_Single, "1!99999");
+	register_event_ex("Money", "@Event_Money", RegisterEvent_Single, "1!99999");
 
 	create_cvar("amx_infinitemoney_version", PLUGIN_VERSION, FCVAR_SERVER | FCVAR_SPONLY);
 } 
@@ -117,7 +117,7 @@ public client_disconnected(id)
 	return PLUGIN_HANDLED;
 }
 
-@Forward_MoneyChange(id)
+@Event_Money(id)
 {
 	if (!g_HasInfiniteMoney[id])
 		return PLUGIN_HANDLED;

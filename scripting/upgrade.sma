@@ -102,8 +102,8 @@ public plugin_init()
 	RegisterHamPlayer(Ham_Spawn, "@Forward_PlayerSpawn_Post", 1);
 	RegisterHamPlayer(Ham_Player_ResetMaxSpeed, "@Forward_Player_ResetMaxSpeed_Post", 1);
 	
-	register_event_ex("HLTV", "@Forward_NewRound", RegisterEvent_Global, "1=0", "2=0");
-	register_logevent("@Forward_RoundStart", 2, "1=Round_Start");
+	register_event_ex("HLTV", "@Event_NewRound", RegisterEvent_Global, "1=0", "2=0");
+	register_logevent("@LogEvent_RoundStart", 2, "1=Round_Start");
 	
 	bind_pcvar_num(create_cvar("upgrade_cost", "4000", .has_min = true, .min_val = 0.0), CvarCost);
 	bind_pcvar_num(create_cvar("upgrade_hp", "150", .has_min = true, .min_val = 1.0), CvarHealth);
@@ -219,12 +219,12 @@ public client_disconnected(id)
 	return HAM_IGNORED;
 }
 
-@Forward_NewRound()
+@Event_NewRound()
 {
 	g_IsFreezetime = true;
 }
 
-@Forward_RoundStart()
+@LogEvent_RoundStart()
 {
 	g_IsFreezetime = false;
 }
