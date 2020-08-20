@@ -29,9 +29,6 @@ stock const SH_VERSION_STR[] =	"1.3.0.0";
 // Cooldown task id, required to allow core to stop task
 #define SH_COOLDOWN_TASKID	572910
 
-// Max player slots
-#define SH_MAXSLOTS		MAX_PLAYERS
-
 // sh_hero_init(id, heroID, mode) modes
 #define SH_HERO_DROP	0	//Hero is dropped
 #define SH_HERO_ADD		1	//Hero is added

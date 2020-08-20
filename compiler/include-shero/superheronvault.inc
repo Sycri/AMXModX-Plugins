@@ -39,9 +39,9 @@ public memoryTableWrite()
 
 	// Write Memory Table to File
 	for (new x = 1; x < gMemoryTableCount; x++) {
-		if (gMemoryTableKeys[x][0] != '^0') {
+		if (gMemoryTableKeys[x][0] != '^0')
 			writeData(x);
-		}
+		
 		// Can even clear the MemoryKey - if a player is disconnected no reason to save again and again...
 		gMemoryTableKeys[x][0] = '^0';
 	}
@@ -71,9 +71,8 @@ writeData(id)
 
 	nvault_set(gVaultHandle, gMemoryTableKeys[id], data);
 
-	if (0 < id <= MAX_PLAYERS) {
+	if (0 < id <= MAX_PLAYERS)
 		gChangedHeroes[id] = false;
-	}
 }
 //----------------------------------------------------------------------------------------------
 loadXP(id, const savekey[32])

@@ -487,9 +487,8 @@ stock bool:sh_is_active()
 {
 	static sv_superheros;
 
-	if ( !sv_superheros ) {
+	if (!sv_superheros)
 		sv_superheros = get_cvar_pointer("sv_superheros");
-	}
 
 	return (sv_superheros ? (get_pcvar_num(sv_superheros) ? true : false) : false);
 }
@@ -503,9 +502,8 @@ stock bool:sh_friendlyfire_on()
 {
 	static mp_friendlyfire;
 
-	if ( !mp_friendlyfire ) {
+	if (!mp_friendlyfire)
 		mp_friendlyfire = get_cvar_pointer("mp_friendlyfire");
-	}
 
 	return (get_pcvar_num(mp_friendlyfire) ? true : false);
 }
@@ -517,12 +515,12 @@ stock bool:sh_friendlyfire_on()
  */
 stock sh_maxplayers()
 {
-	static maxplayers;
+	static maxPlayers;
 
-	if ( !maxplayers )
-		maxplayers = get_maxplayers();
+	if (!maxPlayers)
+		maxPlayers = get_maxplayers();
 
-	return maxplayers;
+	return maxPlayers;
 }
 
 /**
@@ -546,9 +544,10 @@ stock sh_sound_deny(id)
  */
 stock sh_switch_weapon(id, weaponID)
 {
-	if ( weaponID < CSW_P228 || weaponID > CSW_P90 ) return;
+	if (weaponID < CSW_P228 || weaponID > CSW_P90)
+		return;
 
-	if ( user_has_weapon(id, weaponID) ) {
+	if (user_has_weapon(id, weaponID)) {
 		static weaponName[32];
 		get_weaponname(weaponID, weaponName, charsmax(weaponName));
 		engclient_cmd(id, weaponName);
@@ -572,9 +571,8 @@ stock sh_screen_fade(id, Float:fadeTime, Float:holdTime, red, green, blue, alpha
 {
 	static msgScreenFade;
 
-	if ( !msgScreenFade ) {
+	if (!msgScreenFade)
 		msgScreenFade = get_user_msgid("ScreenFade");
-	}
 
 	// Check unsigned short range
 	new fade, hold;
@@ -605,9 +603,8 @@ stock sh_screen_shake(id, Float:amplitude, Float:duration, Float:frequency)
 {
 	static msgScreenShake;
 
-	if ( !msgScreenShake ) {
+	if (!msgScreenShake)
 		msgScreenShake = get_user_msgid("ScreenShake");
-	}
 
 	// Check unsigned short range
 	new amp, dura, freq;
@@ -640,27 +637,30 @@ stock sh_screen_shake(id, Float:amplitude, Float:duration, Float:frequency)
  */
 stock sh_set_rendering(entity, r = 255, g = 255, b = 255, amount = 16, fx = kRenderFxNone, render = kRenderNormal)
 {
-	if ( !pev_valid(entity) ) return 0;
+	if (!pev_valid(entity))
+		return 0;
 
 	new Float:alpha = float(amount);
 
 	// This check is only to favor invisibility of a player over any other render expect a reset
-	if ( entity <= sh_maxplayers() ) {
+	if (entity <= sh_maxplayers()) {
 
 		// If client is in an alpha render do we need to block this render setting.
-		if ( pev(entity, pev_rendermode) == kRenderTransAlpha ) {
+		if (pev(entity, pev_rendermode) == kRenderTransAlpha) {
 
 			// If just resetting render allow it to reset
-			if ( r != 255 || g != 255 || b != 255 || amount != 16 || fx != kRenderFxNone || render != kRenderNormal ) {
+			if (r != 255 || g != 255 || b != 255 || amount != 16 || fx != kRenderFxNone || render != kRenderNormal) {
 
 				// Skip setting any other render type, allow user to stay in alpha render
-				if ( render != kRenderTransAlpha ) return 0;
+				if (render != kRenderTransAlpha)
+					return 0;
 
 				new Float:currentAlpha;
 				pev(entity, pev_renderamt, currentAlpha);
 
 				// Only set alpha render if equal or less visible (equal to allow color changes etc.)
-				if ( alpha > currentAlpha ) return 0;
+				if (alpha > currentAlpha)
+					return 0;
 			}
 		}
 	}
@@ -688,13 +688,15 @@ stock sh_set_rendering(entity, r = 255, g = 255, b = 255, amount = 16, fx = kRen
  */
 stock sh_add_hp(id, hitPoints, maxHealth = 0)
 {
-	if ( hitPoints == 0 ) return 0;
+	if (hitPoints == 0)
+		return 0;
 
-	if ( maxHealth == 0 ) maxHealth = sh_get_max_hp(id);
+	if (maxHealth == 0)
+		maxHealth = sh_get_max_hp(id);
 
 	new currentHealth = get_user_health(id);
 
-	if ( currentHealth < maxHealth ) {
+	if (currentHealth < maxHealth) {
 		new newHealth = min((currentHealth + hitPoints), maxHealth);
 		set_user_health(id, newHealth);
 		return newHealth - currentHealth;
@@ -716,15 +718,18 @@ stock sh_add_hp(id, hitPoints, maxHealth = 0)
  */
 stock sh_add_ap(id, armorPoints, maxArmor = 0)
 {
-	if ( armorPoints == 0 ) return 0;
+	if (armorPoints == 0)
+		return 0;
 
-	if ( maxArmor == 0 ) maxArmor = sh_get_max_ap(id);
+	if (maxArmor == 0)
+		maxArmor = sh_get_max_ap(id);
 
 	new CsArmorType:armorType;
 	new currentArmor = cs_get_user_armor(id, armorType);
 
-	if ( currentArmor < maxArmor ) {
-		if ( !currentArmor ) armorType = CS_ARMOR_VESTHELM;
+	if (currentArmor < maxArmor) {
+		if (!currentArmor)
+			armorType = CS_ARMOR_VESTHELM;
 
 		new newArmor = min((currentArmor + armorPoints), maxArmor);
 		cs_set_user_armor(id, newArmor, armorType);
@@ -747,11 +752,11 @@ stock sh_vip_flags()
 {
 	static sh_blockvip;
 
-	if ( !sh_blockvip ) {
+	if (!sh_blockvip)
 		sh_blockvip = get_cvar_pointer("sh_blockvip");
-	}
 
-	if ( !sh_blockvip ) return 0;
+	if (!sh_blockvip)
+		return 0;
 
 	static temp[9];
 	get_pcvar_string(sh_blockvip, temp, charsmax(temp));
@@ -782,7 +787,7 @@ stock bool:sh_hull_vacant(id, const Float:origin[3], hullType = HULL_HEAD, &hite
 	hitent = get_tr2(0, TraceResult:TR_pHit);
 
 	// Is the origin's hull empty for the hull type
-	if ( !get_tr2(0, TraceResult:TR_StartSolid) && !get_tr2(0, TraceResult:TR_AllSolid) && get_tr2(0, TraceResult:TR_InOpen) )
+	if (!get_tr2(0, TraceResult:TR_StartSolid) && !get_tr2(0, TraceResult:TR_AllSolid) && get_tr2(0, TraceResult:TR_InOpen))
 		return true;
 
 	return false;
@@ -805,11 +810,10 @@ stock bool:sh_hull_vacant(id, const Float:origin[3], hullType = HULL_HEAD, &hite
 stock sh_get_velocity(const Float:initial[3], const Float:final[3], Float:speed, Float:velocity[3])
 {
 	// Lets make sure we are within range
-	static sv_maxvelocity;
+	static Float:sv_maxvelocity;
 
-	if ( !sv_maxvelocity ) {
+	if (!sv_maxvelocity)
 		sv_maxvelocity = get_cvar_pointer("sv_maxvelocity");
-	}
 
 	new Float:maxSpeed = get_pcvar_float(sv_maxvelocity);
 
@@ -917,10 +921,10 @@ public sh_end_cooldown(id)
  */
 stock Float:sh_get_weapon_speed(weaponID, bool:zoomed = false)
 {
-	if ( zoomed ) {
+	if (zoomed) {
 		// Only the 4 sniper rifles actually have different speeds when zoomed
 		// And 3 of those have the same speed so lets just use a switch for them.
-		switch(weaponID) {
+		switch (weaponID) {
 			case CSW_SCOUT: return 220.0;
 			case CSW_SG550, CSW_AWP, CSW_G3SG1: return 150.0;
 		}
@@ -953,25 +957,24 @@ stock strbrkqt(const text[], Left[], leftLen, Right[], rightLen)
 	new i, left_pos = 0;
 	new textLen = strlen(text);
 
-	for ( i = 0; i < textLen; i++) {
+	for (i = 0; i < textLen; i++) {
 
-		if ( text[i] == '^"' && !done_flag ) {
-			if ( in_quotes ) {
+		if (text[i] == '^"' && !done_flag) {
+			if (in_quotes) {
 				done_flag = true;
 				in_quotes = false;
+			} else {
+				in_quotes = true;
 			}
-			else in_quotes = true;
-		}
-		else if ( isspace(text[i]) && !in_quotes ) {
-			if ( left_pos > 0 ) {
+		} else if (isspace(text[i]) && !in_quotes) {
+			if (left_pos > 0)
 				done_flag = true;
-			}
-		}
-		else if ( !done_flag && left_pos <= leftLen ) {
+		} else if (!done_flag && left_pos <= leftLen) {
 			setc(Left[left_pos], 1, text[i]);
 			left_pos++;
+		} else if (done_flag) {
+			break;
 		}
-		else if ( done_flag ) break;
 	}
 
 	Left[left_pos] = '^0';

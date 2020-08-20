@@ -58,23 +58,24 @@ new Handle:gDbConnect;
 new gVaultFile[128];
 new bool:gPersistentTemp;
 new bool:gCreateTables = true;
-new sh_mysql_host, sh_mysql_user, sh_mysql_pass;
-new sh_mysql_db, sh_mysql_persistent;
+
+new CvarMysqlHost[64], CvarMysqlUser[32], CvarMysqlPass[32];
+new CvarMysqlDB[32], CvarMysqlPersistent;
 //----------------------------------------------------------------------------------------------
 saving_init()
 {
-	sh_mysql_host = register_cvar("sh_mysql_host", "");
-	sh_mysql_user = register_cvar("sh_mysql_user", "");
-	sh_mysql_pass = register_cvar("sh_mysql_pass", "");
-	sh_mysql_db = register_cvar("sh_mysql_db", "");
-	sh_mysql_persistent = register_cvar("sh_mysql_persistent", "0");
+	bind_pcvar_string(create_cvar("sh_mysql_host", ""), CvarMysqlHost, charsmax(CvarMysqlHost));
+	bind_pcvar_string(create_cvar("sh_mysql_user", ""), CvarMysqlUser, charsmax(CvarMysqlUser));
+	bind_pcvar_string(create_cvar("sh_mysql_pass", ""), CvarMysqlPass, charsmax(CvarMysqlPass));
+	bind_pcvar_string(create_cvar("sh_mysql_db", ""), CvarMysqlDB, charsmax(CvarMysqlDB));
+	bind_pcvar_num(create_cvar("sh_mysql_persistent", "0"), CvarMysqlPersistent);
 
-	register_concmd("amx_shvaulttosql", "adminCopyVault", ADMIN_RCON, "- Copies vault XP to MySQL, should only be done once.");
+	register_concmd("amx_shvaulttosql", "@ConsoleCommand_AdminCopyVault", ADMIN_RCON, "- Copies vault XP to MySQL, should only be done once.");
 
 	get_localinfo("amxx_vault", gVaultFile, charsmax(gVaultFile));
 }
 //----------------------------------------------------------------------------------------------
-public adminCopyVault(id, level, cid)
+@ConsoleCommand_AdminCopyVault(id, level, cid)
 {
 	if (!cmd_access(id, level, cid, 1))
 		return;
@@ -182,7 +183,8 @@ parseXP(id, const data[])
 	while (Right[0] != '^0' && powerCount < maxPowers) {
 		strbrkqt(Right, Left, charsmax(Left), Right, charsmax(Right));
 		heroIndex = getHeroID(Left);
-		if (heroIndex >= 0)  {
+
+		if (heroIndex >= 0) {
 			gMemoryTablePowers[id][0] = ++powerCount;
 			gMemoryTablePowers[id][powerCount] = heroIndex;
 		}
@@ -204,9 +206,9 @@ public memoryTableWrite()
 
 	// Write Memory Table to File
 	for (new x = 1; x < gMemoryTableCount; x++) {
-		if (gMemoryTableKeys[x][0] != '^0') {
+		if (gMemoryTableKeys[x][0] != '^0')
 			writeData(x);
-		}
+
 		// Can even clear the MemoryKey - if a player is disconnected no reason to save again and again...
 		gMemoryTableKeys[x][0] = '^0';
 	}
@@ -228,7 +230,7 @@ public memoryTableWrite()
 mySQLConnect()
 {
 	if (gDbConnect) {
-		if (!get_pcvar_num(sh_mysql_persistent) && !gPersistentTemp)
+		if (!CvarMysqlPersistent && !gPersistentTemp)
 			close_mysql();
 		else
 			return;
@@ -237,17 +239,10 @@ mySQLConnect()
 	// Only create the tuple it was not done yet or a connection could not be made
 	static host[64], user[32], pass[32], db[32];
 	if (!gDbTuple) {
-		get_pcvar_string(sh_mysql_host, host, charsmax(host));
-		get_pcvar_string(sh_mysql_user, user, charsmax(user));
-		get_pcvar_string(sh_mysql_pass, pass, charsmax(pass));
-		get_pcvar_string(sh_mysql_db, db, charsmax(db));
-
-		if (host[0] == '^0' && user[0] == '^0' && db[0] == '^0') {
-			get_cvar_string("amx_mysql_host", host, charsmax(host));
-			get_cvar_string("amx_mysql_user", user, charsmax(user));
-			get_cvar_string("amx_mysql_pass", pass, charsmax(pass));
-			get_cvar_string("amx_mysql_db", db, charsmax(db));
-		}
+		host = CvarMysqlHost;
+		user = CvarMysqlUser;
+		pass = CvarMysqlPass;
+		db = CvarMysqlDB;
 
 		//mysql only for now
 		SQL_SetAffinity("mysql");
@@ -398,9 +393,8 @@ writeData(x)
 		}
 
 		// x can be higher than max slots, however sizeof gChangedHeroes can not be
-		if (0 < x <= MAX_PLAYERS) {
+		if (0 < x <= MAX_PLAYERS)
 			gChangedHeroes[x] = false;
-		}
 	}
 
 	//Closes the connection if set not to be persistent
@@ -410,7 +404,7 @@ writeData(x)
 //immediate use, no threading
 loadXP(id, const savekey[32])
 {
-	mySQLConnect()
+	mySQLConnect();
 
 	if (gDbConnect == Empty_Handle)
 		return false;
@@ -505,7 +499,7 @@ cleanXP(bool:clearAll)
 	if (!clearAll && (!CvarSaveXP || xpSaveDays < 0))
 		return;
 
-	mySQLConnect()
+	mySQLConnect();
 
 	if (gDbConnect == Empty_Handle)
 		return;
@@ -551,7 +545,7 @@ cleanXP(bool:clearAll)
 
 		sql[0] = '^0';
 		formatex(sql, charsmax(sql), "DELETE FROM `sh_savexp` WHERE `LAST_PLAY_DATE` < (SYSDATE() - INTERVAL '%d' DAY) AND NOT (`HUDHELP` & '%d')", xpSaveDays, SH_FLAG_XPIMMUNE);
-		query = SQL_PrepareQuery(gDbConnect, "%s", sql)
+		query = SQL_PrepareQuery(gDbConnect, "%s", sql);
 		if (!SQL_Execute(query)) {
 			errcode = SQL_QueryError(query, error, charsmax(error));
 			debugMsg(0, 0, "Couldn't Clean XP: [%d] '%s' - '%s'", errcode, error, sql);
@@ -568,7 +562,7 @@ cleanXP(bool:clearAll)
 //----------------------------------------------------------------------------------------------
 close_mysql()
 {
-	if (gDbConnect == Empty_Handle || get_pcvar_num(sh_mysql_persistent) || gPersistentTemp)
+	if (gDbConnect == Empty_Handle || CvarMysqlPersistent || gPersistentTemp)
 		return;
 
 	SQL_FreeHandle(gDbConnect);
