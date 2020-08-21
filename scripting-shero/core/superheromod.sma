@@ -58,8 +58,7 @@
 *	- Changed most cvars from get_pcvar_num to bind_pcvar_num so variables could be used directly
 *	- Changed from RegisterHamFromEntity to RegisterHamPlayer for cleaner code
 *	- Forced usage of semicolons for better clarity
-*	- Removed SH_MAXSLOTS and replaced it with MAX_PLAYERS since the latter is in AMX Mod X core
-*	- Removed all backwards compatibility
+*	- Removed all previous backwards compatibility
 *	- Removed code that uses old syntax for MySQL 3.23
 *	- Removed cvar sh_adminaccess in favor of cmdaccess.ini
 *	- Removed repetitive checks in natives
@@ -71,8 +70,9 @@
 *	- Replaced event CurWeapon with forward Ham_CS_Item_GetMaxSpeed for more reliable speed change
 *	- Replaced forward FM_Touch with Ham_Touch since the former is less efficient
 *	- Replaced register_cvar with create_cvar
+*	- Replaced SH_MAXSLOTS with MAX_PLAYERS since the latter is in AMX Mod X core
 *	- Replaced variable gServersMaxPlayers with MaxClients which is available in AMX Mod X since version 1.8.3
-*	- Rewrote parts of the SuperHero Core and included heroes
+*	- Rewrote parts of the SuperHero Core and default heroes
 *	- Separated SuperHero Core into multiple plugins
 *
 *  v1.2.1 - vittu - ??/??/??
@@ -403,9 +403,14 @@
 
 #include <amxmodx>
 #include <amxmisc>
-#include <superheromod>
+#include <fakemeta>
+#include <hamsandwich>
+#include <fun>
+#include <cstrike>
+#include <sh_core_main>
 #include <sh_core_objectives>
 #include <sh_core_hpap>
+#include <sh_core_speed>
 
 #pragma semicolon 1
 
@@ -419,8 +424,6 @@ new gSuperHeros[SH_MAXHEROS][enumHeros];
 new gSuperHeroCount = 0;
 
 // Changed these from CVARS to straight numbers...
-new gHeroMaxSpeed[SH_MAXHEROS];
-new gHeroSpeedWeapons[SH_MAXHEROS][31]; // array weapons of weapon's i.e. {4,30} Note:{0}=all
 new gHeroMinGravity[SH_MAXHEROS];
 new gHeroLevelCVAR[SH_MAXHEROS];
 new gHeroMaxDamageMult[SH_MAXHEROS][31];
@@ -433,8 +436,6 @@ new gPlayerFlags[MAX_PLAYERS + 1];
 new gPlayerMenuOffset[MAX_PLAYERS + 1];
 new gPlayerMenuChoices[MAX_PLAYERS + 1][SH_MAXHEROS + 1]; // This will be filled in with # of heroes available
 new gMaxPowersLeft[MAX_PLAYERS + 1][SH_MAXLEVELS + 1];
-new gPlayerStunTimer[MAX_PLAYERS + 1];
-new Float:gPlayerStunSpeed[MAX_PLAYERS + 1];
 new gPlayerGodTimer[MAX_PLAYERS + 1];
 new gPlayerStartXP[MAX_PLAYERS + 1];
 new gPlayerLevel[MAX_PLAYERS + 1];
@@ -490,7 +491,6 @@ new CvarFriendlyFire, CvarLan;
 
 //PCVARs
 new sh_mercyxp, sh_minlevel;
-new sv_maxspeed;
 
 //Forwards
 new fwdReturn;
@@ -562,7 +562,6 @@ public plugin_init()
 
 	// Server cvars checked by core
 	bind_pcvar_num(get_cvar_pointer("mp_friendlyfire"), CvarFriendlyFire);
-	sv_maxspeed = get_cvar_pointer("sv_maxspeed");
 	bind_pcvar_num(get_cvar_pointer("sv_lan"), CvarLan);
 
 
@@ -592,11 +591,6 @@ public plugin_init()
 	// Must use RegisterHamPlayer for special bots to hook
 	RegisterHamPlayer(Ham_Spawn, "ham_PlayerSpawn_Post", 1);
 	RegisterHamPlayer(Ham_TakeDamage, "ham_TakeDamage_Pre");
-	new weaponName[32];
-	for (new id = CSW_P228; id <= CSW_P90; id++) {
-		if (get_weaponname(id, weaponName, charsmax(weaponName)))
-			RegisterHam(Ham_CS_Item_GetMaxSpeed, weaponName, "@Forward_CS_Item_GetMaxSpeed_Pre", 0);
-	}
 
 	// Player choosing a team (t, ct, auto, spec)
 	register_menucmd(register_menuid("IG_Team_Select", 1), 511, "team_chosen");
@@ -662,12 +656,11 @@ public plugin_precache()
 //----------------------------------------------------------------------------------------------
 public plugin_natives()
 {
-	register_library(SH_LIBRARY_STR);
+	register_library("sh_core_main");
 
 	register_native("sh_create_hero", "@Native_CreateHero");
 	register_native("sh_set_hero_info", "@Native_SetHeroInfo");
 	register_native("sh_set_hero_bind", "@Native_SetHeroBind");
-	register_native("sh_set_hero_speed", "@Native_SetHeroSpeed");
 	register_native("sh_set_hero_grav", "@Native_SetHeroGravity");
 	register_native("sh_set_hero_dmgmult", "@Native_SetHeroDamageMultiplier");
 	register_native("sh_get_num_heroes", "@Native_GetNumHeroes");
@@ -681,12 +674,12 @@ public plugin_natives()
 	register_native("sh_set_user_xp", "@Native_SetUserXP");
 	register_native("sh_add_kill_xp", "@Native_AddKillXP");
 	register_native("sh_get_hero_id", "@Native_GetHeroID");
+	register_native("sh_get_hero_name", "@Native_GetHeroName");
 	register_native("sh_user_has_hero", "@Native_UserHasHero");
+	register_native("sh_user_is_loaded", "@Native_UserIsLoaded");
 	register_native("sh_chat_message", "@Native_ChatMessage");
 	register_native("sh_debug_message", "@Native_DebugMessage");
 	register_native("sh_extra_damage", "@Native_ExtraDamage");
-	register_native("sh_set_stun", "@Native_SetStun");
-	register_native("sh_get_stun", "@Native_GetStun");
 	register_native("sh_set_godmode", "@Native_SetGodmode");
 	register_native("sh_is_freezetime", "@Native_IsFreezeTime");
 	register_native("sh_is_inround", "@Native_IsInRound");
@@ -694,7 +687,6 @@ public plugin_natives()
 	register_native("sh_drop_weapon", "@Native_DropWeapon");
 	register_native("sh_give_weapon", "@Native_GiveWeapon");
 	register_native("sh_give_item", "@Native_GiveItem");
-	register_native("sh_reset_max_speed", "@Native_ResetMaxSpeed");
 	register_native("sh_reset_min_gravity", "@Native_ResetMinGravity");
 }
 //----------------------------------------------------------------------------------------------
@@ -753,7 +745,6 @@ public plugin_cfg()
 	// Tasks
 	set_task_ex(1.0, "loopMain", _, _, _, SetTask_Repeat);
 	set_task(3.0, "setHeroLevels");
-	set_task(5.0, "setSvMaxspeed");
 
 	if (cvar_exists("monster_spawn"))
 		gMonsterModRunning = true;
@@ -897,7 +888,7 @@ public loopMain()
 	if (!CvarSuperHeros)
 		return;
 
-	//Unstun Timer & GodMode Timer
+	//GodMode Timer
 	timerAll();
 
 	//Show the CMD Projector
@@ -910,21 +901,6 @@ public setHeroLevels()
 
 	for ( new x = 0; x < gSuperHeroCount && x <= SH_MAXHEROS; x++)
 		gSuperHeros[x][availableLevel] = get_pcvar_num(gHeroLevelCVAR[x]);
-}
-//----------------------------------------------------------------------------------------------
-public setSvMaxspeed()
-{
-	new maxSpeed = 320; // Server Default
-	for (new x = 0; x < gSuperHeroCount; x++) {
-		if (gHeroMaxSpeed[x] != 0)
-			maxSpeed = max(maxSpeed, get_pcvar_num(gHeroMaxSpeed[x]));
-	}
-
-	// Only set if below required speed to avoid setting lower then server op may want
-	if (get_pcvar_num(sv_maxspeed) < maxSpeed) {
-		debugMsg(0, 1, "Setting server CVAR sv_maxspeed to: %d", maxSpeed);
-		set_pcvar_num(sv_maxspeed, maxSpeed);
-	}
 }
 //----------------------------------------------------------------------------------------------
 //native sh_is_inround()
@@ -974,7 +950,7 @@ bool:@Native_IsFreezeTime()
 
 	new powerIndex = get_param(2);
 
-	if (0 < powerIndex < getPowerCount(id))
+	if (0 < powerIndex <= getPowerCount(id))
 		return gPlayerPowers[id][powerIndex];
 
 	return -1;
@@ -1179,21 +1155,34 @@ getHeroID(const heroName[])
 	return -1;
 }
 //----------------------------------------------------------------------------------------------
-//native sh_user_has_hero(id, heroIndex)
-@Native_UserHasHero()
+//native sh_get_hero_name(heroID, name[], len)
+bool:@Native_GetHeroName()
+{
+	new heroIndex = get_param(1);
+
+	if (-1 < heroIndex < gSuperHeroCount) {
+		set_string(2, gSuperHeros[heroIndex][hero], get_param(2));
+		return true;
+	}
+
+	return false;
+}
+//----------------------------------------------------------------------------------------------
+//native sh_user_has_hero(id, heroID)
+bool:@Native_UserHasHero()
 {
 	new id = get_param(1);
 
 	//stupid check - but checking prevents crashes
 	if (id < 1 || id > MaxClients)
-		return 0;
+		return false;
 
 	new heroIndex = get_param(2);
 
 	if (-1 < heroIndex < gSuperHeroCount)
 		return playerHasPower(id, heroIndex);
 
-	return 0;
+	return false;
 }
 //----------------------------------------------------------------------------------------------
 bool:playerHasPower(id, heroIndex)
@@ -1204,6 +1193,18 @@ bool:playerHasPower(id, heroIndex)
 			return true;
 	}
 	return false;
+}
+//----------------------------------------------------------------------------------------------
+//native sh_user_is_loaded(id)
+bool:@Native_UserIsLoaded()
+{
+	new id = get_param(1);
+
+	//stupid check - but checking prevents crashes
+	if (id < 1 || id > MaxClients)
+		return false;
+
+	return gReadXPNextRound[id] ? false : true;
 }
 //----------------------------------------------------------------------------------------------
 //native sh_drop_weapon(id, weaponID, bool:remove = false)
@@ -1249,7 +1250,7 @@ dropWeapon(id, weaponID, bool:remove)
 
 		while ((weaponBox = cs_find_ent_by_owner(weaponBox, "weaponbox", id)) > 0) {
 			// Skip anything not owned by this client
-			if (pev_valid(weaponBox))
+			if (!pev_valid(weaponBox))
 				continue;
 
 			// If Velocities are all zero its on the ground already and should stay there
@@ -1408,10 +1409,6 @@ initHero(id, heroIndex, mode)
 
 	// Reset Hero hp/ap/speed/grav if needed
 	if (mode == SH_HERO_DROP && is_user_alive(id)) {
-		//reset all values
-		if (gHeroMaxSpeed[heroIndex] != 0)
-			setSpeedPowers(id, true);
-
 		if (gHeroMinGravity[heroIndex] != 0)
 			resetMinGravity(id);
 	}
@@ -1420,40 +1417,6 @@ initHero(id, heroIndex, mode)
 	ExecuteForward(fwd_HeroInit, fwdReturn, id, heroIndex, mode);
 
 	gChangedHeroes[id] = true;
-}
-//----------------------------------------------------------------------------------------------
-//native sh_set_hero_speed(heroID, pcvarSpeed, const weapons[] = {0}, numofwpns = 1)
-@Native_SetHeroSpeed()
-{
-	new heroIndex = get_param(1);
-
-	if (heroIndex < 0 || heroIndex >= gSuperHeroCount)
-		return;
-
-	new pcvarSpeed = get_param(2);
-	new numWpns = get_param(4);
-
-	new pWeapons[31];
-	get_array(3, pWeapons, numWpns);
-
-	//Avoid running this unless debug is high enough
-	if (CvarDebugMessages > 2) {
-		//Set up the weapon string for the debug message
-		new weapons[32], number[3], x;
-		for (x = 0; x < numWpns; x++) {
-			formatex(number, charsmax(number), "%d", pWeapons[x]);
-			add(weapons, charsmax(weapons), number);
-			if (pWeapons[x+1] != '^0')
-				add(weapons, charsmax(weapons), ",");
-			else
-				break;
-		}
-
-		debugMsg(0, 3, "Set Max Speed -> HeroID: %d - Speed: %d - Weapon(s): %s", heroIndex, get_pcvar_num(pcvarSpeed), weapons);
-	}
-
-	gHeroMaxSpeed[heroIndex] = pcvarSpeed; // pCVAR expected!
-	copy(gHeroSpeedWeapons[heroIndex], charsmax(gHeroSpeedWeapons[]), pWeapons); // Array expected!
 }
 //----------------------------------------------------------------------------------------------
 //native sh_set_hero_grav(heroID, pcvarGravity, const weapons[] = {0}, numofwpns = 1)
@@ -1488,45 +1451,6 @@ initHero(id, heroIndex, mode)
 
 	gHeroMinGravity[heroIndex] = pcvarGravity; // pCVAR expected!
 	//copy(gHeroGravityWeapons[heroIndex], charsmax(gHeroGravityWeapons[]), pWeapons) // Array expected!
-}
-//----------------------------------------------------------------------------------------------
-Float:getMaxSpeed(id, weapon)
-{
-	static Float:returnSpeed, Float:heroSpeed, x, i;
-	static playerPowerCount, heroIndex, heroWeapon, heroSpeedPointer;
-	returnSpeed = -1.0;
-	playerPowerCount = getPowerCount(id);
-
-	for (x = 1; x <= playerPowerCount; x++) {
-		heroIndex = gPlayerPowers[id][x];
-		
-		if (-1 < heroIndex < gSuperHeroCount) {
-			heroSpeedPointer = gHeroMaxSpeed[heroIndex];
-			if (!heroSpeedPointer)
-				continue;
-			
-			heroSpeed = get_pcvar_float(heroSpeedPointer);
-			if (heroSpeed > 0.0) {
-				for (i = 0; i < 31; i++) {
-					heroWeapon = gHeroSpeedWeapons[heroIndex][i];
-
-					//Stop checking, end of list
-					if (i != 0 && heroWeapon == 0)
-						break;
-
-					debugMsg(id, 5, "Looking for Speed Functions - %s, %d, %d", gSuperHeros[heroIndex][hero], heroWeapon, weapon);
-
-					//if 0 or current weapon check max
-					if (heroWeapon == 0 || heroWeapon == weapon) {
-						returnSpeed = floatmax(returnSpeed, heroSpeed);
-						break;
-					}
-				}
-			}
-		}
-	}
-
-	return returnSpeed;
 }
 //----------------------------------------------------------------------------------------------
 Float:getMinGravity(id)
@@ -1906,14 +1830,9 @@ public ham_PlayerSpawn_Post(id)
 	//It is up to the hero to set the variable back to false
 	remove_task(id + SH_COOLDOWN_TASKID, 1); // 1 = look outside this plugin
 
-	//Sets the stun and god timers back to normal
-	gPlayerStunTimer[id] = -1;
+	//Sets the god timer back to normal
 	gPlayerGodTimer[id] = -1;
 	set_user_godmode(id, 0);
-
-	//These must be checked here to set the max variables correctly
-	sh_update_max_hp(id);
-	sh_update_max_ap(id);
 
 	//Prevents this whole function from being called if its not a new round
 	if (!gNewRoundSpawn[id]) {
@@ -1924,9 +1843,6 @@ public ham_PlayerSpawn_Post(id)
 
 		return HAM_IGNORED;
 	}
-
-	if (!gBetweenRounds)
-		setSpeedPowers(id, false);
 
 	// Read the XP!
 	if (gFirstRound[id])
@@ -1972,11 +1888,6 @@ public ham_PlayerSpawn_Post(id)
 
 	//Prevents People from going invisible randomly
 	set_user_rendering(id);
-
-	//Makes armor system more reliable, also forces armor to reset if survived round
-	//Note: might need to call this after forward is sent
-	if (sh_update_max_ap(id) != 0 && !(id == sh_get_vip_id() && (sh_vip_flags() & VIP_BLOCK_ARMOR)))
-		cs_set_user_armor(id, 0, CS_ARMOR_NONE);
 
 	//Let heroes know someone just spawned from a new round
 	ExecuteForward(fwd_Spawn, fwdReturn, id, 1);
@@ -2111,7 +2022,7 @@ public powerKeyDown(id)
 	}
 
 	// Make sure player isn't stunned
-	if (gPlayerStunTimer[id] > 0) {
+	if (sh_get_stun(id)) {
 		sh_sound_deny(id);
 		return PLUGIN_HANDLED;
 	}
@@ -2153,7 +2064,7 @@ public powerKeyUp(id)
 		return PLUGIN_HANDLED;
 
 	// Make sure player isn't stunned (unless they were in keydown when stunned)
-	if (gPlayerStunTimer[id] > 0 && !gInPowerDown[id][whichKey])
+	if (sh_get_stun(id) && !gInPowerDown[id][whichKey])
 		return PLUGIN_HANDLED;
 
 	//Set this key as NOT in use anymore
@@ -2175,165 +2086,12 @@ public powerKeyUp(id)
 	return PLUGIN_HANDLED;
 }
 //----------------------------------------------------------------------------------------------
-@Forward_CS_Item_GetMaxSpeed_Pre(weapon, Float:newSpeed)
-{
-	if (!CvarSuperHeros)
-		return HAM_IGNORED;
-
-	static owner;
-	owner = pev(weapon, pev_owner);
-
-	if (!is_user_alive(owner) || gRoundFreeze || gReadXPNextRound[owner])
-		return HAM_IGNORED;
-
-	if (gPlayerStunTimer[owner] > 0) {
-		static Float:stunSpeed;
-		stunSpeed = gPlayerStunSpeed[owner];
-
-		SetHamReturnFloat(stunSpeed);
-		debugMsg(owner, 5, "Setting Stun Speed To %f", stunSpeed);
-		return HAM_SUPERCEDE;
-	}
-
-	if (owner == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_SPEED)
-		return HAM_IGNORED;
-
-	if (cs_get_user_zoom(owner) != CS_SET_NO_ZOOM)
-		return HAM_IGNORED;
-
-	static Float:heroSpeed;
-	heroSpeed = getMaxSpeed(owner, cs_get_weapon_id(weapon));
-
-	debugMsg(owner, 10, "Checking Speeds - New: %f - Hero: %f", newSpeed, heroSpeed);
-
-	if (heroSpeed == newSpeed || heroSpeed == -1.0)
-		return HAM_IGNORED;
-
-	SetHamReturnFloat(heroSpeed);
-	debugMsg(owner, 5, "Setting Speed To %f", heroSpeed);
-	return HAM_SUPERCEDE;
-}
-//----------------------------------------------------------------------------------------------
 public setPowers(id)
 {
 	if (!is_user_alive(id))
 		return;
 
-	setSpeedPowers(id, false);
-	setArmorPowers(id);
 	setGravityPowers(id);
-	setHealthPowers(id);
-}
-//----------------------------------------------------------------------------------------------
-//native sh_reset_max_speed(id)
-@Native_ResetMaxSpeed()
-{
-	if (!CvarSuperHeros)
-		return;
-
-	new id = get_param(1);
-
-	if (!is_user_alive(id))
-		return;
-
-	setSpeedPowers(id, true);
-}
-//----------------------------------------------------------------------------------------------
-setSpeedPowers(id, bool:checkDefault)
-{
-	if (!CvarSuperHeros)
-		return;
-
-	if (!is_user_alive(id) || gRoundFreeze || gReadXPNextRound[id])
-		return;
-
-	if (gPlayerStunTimer[id] > 0) {
-		new Float:stunSpeed = gPlayerStunSpeed[id];
-		set_user_maxspeed(id, stunSpeed);
-
-		debugMsg(id, 5, "Setting Stun Speed To %f", stunSpeed);
-		return;
-	}
-
-	new weapon = cs_get_user_weapon(id);
-	new Float:oldSpeed = get_user_maxspeed(id);
-	new Float:newSpeed;
-
-	if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_SPEED) {
-		newSpeed = 227.0;
-	} else if (cs_get_user_zoom(id) != CS_SET_NO_ZOOM) {
-		switch (weapon) {
-			// If weapon is a zoomed sniper rifle set default speeds
-			case CSW_SCOUT, CSW_SG550, CSW_AWP, CSW_G3SG1: newSpeed = sh_get_weapon_speed(weapon, true);
-		}
-	} else {
-		newSpeed = getMaxSpeed(id, weapon);
-	}
-
-	debugMsg(id, 10, "Checking Speeds - Old: %f - New: %f", oldSpeed, newSpeed);
-
-	// OK SET THE SPEED
-	if (newSpeed != oldSpeed) {
-		switch (newSpeed) {
-			case -1.0: {
-				if (checkDefault) {
-					if (id == sh_get_vip_id())
-						//Still need to check this because vip speed may not be blocked
-						//and user may not have a hero with current weapon speed 
-						set_user_maxspeed(id, 227.0);
-					else
-						// Set default weapon speed
-						// Do not need to check for scoped sniper rifles as getMaxSpeed will
-						// return that value since heroes can not effect scoped sniper rifles.
-						set_user_maxspeed(id, sh_get_weapon_speed(weapon));
-				}
-			}
-			default: {
-				set_user_maxspeed(id, newSpeed);
-				debugMsg(id, 5, "Setting Speed To %f", newSpeed);
-			}
-		}
-	}
-}
-//----------------------------------------------------------------------------------------------
-setHealthPowers(id)
-{
-	if (!CvarSuperHeros)
-		return;
-	
-	if (!is_user_alive(id) || gReadXPNextRound[id])
-		return;
-
-	new oldHealth = get_user_health(id);
-	new newHealth = sh_update_max_hp(id);
-
-	// Can't get health in the middle of a round UNLESS you didn't get shot...
-	if (oldHealth < newHealth && oldHealth >= 100) {
-		debugMsg(id, 5, "Setting Health to %d", newHealth);
-		set_user_health(id, newHealth);
-	}
-}
-//----------------------------------------------------------------------------------------------
-setArmorPowers(id)
-{
-	if (!CvarSuperHeros)
-		return;
-
-	if (!is_user_alive(id) || gReadXPNextRound[id])
-		return;
-
-	new CsArmorType:armorType;
-	new oldArmor = cs_get_user_armor(id, armorType);
-	new newArmor = sh_update_max_ap(id);
-
-	// Little check for armor system
-	if (oldArmor != 0 || oldArmor >= newArmor)
-		return;
-
-	// Set the armor to the correct value
-	cs_set_user_armor(id, newArmor, CS_ARMOR_VESTHELM);
-
-	debugMsg(id, 5, "Setting Armor to %d", newArmor);
 }
 //----------------------------------------------------------------------------------------------
 //native sh_reset_min_gravity(id)
@@ -2996,18 +2754,6 @@ timerAll()
 	for (id = 1; id <= MaxClients; id++) {
 		if (is_user_alive(id)) {
 			// Switches are faster but we don't want to do anything with -1
-			switch (gPlayerStunTimer[id]) {
-				case -1: { /*Do nothing*/ }
-				case 0: {
-					gPlayerStunTimer[id] = -1;
-					setSpeedPowers(id, true);
-				}
-				default: {
-					gPlayerStunTimer[id]--;
-					gPlayerStunSpeed[id] = get_user_maxspeed(id); //is this really needed?
-				}
-			}
-
 			switch (gPlayerGodTimer[id]) {
 				case -1: { /*Do nothing*/ }
 				case 0: {
@@ -3020,46 +2766,9 @@ timerAll()
 				}
 			}
 		} else {
-			gPlayerStunTimer[id] = -1;
 			gPlayerGodTimer[id] = -1;
 		}
 	}
-}
-//----------------------------------------------------------------------------------------------
-//native sh_set_stun(id, Float:howLong, Float:speed = 0.0)
-@Native_SetStun()
-{
-	if (!CvarSuperHeros)
-		return;
-
-	new id = get_param(1);
-
-	if (!is_user_alive(id))
-		return;
-
-	new Float:howLong = get_param_f(2);
-
-	if (howLong > gPlayerStunTimer[id]) {
-		new Float:speed = get_param_f(3);
-		debugMsg(id, 5, "Stunning for %f seconds at %f speed", howLong, speed);
-		gPlayerStunTimer[id] = floatround(howLong);
-		gPlayerStunSpeed[id] = speed;
-		set_user_maxspeed(id, speed);
-	}
-}
-//----------------------------------------------------------------------------------------------
-//native sh_get_stun(id)
-@Native_GetStun()
-{
-	if (!CvarSuperHeros)
-		return 0;
-
-	new id = get_param(1);
-
-	if (!is_user_alive(id))
-		return 0;
-
-	return gPlayerStunTimer[id] > 0 ? 1 : 0;
 }
 //----------------------------------------------------------------------------------------------
 //native sh_set_godmode(id, Float:howLong)
@@ -4200,7 +3909,6 @@ initPlayer(id)
 	gPlayerXP[id] = 0;
 	gPlayerPowers[id][0] = 0;
 	gPlayerBinds[id][0] = 0;
-	gPlayerStunTimer[id] = -1;
 	gPlayerGodTimer[id] = -1;
 	setLevel(id, 0);
 	gPlayerFlags[id] = SH_FLAG_HUDHELP;

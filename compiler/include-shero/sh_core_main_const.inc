@@ -1,10 +1,10 @@
 // SuperHero Constants Include File
 // Version 1.3.0
 
-#if defined _sheroconst_included
+#if defined _sh_core_main_const_included
   #endinput
 #endif
-#define _sheroconst_included
+#define _sh_core_main_const_included
 
 //----------------------------------------------------------------------------------------------
 // Changeable DEFINE Settings, must recompile SuperHero plugins if changed
@@ -24,7 +24,6 @@
 //----------------------------------------------------------------------------------------------
 
 #define SH_VERSION		1.30
-stock const SH_LIBRARY_STR[] =	"SuperHero Core";
 stock const SH_VERSION_STR[] =	"1.3.0.0";
 stock const SH_AUTHOR_STR[] =	"JTP10181/{HOJ}Batman/vittu/AssKicR/Sycri";
 
@@ -170,39 +169,4 @@ stock gWeaponSlot[] = {
 	1,	//CSW_AK47
 	3,	//CSW_KNIFE
 	1	//CSW_P90
-};
-// usage: check sh_get_weapon_speed stock in superheromod.inc
-// Thanks WC3:FT for weapon speeds so I didn't have to check them
-stock Float:gWeaponSpeed[] = {
-	0.0,
-	250.0,	// CSW_P228
-	0.0,
-	260.0,	// CSW_SCOUT
-	250.0,	// CSW_HEGRENADE
-	240.0,	// CSW_XM1014
-	250.0,	// CSW_C4
-	250.0,	// CSW_MAC10
-	240.0,	// CSW_AUG
-	250.0,	// CSW_SMOKEGRENADE
-	250.0,	// CSW_ELITE
-	250.0,	// CSW_FIVESEVEN
-	250.0,	// CSW_UMP45
-	210.0,	// CSW_SG550
-	240.0,	// CSW_GALI
-	240.0,	// CSW_FAMAS
-	250.0,	// CSW_USP
-	250.0,	// CSW_GLOCK18
-	210.0,	// CSW_AWP
-	250.0,	// CSW_MP5NAVY
-	220.0,	// CSW_M249
-	230.0,	// CSW_M3
-	230.0,	// CSW_M4A1
-	250.0,	// CSW_TMP
-	210.0,	// CSW_G3SG1
-	250.0,	// CSW_FLASHBANG
-	250.0,	// CSW_DEAGLE
-	235.0,	// CSW_SG552
-	221.0,	// CSW_AK47
-	250.0,	// CSW_KNIFE
-	245.0	// CSW_P90
 };

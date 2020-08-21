@@ -9,6 +9,10 @@
   #pragma loadlib sh_core_hpap
 #endif
 
+#include <amxmodx>
+#include <fun>
+#include <cstrike>
+
 /**************************
  *        NATIVES         *
  **************************/
@@ -29,22 +33,6 @@ native sh_get_max_hp(id);
  */
 native sh_get_max_ap(id);
 
-/**
- * Updates the client's max health internally based on the heroes client has.
- *
- * @param id		The index of the client.
- * @return		The max hero HP of the client, else 0 if invalid client.
- */
-native sh_update_max_hp(id);
-
-/**
- * Updates the client's max health internally based on the heroes client has.
- *
- * @param id		The index of the client.
- * @return		The max hero AP of the client, else 0 if invalid client.
- */
-native sh_update_max_ap(id);
-
 //------------
 // Hero Creation/Property Natives
 //------------
@@ -62,3 +50,68 @@ native sh_update_max_ap(id);
  * @noreturn
  */
 native sh_set_hero_hpap(heroID, pcvarHealth = 0, pcvarArmor = 0);
+
+/**************************
+ *         STOCKS         *
+ **************************/
+
+/**
+ * Add to client's current health, up to a max limit.
+ *
+ * @param id		The index of the client.
+ * @param hitPoints	The amount of health to add.
+ * @param maxHealth	The maxium possible health to add up to, set 0 to use max from client's heroes.
+ * @return		The amount of health added, 0 on failure.
+ */
+stock sh_add_hp(id, hitPoints, maxHealth = 0)
+{
+	if (hitPoints == 0)
+		return 0;
+
+	if (maxHealth == 0)
+		maxHealth = sh_get_max_hp(id);
+
+	new currentHealth = get_user_health(id);
+
+	if (currentHealth < maxHealth) {
+		new newHealth = min((currentHealth + hitPoints), maxHealth);
+		set_user_health(id, newHealth);
+		return newHealth - currentHealth;
+	}
+
+	return 0;
+}
+
+/**
+ * Add to client's current armor, up to a max limit.
+ *
+ * @note	Armor power does not set til approx 0.6 seconds after spawn,
+ *			do not regen armor during that time to allow sh to properly set AP.
+ *
+ * @param id		The index of the client.
+ * @param armorPoints	The amount of armor to add.
+ * @param maxArmor	The maxium possible armor to add up to, set 0 to use max from client's heroes.
+ * @return		The amount of health added, 0 on failure.
+ */
+stock sh_add_ap(id, armorPoints, maxArmor = 0)
+{
+	if (armorPoints == 0)
+		return 0;
+
+	if (maxArmor == 0)
+		maxArmor = sh_get_max_ap(id);
+
+	new CsArmorType:armorType;
+	new currentArmor = cs_get_user_armor(id, armorType);
+
+	if (currentArmor < maxArmor) {
+		if (!currentArmor)
+			armorType = CS_ARMOR_VESTHELM;
+
+		new newArmor = min((currentArmor + armorPoints), maxArmor);
+		cs_set_user_armor(id, newArmor, armorType);
+		return newArmor - currentArmor;
+	}
+
+	return 0;
+}

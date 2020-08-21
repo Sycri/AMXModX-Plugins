@@ -4,8 +4,12 @@
 *
 *****************************************************************************/
 
-#include <superheromod>
+#include <amxmodx>
 #include <amxmisc>
+#include <fakemeta>
+#include <csx>
+#include <cstrike>
+#include <sh_core_main>
 
 #pragma semicolon 1
 

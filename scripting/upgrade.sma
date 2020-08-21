@@ -131,6 +131,7 @@ public plugin_init()
 	
 	RegisterHamPlayer(Ham_Killed, "@Forward_PlayerKilled_Post", 1);
 	RegisterHamPlayer(Ham_Spawn, "@Forward_PlayerSpawn_Post", 1);
+	RegisterHamPlayer(Ham_AddPlayerItem, "@Forward_AddPlayerItem_Post", 1);
 
 	new weaponName[32];
 	for (new id = CSW_P228; id <= CSW_P90; id++) {
@@ -243,6 +244,18 @@ public client_disconnected(id)
 	return HAM_IGNORED;
 }
 
+@Forward_AddPlayerItem_Post(id)
+{
+	if (!is_user_alive(id) || !gHasUpgrade[id])
+		return HAM_IGNORED;
+
+	if (gIsFreezetime || cs_get_user_zoom(id) != CS_SET_NO_ZOOM)
+		return HAM_IGNORED;
+
+	set_user_maxspeed(id, CvarSpeed);
+	return HAM_IGNORED;
+}
+
 @Forward_CS_Item_GetMaxSpeed_Pre(weapon)
 {
 	static owner;
@@ -251,7 +264,7 @@ public client_disconnected(id)
 	if (!is_user_alive(owner) || !gHasUpgrade[owner])
 		return HAM_IGNORED;
 
-	if (gIsFreezetime || cs_get_user_zoom(owner) != CS_SET_NO_ZOOM)
+	if (cs_get_user_zoom(owner) != CS_SET_NO_ZOOM)
 		return HAM_IGNORED;
 
 	SetHamReturnFloat(CvarSpeed);

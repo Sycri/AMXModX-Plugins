@@ -4,7 +4,10 @@
 *
 *****************************************************************************/
 
-#include <superheromod>
+#include <amxmodx>
+#include <cstrike>
+#include <hamsandwich>
+#include <sh_core_main>
 
 #pragma semicolon 1
 

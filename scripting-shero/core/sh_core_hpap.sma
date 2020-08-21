@@ -4,7 +4,11 @@
 *
 *****************************************************************************/
 
-#include <superheromod>
+#include <amxmodx>
+#include <fakemeta>
+#include <fun>
+#include <cstrike>
+#include <sh_core_main>
 #include <sh_core_objectives>
 
 #pragma semicolon 1
@@ -33,8 +37,6 @@ public plugin_natives()
     register_native("sh_set_hero_hpap", "@Native_SetHeroHpAp");
     register_native("sh_get_max_ap", "@Native_GetMaxAP");
     register_native("sh_get_max_hp", "@Native_GetMaxHP");
-    register_native("sh_update_max_ap", "@Native_UpdateMaxAP");
-    register_native("sh_update_max_hp", "@Native_UpdateMaxHP");
 }
 //----------------------------------------------------------------------------------------------
 public plugin_cfg()
@@ -42,36 +44,49 @@ public plugin_cfg()
     gSuperHeroCount = sh_get_num_heroes();
 }
 //----------------------------------------------------------------------------------------------
-public client_disconnected(id)
-{
-
-}
-//----------------------------------------------------------------------------------------------
 public sh_hero_init(id, heroID, mode)
 {
-	if (mode == SH_HERO_DROP && is_user_alive(id)) {
-		//reset all values
-		if (gHeroMaxHealth[heroID] != 0) {
-			new newHealth = getMaxHealth(id);
+	if (!is_user_alive(id))
+		return;
 
-			if (get_user_health(id) > newHealth) {
-				// Assume some damage for doing this?
-				// Don't want players picking Superman let's say then removing his power - and trying to keep the HPs
-				// If they do that - feel free to lose some hps
-				// Also - Superman starts with around 150 Person could take some damage (i.e. reduced to 110 )
-				// but then clear powers and start at 100 - like 40 free hps for doing that, trying to avoid exploits
-				set_user_health(id, newHealth - (newHealth / 4));
+	switch (mode) {
+		case SH_HERO_ADD: {
+			if (gHeroMaxHealth[heroID] != 0)
+				setHealthPowers(id);
+
+			if (gHeroMaxArmor[heroID] != 0)
+				setArmorPowers(id, false);
+		}
+		case SH_HERO_DROP: {
+			if (gHeroMaxHealth[heroID] != 0) {
+				new newHealth = getMaxHealth(id);
+
+				if (get_user_health(id) > newHealth) {
+					// Assume some damage for doing this?
+					// Don't want players picking Superman let's say then removing his power - and trying to keep the HPs
+					// If they do that - feel free to lose some hps
+					// Also - Superman starts with around 150 Person could take some damage (i.e. reduced to 110 )
+					// but then clear powers and start at 100 - like 40 free hps for doing that, trying to avoid exploits
+					set_user_health(id, newHealth - (newHealth / 4));
+				}
+			}
+
+			if (gHeroMaxArmor[heroID] != 0) {
+				new newArmor = getMaxArmor(id);
+				new CsArmorType:armorType;
+
+				if (cs_get_user_armor(id, armorType) > newArmor)
+					// Remove Armor for doing this
+					cs_set_user_armor(id, newArmor, armorType);
 			}
 		}
-
-		if (gHeroMaxArmor[heroID] != 0) {
-			new newArmor = getMaxArmor(id);
-			new CsArmorType:armorType;
-			if (cs_get_user_armor(id, armorType) > newArmor)
-				// Remove Armor for doing this
-				cs_set_user_armor(id, newArmor, armorType);
-		}
 	}
+}
+//----------------------------------------------------------------------------------------------
+public sh_client_spawn(id)
+{
+	setHealthPowers(id);
+	setArmorPowers(id, true);
 }
 //----------------------------------------------------------------------------------------------
 //native sh_set_hero_hpap(heroID, pcvarHealth = 0, pcvarArmor = 0)
@@ -119,30 +134,6 @@ public sh_hero_init(id, heroID, mode)
 	return gMaxHealth[id];
 }
 //----------------------------------------------------------------------------------------------
-//native sh_update_max_ap(id)
-@Native_UpdateMaxAP()
-{
-	new id = get_param(1);
-
-	//stupid check - but checking prevents crashes
-	if (id < 1 || id > MaxClients)
-		return 0;
-
-	return getMaxArmor(id);
-}
-//----------------------------------------------------------------------------------------------
-//native sh_update_max_hp(id)
-@Native_UpdateMaxHP()
-{
-	new id = get_param(1);
-
-	//stupid check - but checking prevents crashes
-	if (id < 1 || id > MaxClients)
-		return 0;
-
-	return getMaxHealth(id);
-}
-//----------------------------------------------------------------------------------------------
 @Message_Health(msgid, dest, id)
 {
 	// Run even when mod is off, not a big deal
@@ -157,6 +148,46 @@ public sh_hero_init(id, heroID, mode)
 		set_msg_arg_int(1, ARG_BYTE, ++hp);
 }
 //----------------------------------------------------------------------------------------------
+setArmorPowers(id, bool:resetArmor)
+{
+	if (!sh_is_active())
+		return;
+
+	if (!sh_user_is_loaded(id))
+		return;
+
+	new oldArmor = cs_get_user_armor(id);
+	new newArmor = getMaxArmor(id);
+
+	// Little check for armor system
+	if ((oldArmor != 0 || oldArmor >= newArmor) && !resetArmor)
+		return;
+
+	// Set the armor to the correct value
+	cs_set_user_armor(id, newArmor, CS_ARMOR_VESTHELM);
+
+	sh_debug_message(id, 5, "Setting Armor to %d", newArmor);
+}
+//----------------------------------------------------------------------------------------------
+setHealthPowers(id)
+{
+	if (!sh_is_active())
+		return;
+	
+	if (!sh_user_is_loaded(id))
+		return;
+
+	new oldHealth = get_user_health(id);
+	new newHealth = getMaxHealth(id);
+
+	// Can't get health in the middle of a round UNLESS you didn't get shot...
+	if (oldHealth < newHealth && oldHealth >= 100) {
+		set_user_health(id, newHealth);
+
+		sh_debug_message(id, 5, "Setting Health to %d", newHealth);
+	}
+}
+//----------------------------------------------------------------------------------------------
 getMaxArmor(id)
 {
     if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_ARMOR)
@@ -168,6 +199,7 @@ getMaxArmor(id)
     
     for (x = 1; x <= playerPowerCount; x++) {
         heroIndex = sh_get_user_hero(id, x);
+
         if (-1 < heroIndex < gSuperHeroCount) {
             heroArmor = gHeroMaxArmor[heroIndex];
             if (!heroArmor)
@@ -191,7 +223,7 @@ getMaxHealth(id)
 
         for (x = 1; x <= playerPowerCount; x++) {
             heroIndex = sh_get_user_hero(id, x);
-			// Test crash gaurd
+			
             if (-1 < heroIndex < gSuperHeroCount) {
                 heroHealth = gHeroMaxHealth[heroIndex];
                 if (!heroHealth)
