@@ -20,6 +20,11 @@
 #include <cstrike>
 #include <superheroconst>
 
+//Backwards compatibility
+#include <sh_core_objectives>
+#include <sh_core_hpap>
+#include <sh_core_shieldrestrict>
+
 //----------------------------------------------------------------------------------------------
 // IMPORTANT FUNCTIONS - WHAT EVENTS CAN THE SUPERHEROES REGISTER FOR?
 //----------------------------------------------------------------------------------------------
@@ -116,6 +121,15 @@ native bool:sh_is_inround();
 native bool:sh_is_freezetime();
 
 /**
+ * Returns server's registered hero count.
+ *
+ * @note		The earliest this is guaranteed to be accurate is during plugin_cfg().
+ *
+ * @return		The number of registered heroes on the server.
+ */
+native sh_get_num_heroes();
+
+/**
  * Returns server's max level.
  *
  * @note		The earliest this is guaranteed to be accurate is during plugin_cfg(). It needs
@@ -134,6 +148,15 @@ native sh_get_num_lvls();
 native sh_get_lvl_xp(level);
 
 /**
+ * Gets hero's index from the client's power slot.
+ *
+ * @param id		The index of the client.
+ * @param powerID	The index of the power.
+ * @return		The hero's index, else -1 if not a valid client id or power id.
+ */
+native sh_get_user_hero(id, powerID);
+
+/**
  * Gets the client's current level.
  *
  * @param id		The index of the client.
@@ -149,6 +172,14 @@ native sh_get_user_lvl(id);
  * @return		The level set on the client, else -1 if not a valid level.
  */
 native sh_set_user_lvl(id, level);
+
+/**
+ * Returns the client's power count.
+ *
+ * @param id		The index of the client.
+ * @return		The current amount of powers of the client, else -1 if not a valid id.
+ */
+native sh_get_user_powers(id);
 
 /**
  * Gets the client's current XP.
@@ -178,22 +209,6 @@ native sh_set_user_xp(id, xp, bool:addtoxp = false);
  * @noreturn
  */
 native sh_add_kill_xp(id, victim, Float:multiplier = 1.0);
-
-/**
- * Gets the client's max Health based on heroes client has.
- *
- * @param id		The index of the client.
- * @return		The max hero HP of the client, else 0 if invalid client.
- */
-native sh_get_max_hp(id);
-
-/**
- * Gets the client's max SuperHero Armor.
- *
- * @param id		The index of the client.
- * @return		The max hero AP of the client, else 0 if invalid client.
- */
-native sh_get_max_ap(id);
 
 //------------
 // Hero Creation/Property Natives
@@ -229,30 +244,6 @@ native sh_set_hero_info(heroID, const powerInfo[] = "", const powerHelp[] = "");
  * @noreturn
  */
 native sh_set_hero_bind(heroID);
-
-/**
- * Sets hero's shield restriction status. (Optional)
- *
- * @note		Set this on heroes that give weapons to avoid invisible shield bug.
- *
- * @param heroID	The index of the hero.
- * @param restricted	Set true to restict hero from allowing shield use, otherwise false.
- * @noreturn
- */
-native sh_set_hero_shield(heroID, bool:restricted = false);
-
-/**
- * Sets hero's max Health and Armor. (Optional)
- * Health and Armor do not stack, values from heroes are compared and greatest is applied.
- *
- * @note		If you only want to set one of the values, set the other to 0 or underscore "_" to use the default set value of 0.
- *
- * @param heroID	The index of the hero.
- * @param pcvarHealth	The pcvar value for maximum Health CVAR for the hero, CVAR values below 100 are ignored.
- * @param pcvarArmor	The pcvar value for maximum Armor CVAR for the hero.
- * @noreturn
- */
-native sh_set_hero_hpap(heroID, pcvarHealth = 0, pcvarArmor = 0);
 
 /**
  * Sets hero's max speed dependent on currently held weapon. (Optional)
@@ -737,31 +728,6 @@ stock sh_add_ap(id, armorPoints, maxArmor = 0)
 	}
 
 	return 0;
-}
-
-/**
- * Returns server flags for sh_blockvip cvar, can be used in heroes for custom VIP blocks.
- * (see superheroconst.inc for flag types)
- *
- * @note	You are still responsible to check if user is vip, use cs_get_user_vip(id).
- * 			example usage: if(cs_get_user_vip(id) && sh_vip_flags()&VIP_BLOCK_CUSTOM) {//do something}
- *
- * @return	The flags currently set.
- */
-stock sh_vip_flags()
-{
-	static sh_blockvip;
-
-	if (!sh_blockvip)
-		sh_blockvip = get_cvar_pointer("sh_blockvip");
-
-	if (!sh_blockvip)
-		return 0;
-
-	static temp[9];
-	get_pcvar_string(sh_blockvip, temp, charsmax(temp));
-
-	return read_flags(temp);
 }
 
 /**

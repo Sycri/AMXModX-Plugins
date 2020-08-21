@@ -73,6 +73,7 @@
 *	- Replaced register_cvar with create_cvar
 *	- Replaced variable gServersMaxPlayers with MaxClients which is available in AMX Mod X since version 1.8.3
 *	- Rewrote parts of the SuperHero Core and included heroes
+*	- Separated SuperHero Core into multiple plugins
 *
 *  v1.2.1 - vittu - ??/??/??
 *	- 
@@ -403,10 +404,12 @@
 #include <amxmodx>
 #include <amxmisc>
 #include <superheromod>
+#include <sh_core_objectives>
+#include <sh_core_hpap>
 
 #pragma semicolon 1
 
-new const SH_CORE_STR[] =  "SuperHero Core";
+new const SH_PLUGIN_STR[] = "[SH] Core: Main";
 
 // Parms Are: Hero, Power Description, Help Info, Needs A Bind?, Level Available At
 enum enumHeros { hero[25], superpower[50], help[128], requiresKeys, availableLevel };
@@ -418,10 +421,7 @@ new gSuperHeroCount = 0;
 // Changed these from CVARS to straight numbers...
 new gHeroMaxSpeed[SH_MAXHEROS];
 new gHeroSpeedWeapons[SH_MAXHEROS][31]; // array weapons of weapon's i.e. {4,30} Note:{0}=all
-new gHeroMaxHealth[SH_MAXHEROS];
 new gHeroMinGravity[SH_MAXHEROS];
-new gHeroMaxArmor[SH_MAXHEROS];
-new bool:gHeroShieldRest[SH_MAXHEROS];
 new gHeroLevelCVAR[SH_MAXHEROS];
 new gHeroMaxDamageMult[SH_MAXHEROS][31];
 
@@ -446,15 +446,11 @@ new bool:gIsPowerBanned[MAX_PLAYERS + 1];
 new bool:gInMenu[MAX_PLAYERS + 1];
 new bool:gReadXPNextRound[MAX_PLAYERS + 1];
 new bool:gFirstRound[MAX_PLAYERS + 1];
-new bool:gShieldRestrict[MAX_PLAYERS + 1];
 new bool:gBlockMercyXp[MAX_PLAYERS + 1];
 new Float:gReloadTime[MAX_PLAYERS + 1];
 new gInPowerDown[MAX_PLAYERS + 1][SH_MAXBINDPOWERS + 1];
 new bool:gChangedHeroes[MAX_PLAYERS + 1];
-new gMaxHealth[MAX_PLAYERS + 1];
-new gMaxArmor[MAX_PLAYERS + 1];
 new bool:gPlayerPutInServer[MAX_PLAYERS + 1];
-new gXpBonusVIP;
 //new Float:gLastKeydown[MAX_PLAYERS + 1]
 
 // Other miscellaneous global variables
@@ -466,8 +462,6 @@ new bool:gBetweenRounds;
 new bool:gGiveMercyXP = true;
 new gNumLevels = 0;
 new gMenuID = 0;
-new gNumHostages = 0;
-new gXpBonusC4ID = -1;
 new gHelpHudSync, gHeroHudSync;
 new bool:gMapBlockWeapons[31]; //1-30 CSW_ constants
 new bool:gXrtaDmgClientKill;
@@ -488,10 +482,10 @@ new gMemoryTablePowers[gMemoryTableSize][SH_MAXLEVELS + 1];	// 0=# of powers, 1=
 new gSHConfigDir[128], gBanFile[128], gSHConfig[128], gHelpMotd[128];
 
 //CVARs Bound To Variables
-new CvarSuperHeros, CvarAliveDrop, CvarAutoBalance, CvarObjectiveXP, CvarCmdProjector;
+new CvarSuperHeros, CvarAliveDrop, CvarAutoBalance, CvarCmdProjector;
 new CvarDebugMessages, CvarEndRoundSave, Float:CvarHSMult, CvarLoadImmediate, CvarLvlLimit;
 new CvarMaxBinds, CvarMaxPowers, CvarMenuMode, CvarMercyXPMode, CvarSaveXP;
-new CvarSaveBy, CvarXPSaveDays, CvarMinPlayersXP, CvarReloadMode, CvarBlockVIP[8], CvarFreeForAll;
+new CvarSaveBy, CvarXPSaveDays, CvarMinPlayersXP, CvarReloadMode, CvarFreeForAll;
 new CvarFriendlyFire, CvarLan;
 
 //PCVARs
@@ -525,11 +519,11 @@ new const gSoundLevel[] = "plats/elevbell1.wav";
 public plugin_init()
 {
 	// Check to make sure this plugin isn't loaded already
-	if (is_plugin_loaded(SH_CORE_STR) > 0)
+	if (is_plugin_loaded(SH_PLUGIN_STR) > 0)
 		set_fail_state("You can only load the ^"SuperHero Core^" once, please check your plugins-shero.ini");
 
 	// Plugin Info
-	register_plugin(SH_CORE_STR, SH_VERSION_STR, "JTP10181/{HOJ}Batman/vittu/AssKicR");
+	register_plugin(SH_PLUGIN_STR, SH_VERSION_STR, SH_AUTHOR_STR);
 	register_cvar("SuperHeroMod_Version", SH_VERSION_STR, FCVAR_SERVER | FCVAR_SPONLY);
 	set_cvar_string("SuperHeroMod_Version", SH_VERSION_STR); // Update incase new version loaded while still running
 
@@ -545,7 +539,6 @@ public plugin_init()
 	bind_pcvar_num(create_cvar("sv_superheros", "1"), CvarSuperHeros);
 	bind_pcvar_num(create_cvar("sh_alivedrop", "0"), CvarAliveDrop);
 	bind_pcvar_num(create_cvar("sh_autobalance", "0"), CvarAutoBalance);
-	bind_pcvar_num(create_cvar("sh_objectivexp", "8", .has_min = true, .min_val = 0.0), CvarObjectiveXP);
 	bind_pcvar_num(create_cvar("sh_cmdprojector", "1"), CvarCmdProjector);
 	bind_pcvar_num(create_cvar("sh_endroundsave", "1"), CvarEndRoundSave);
 	bind_pcvar_float(create_cvar("sh_hsmult", "1.0", .has_min = true, .min_val = 1.0), CvarHSMult);
@@ -561,8 +554,10 @@ public plugin_init()
 	bind_pcvar_num(create_cvar("sh_saveby", "1"), CvarSaveBy);
 	bind_pcvar_num(create_cvar("sh_xpsavedays", "14", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 365.0), CvarXPSaveDays);
 	bind_pcvar_num(create_cvar("sh_reloadmode", "1"), CvarReloadMode);
-	bind_pcvar_num(create_cvar("sh_minplayersxp", "2"), CvarMinPlayersXP);
-	bind_pcvar_string(create_cvar("sh_blockvip", "abcdef"), CvarBlockVIP, charsmax(CvarBlockVIP));
+	if (cvar_exists("sh_minplayersxp"))
+        bind_pcvar_num(get_cvar_pointer("sh_minplayersxp"), CvarMinPlayersXP);
+	else
+        bind_pcvar_num(create_cvar("sh_minplayersxp", "2"), CvarMinPlayersXP);
 	bind_pcvar_num(create_cvar("sh_ffa", "0"), CvarFreeForAll);
 
 	// Server cvars checked by core
@@ -592,14 +587,6 @@ public plugin_init()
 	register_logevent("round_Start", 2, "1=Round_Start");
 	register_logevent("round_End", 2, "1=Round_End");
 	register_logevent("round_Restart", 2, "1&Restart_Round_");
-	register_logevent("bomb_HolderSpawned", 3, "2=Spawned_With_The_Bomb");
-	register_logevent("host_Killed", 3, "2=Killed_A_Hostage");
-	register_logevent("host_Rescued", 3, "2=Rescued_A_Hostage");
-	register_logevent("host_AllRescued", 6, "3=All_Hostages_Rescued");
-	register_logevent("vip_UserSpawned", 3, "2=Became_VIP");
-	register_logevent("vip_UserEscape", 3, "2=Escaped_As_VIP");
-	register_logevent("vip_Assassinated", 3, "2=Assassinated_The_VIP");
-	register_logevent("vip_Escaped", 6, "3=VIP_Escaped");
 
 	// Must use post or else is_user_alive will return false when dead player respawns
 	// Must use RegisterHamPlayer for special bots to hook
@@ -610,9 +597,6 @@ public plugin_init()
 		if (get_weaponname(id, weaponName, charsmax(weaponName)))
 			RegisterHam(Ham_CS_Item_GetMaxSpeed, weaponName, "@Forward_CS_Item_GetMaxSpeed_Pre", 0);
 	}
-
-	// Touch Forward
-	RegisterHam(Ham_Touch, "weapon_shield", "@Forward_Shield_Touch_Pre");
 
 	// Player choosing a team (t, ct, auto, spec)
 	register_menucmd(register_menuid("IG_Team_Select", 1), 511, "team_chosen");
@@ -645,12 +629,6 @@ public plugin_init()
 	gHelpHudSync = CreateHudSyncObj();
 	gHeroHudSync = CreateHudSyncObj();
 
-	// Count number of hostages for sh_objectivexp
-	// This should have a better method of counting, maybe check when keyvalue is set
-	new ent = -1;
-	while ((ent = cs_find_ent_by_class(ent, "hostage_entity")) > 0)
-		gNumHostages++;
-
 	// Global Variables...
 	gmsgStatusText = get_user_msgid("StatusText");
 	gmsgScoreInfo = get_user_msgid("ScoreInfo");
@@ -667,9 +645,6 @@ public plugin_init()
 	// Block player names from overwriting StatusText sent by core
 	register_message(gmsgStatusText, "msg_StatusText");
 
-	// Fixes bug with HUD showing 0 health and reversing keys
-	register_message(get_user_msgid("Health"), "msg_Health");
-
 	// Load the config file here and again later
 	// Initial load for core configs
 	loadConfig();
@@ -678,7 +653,7 @@ public plugin_init()
 public plugin_precache()
 {
 	// Default Sounds
-	precache_sound("common/wpn_denyselect.wav");
+	precache_sound(gSoundDeny);
 	precache_sound(gSoundLevel);
 
 	// Create this cvar in precache incase a hero wants to create a debug msg during precache
@@ -687,22 +662,21 @@ public plugin_precache()
 //----------------------------------------------------------------------------------------------
 public plugin_natives()
 {
-	register_library(SH_CORE_STR);
+	register_library(SH_LIBRARY_STR);
 
 	register_native("sh_create_hero", "@Native_CreateHero");
 	register_native("sh_set_hero_info", "@Native_SetHeroInfo");
 	register_native("sh_set_hero_bind", "@Native_SetHeroBind");
-	register_native("sh_set_hero_shield", "@Native_SetHeroShield");
-	register_native("sh_set_hero_hpap", "@Native_SetHeroHpAp");
 	register_native("sh_set_hero_speed", "@Native_SetHeroSpeed");
 	register_native("sh_set_hero_grav", "@Native_SetHeroGravity");
 	register_native("sh_set_hero_dmgmult", "@Native_SetHeroDamageMultiplier");
-	register_native("sh_get_max_ap", "@Native_GetMaxAP");
-	register_native("sh_get_max_hp", "@Native_GetMaxHP");
+	register_native("sh_get_num_heroes", "@Native_GetNumHeroes");
 	register_native("sh_get_num_lvls", "@Native_GetNumLvls");
 	register_native("sh_get_lvl_xp", "@Native_GetLvlXP");
+	register_native("sh_get_user_hero", "@Native_GetUserHero");
 	register_native("sh_get_user_lvl", "@Native_GetUserLvl");
 	register_native("sh_set_user_lvl", "@Native_SetUserLvl");
+	register_native("sh_get_user_powers", "@Native_GetUserPowers");
 	register_native("sh_get_user_xp", "@Native_GetUserXP");
 	register_native("sh_set_user_xp", "@Native_SetUserXP");
 	register_native("sh_add_kill_xp", "@Native_AddKillXP");
@@ -965,6 +939,12 @@ bool:@Native_IsFreezeTime()
 	return gRoundStarted ? false : true;
 }
 //----------------------------------------------------------------------------------------------
+//native sh_get_num_heroes()
+@Native_GetNumHeroes()
+{
+	return gSuperHeroCount;
+}
+//----------------------------------------------------------------------------------------------
 //native sh_get_num_lvls()
 @Native_GetNumLvls()
 {
@@ -983,6 +963,23 @@ bool:@Native_IsFreezeTime()
 	return gXPLevel[level];
 }
 //----------------------------------------------------------------------------------------------
+//native sh_get_user_hero(id, powerID)
+@Native_GetUserHero()
+{
+	new id = get_param(1);
+
+	//stupid check - but checking prevents crashes
+	if (id < 1 || id > MaxClients)
+		return -1;
+
+	new powerIndex = get_param(2);
+
+	if (0 < powerIndex < getPowerCount(id))
+		return gPlayerPowers[id][powerIndex];
+
+	return -1;
+}
+//----------------------------------------------------------------------------------------------
 //native sh_get_user_lvl(id)
 @Native_GetUserLvl()
 {
@@ -999,28 +996,16 @@ bool:@Native_IsFreezeTime()
 	return gPlayerLevel[id];
 }
 //----------------------------------------------------------------------------------------------
-//native sh_get_max_hp(id)
-@Native_GetMaxHP()
+//native sh_get_user_powers(id)
+@Native_GetUserPowers()
 {
 	new id = get_param(1);
 
 	//stupid check - but checking prevents crashes
 	if (id < 1 || id > MaxClients)
-		return 0;
+		return -1;
 
-	return gMaxHealth[id];
-}
-//----------------------------------------------------------------------------------------------
-//native sh_get_max_ap(id)
-@Native_GetMaxAP()
-{
-	new id = get_param(1);
-
-	//stupid check - but checking prevents crashes
-	if (id < 1 || id > MaxClients)
-		return 0;
-
-	return gMaxArmor[id];
+	return getPowerCount(id);
 }
 //----------------------------------------------------------------------------------------------
 //native sh_set_user_lvl(id, setlevel)
@@ -1239,7 +1224,7 @@ dropWeapon(id, weaponID, bool:remove)
 		return;
 
 	// If VIPs are not allowed other weapons, protect them from losing what they have
-	if (id == gXpBonusVIP && getVipFlags() & VIP_BLOCK_WEAPONS)
+	if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_WEAPONS)
 		return;
 
 	if (!user_has_weapon(id, weaponID))
@@ -1248,7 +1233,7 @@ dropWeapon(id, weaponID, bool:remove)
 	new slot = sh_get_weapon_slot(weaponID);
 	if (slot == 1 || slot == 2 || slot == 5) {
 		//Don't drop/remove the main c4
-		if (weaponID == CSW_C4 && pev_valid(gXpBonusC4ID) && id == pev(gXpBonusC4ID, pev_owner))
+		if (weaponID == CSW_C4 && pev_valid(sh_get_c4_id()) && id == pev(sh_get_c4_id(), pev_owner))
 			return;
 
 		static weaponName[32];
@@ -1295,7 +1280,7 @@ giveWeapon(id, weaponID, bool:switchTo)
 	if (!is_user_alive(id))
 		return 0;
 
-	if (id == gXpBonusVIP && getVipFlags() & VIP_BLOCK_WEAPONS)
+	if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_WEAPONS)
 		return 0;
 
 	if (weaponID < CSW_P228 || weaponID > CSW_P90)
@@ -1335,7 +1320,7 @@ giveWeapon(id, weaponID, bool:switchTo)
 	get_array(2, itemName, charsmax(itemName));
 
 	if (equal(itemName, "weapon", 6)) {
-		if (id == gXpBonusVIP && getVipFlags() & VIP_BLOCK_WEAPONS)
+		if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_WEAPONS)
 			return 0;
 
 		new weaponID = get_weaponid(itemName);
@@ -1416,79 +1401,14 @@ giveWeapon(id, weaponID, bool:switchTo)
 	gSuperHeros[heroIndex][requiresKeys] = true;
 }
 //----------------------------------------------------------------------------------------------
-//native sh_set_hero_shield(heroID, bool:restricted = false)
-@Native_SetHeroShield()
-{
-	new heroIndex = get_param(1);
-
-	if (heroIndex < 0 || heroIndex >= gSuperHeroCount)
-		return;
-
-	new pRestricted = get_param(2); //Shield Restricted?
-
-	debugMsg(0, 3, "Create Hero-> HeroID: %d - Shield Restricted: %s", heroIndex, pRestricted ? "TRUE" : "FALSE");
-
-	gHeroShieldRest[heroIndex] = pRestricted ? true : false;
-}
-//----------------------------------------------------------------------------------------------
 initHero(id, heroIndex, mode)
 {
 	// OK to pass this through when mod off... Let's heroes cleanup after themselves
 	// init event is used to let hero know when a player has selected OR deselected a hero's power
 
-	// Reset Shield Restriction if needed for this hero
-	if (gHeroShieldRest[heroIndex]) {
-		//If this is called by an added hero they must be restricted
-		if (mode == SH_HERO_ADD) {
-			gShieldRestrict[id] = true;
-		} else {
-			new heroIndex, bool:restricted = false;
-			new powerCount = getPowerCount(id);
-			for (new x = 1; x <= powerCount; x++) {
-				heroIndex = gPlayerPowers[id][x];
-				// Test crash guard
-				if (heroIndex < 0 || heroIndex >= gSuperHeroCount)
-					continue;
-
-				if (gHeroShieldRest[heroIndex]) {
-					restricted = true;
-					break;
-				}
-			}
-			gShieldRestrict[id] = restricted;
-		}
-
-		//If they are alive make sure they don't have a shield already
-		if (gShieldRestrict[id] && is_user_alive(id)) {
-			if (cs_get_user_shield(id))
-				engclient_cmd(id, "drop", "weapon_shield");
-		}
-	}
-
 	// Reset Hero hp/ap/speed/grav if needed
 	if (mode == SH_HERO_DROP && is_user_alive(id)) {
 		//reset all values
-		if (gHeroMaxHealth[heroIndex] != 0) {
-			new newHealth = getMaxHealth(id);
-
-			if (get_user_health(id) > newHealth) {
-				// Assume some damage for doing this?
-				// Don't want players picking Superman let's say then removing his power - and trying to keep the HPs
-				// If they do that - feel free to lose some hps
-				// Also - Superman starts with around 150 Person could take some damage (i.e. reduced to 110 )
-				// but then clear powers and start at 100 - like 40 free hps for doing that, trying to avoid exploits
-				set_user_health(id, newHealth - (newHealth / 4));
-			}
-		}
-
-		if (gHeroMaxArmor[heroIndex] != 0) {
-			new newArmor = getMaxArmor(id);
-			new CsArmorType:armorType;
-			if (cs_get_user_armor(id, armorType) > newArmor)
-				// Remove Armor for doing this
-				cs_set_user_armor(id, newArmor, armorType);
-		}
-
 		if (gHeroMaxSpeed[heroIndex] != 0)
 			setSpeedPowers(id, true);
 
@@ -1500,26 +1420,6 @@ initHero(id, heroIndex, mode)
 	ExecuteForward(fwd_HeroInit, fwdReturn, id, heroIndex, mode);
 
 	gChangedHeroes[id] = true;
-}
-//----------------------------------------------------------------------------------------------
-//native sh_set_hero_hpap(heroID, pcvarHealth = 0, pcvarArmor = 0)
-@Native_SetHeroHpAp()
-{
-	new heroIndex = get_param(1);
-
-	if (heroIndex < 0 || heroIndex >= gSuperHeroCount)
-		return;
-
-	new pcvarMaxHealth = get_param(2);
-	new pcvarMaxArmor = get_param(3);
-
-	debugMsg(0, 3, "Set Max HP/AP -> HeroID: %d - %d - %d", heroIndex, pcvarMaxHealth ? get_pcvar_num(pcvarMaxHealth) : 0, pcvarMaxArmor ? get_pcvar_num(pcvarMaxArmor) : 0);
-
-	// Avoid setting if 0 because backward compatibility method would overwrite value
-	if (pcvarMaxHealth != 0)
-		gHeroMaxHealth[heroIndex] = pcvarMaxHealth; // pCVAR expected!
-	if (pcvarMaxArmor != 0)
-		gHeroMaxArmor[heroIndex] = pcvarMaxArmor; // pCVAR expected!
 }
 //----------------------------------------------------------------------------------------------
 //native sh_set_hero_speed(heroID, pcvarSpeed, const weapons[] = {0}, numofwpns = 1)
@@ -1629,60 +1529,9 @@ Float:getMaxSpeed(id, weapon)
 	return returnSpeed;
 }
 //----------------------------------------------------------------------------------------------
-getMaxHealth(id)
-{
-	static returnHealth, x;
-	returnHealth = 100;
-
-	if (!(id == gXpBonusVIP && getVipFlags() & VIP_BLOCK_HEALTH)) {
-		static heroIndex, playerPowerCount, heroHealthPointer;
-		playerPowerCount = getPowerCount(id);
-
-		for (x = 1; x <= playerPowerCount; x++) {
-			heroIndex = gPlayerPowers[id][x];
-			// Test crash gaurd
-			if (-1 < heroIndex < gSuperHeroCount) {
-				heroHealthPointer = gHeroMaxHealth[heroIndex];
-				if (!heroHealthPointer)
-					continue;
-
-				returnHealth = max(returnHealth, get_pcvar_num(heroHealthPointer));
-			}
-		}
-	}
-
-	// Other plugins might use this, even maps
-	set_pev(id, pev_max_health, returnHealth);
-
-	return gMaxHealth[id] = returnHealth;
-}
-//----------------------------------------------------------------------------------------------
-getMaxArmor(id)
-{
-	if (id == gXpBonusVIP && getVipFlags() & VIP_BLOCK_ARMOR)
-		return gMaxArmor[id] = 200;
-
-	static heroIndex, returnArmor, x, playerPowerCount, heroArmorPointer;
-	returnArmor = 0;
-	playerPowerCount = getPowerCount(id);
-
-	for (x = 1; x <= playerPowerCount; x++) {
-		heroIndex = gPlayerPowers[id][x];
-		if (-1 < heroIndex < gSuperHeroCount) {
-			heroArmorPointer = gHeroMaxArmor[heroIndex];
-			if (!heroArmorPointer)
-				continue;
-
-			returnArmor = max(returnArmor, get_pcvar_num(heroArmorPointer));
-		}
-	}
-
-	return gMaxArmor[id] = returnArmor;
-}
-//----------------------------------------------------------------------------------------------
 Float:getMinGravity(id)
 {
-	if (id == gXpBonusVIP && getVipFlags() & VIP_BLOCK_GRAVITY)
+	if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_GRAVITY)
 		return 1.0;
 
 	static Float:returnGravity, Float:heroMinGravity;
@@ -2063,8 +1912,8 @@ public ham_PlayerSpawn_Post(id)
 	set_user_godmode(id, 0);
 
 	//These must be checked here to set the max variables correctly
-	getMaxHealth(id);
-	getMaxArmor(id);
+	sh_update_max_hp(id);
+	sh_update_max_ap(id);
 
 	//Prevents this whole function from being called if its not a new round
 	if (!gNewRoundSpawn[id]) {
@@ -2126,7 +1975,7 @@ public ham_PlayerSpawn_Post(id)
 
 	//Makes armor system more reliable, also forces armor to reset if survived round
 	//Note: might need to call this after forward is sent
-	if (getMaxArmor(id) != 0 && !(id == gXpBonusVIP && (getVipFlags() & VIP_BLOCK_ARMOR)))
+	if (sh_update_max_ap(id) != 0 && !(id == sh_get_vip_id() && (sh_vip_flags() & VIP_BLOCK_ARMOR)))
 		cs_set_user_armor(id, 0, CS_ARMOR_NONE);
 
 	//Let heroes know someone just spawned from a new round
@@ -2255,7 +2104,7 @@ public powerKeyDown(id)
 	debugMsg(id, 5, "power%d Pressed", whichKey);
 
 	// Check if player is a VIP
-	if (id == gXpBonusVIP && getVipFlags() & VIP_BLOCK_POWERKEYS) {
+	if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_POWERKEYS) {
 		sh_sound_deny(id);
 		chatMessage(id, _, "VIP's are not allowed to use +power keys");
 		return PLUGIN_HANDLED;
@@ -2300,7 +2149,7 @@ public powerKeyUp(id)
 	if (whichKey > SH_MAXBINDPOWERS || whichKey <= 0)
 		return PLUGIN_CONTINUE;
 
-	if (id == gXpBonusVIP && getVipFlags() & VIP_BLOCK_POWERKEYS)
+	if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_POWERKEYS)
 		return PLUGIN_HANDLED;
 
 	// Make sure player isn't stunned (unless they were in keydown when stunned)
@@ -2346,7 +2195,7 @@ public powerKeyUp(id)
 		return HAM_SUPERCEDE;
 	}
 
-	if (owner == gXpBonusVIP && getVipFlags() & VIP_BLOCK_SPEED)
+	if (owner == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_SPEED)
 		return HAM_IGNORED;
 
 	if (cs_get_user_zoom(owner) != CS_SET_NO_ZOOM)
@@ -2410,7 +2259,7 @@ setSpeedPowers(id, bool:checkDefault)
 	new Float:oldSpeed = get_user_maxspeed(id);
 	new Float:newSpeed;
 
-	if (id == gXpBonusVIP && getVipFlags() & VIP_BLOCK_SPEED) {
+	if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_SPEED) {
 		newSpeed = 227.0;
 	} else if (cs_get_user_zoom(id) != CS_SET_NO_ZOOM) {
 		switch (weapon) {
@@ -2428,7 +2277,7 @@ setSpeedPowers(id, bool:checkDefault)
 		switch (newSpeed) {
 			case -1.0: {
 				if (checkDefault) {
-					if (id == gXpBonusVIP)
+					if (id == sh_get_vip_id())
 						//Still need to check this because vip speed may not be blocked
 						//and user may not have a hero with current weapon speed 
 						set_user_maxspeed(id, 227.0);
@@ -2456,27 +2305,13 @@ setHealthPowers(id)
 		return;
 
 	new oldHealth = get_user_health(id);
-	new newHealth = getMaxHealth(id);
+	new newHealth = sh_update_max_hp(id);
 
 	// Can't get health in the middle of a round UNLESS you didn't get shot...
 	if (oldHealth < newHealth && oldHealth >= 100) {
 		debugMsg(id, 5, "Setting Health to %d", newHealth);
 		set_user_health(id, newHealth);
 	}
-}
-//----------------------------------------------------------------------------------------------
-public msg_Health(msgid, dest, id)
-{
-	// Run even when mod is off, not a big deal
-	if (!is_user_alive(id))
-		return;
-
-	// Fixes bug with health multiples of 256 showing 0 HP on HUD causes keys to be reversed
-	static hp;
-	hp = get_msg_arg_int(1);
-
-	if (hp % 256 == 0)
-		set_msg_arg_int(1, ARG_BYTE, ++hp);
 }
 //----------------------------------------------------------------------------------------------
 setArmorPowers(id)
@@ -2489,7 +2324,7 @@ setArmorPowers(id)
 
 	new CsArmorType:armorType;
 	new oldArmor = cs_get_user_armor(id, armorType);
-	new newArmor = getMaxArmor(id);
+	new newArmor = sh_update_max_ap(id);
 
 	// Little check for armor system
 	if (oldArmor != 0 || oldArmor >= newArmor)
@@ -2702,7 +2537,7 @@ localAddXP(id, xp)
 //----------------------------------------------------------------------------------------------
 Float:getMaxDamageMult(id, weaponID)
 {
-	if (id == gXpBonusVIP && getVipFlags() & VIP_BLOCK_EXTRADMG)
+	if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_EXTRADMG)
 		return 1.0;
 
 	static Float:returnDmgMult, x;
@@ -2741,7 +2576,7 @@ public ham_TakeDamage_Pre(victim, inflictor, attacker, Float:damage, damagebits)
 	// if (victim != attacker && cs_get_user_team(victim) == cs_get_user_team(attacker) && !CvarFreeForAll)
 		// return HAM_IGNORED;
 
-	if (attacker == gXpBonusVIP && getVipFlags() & VIP_BLOCK_EXTRADMG)
+	if (attacker == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_EXTRADMG)
 		return HAM_IGNORED;
 
 	new weaponID;
@@ -2779,7 +2614,7 @@ public ham_TakeDamage_Pre(victim, inflictor, attacker, Float:damage, damagebits)
 	if (!is_user_connected(attacker))
 		return;
 
-	if (attacker == gXpBonusVIP && getVipFlags() & VIP_BLOCK_EXTRADMG)
+	if (attacker == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_EXTRADMG)
 		return;
 
 	new damage = get_param(3);
@@ -4368,7 +4203,6 @@ initPlayer(id)
 	gPlayerStunTimer[id] = -1;
 	gPlayerGodTimer[id] = -1;
 	setLevel(id, 0);
-	gShieldRestrict[id] = false;
 	gPlayerFlags[id] = SH_FLAG_HUDHELP;
 	gFirstRound[id] = true;
 	gNewRoundSpawn[id] = true;
@@ -4376,277 +4210,6 @@ initPlayer(id)
 	gReadXPNextRound[id] = bool:CvarSaveXP;
 
 	clearAllPowers(id, false);
-}
-//----------------------------------------------------------------------------------------------
-@Forward_Shield_Touch_Pre(item, id)
-{
-	if (!CvarSuperHeros)
-		return HAM_IGNORED;
-
-	if (!is_user_alive(id))
-		return HAM_IGNORED;
-
-	if (gShieldRestrict[id])
-		return HAM_SUPERCEDE;
-	
-	return HAM_IGNORED;
-}
-//----------------------------------------------------------------------------------------------
-// This is called when a user is buying anything (including shield)
-public CS_OnBuy(id, item)
-{
-	if (!CvarSuperHeros)
-		return PLUGIN_CONTINUE;
-
-	if (gShieldRestrict[id] && item == CSI_SHIELD) {
-		console_print(id, "[SH] You are not allowed to buy a SHIELD due to a hero selection you have made");
-		client_print(id, print_center, "You are not allowed to buy a SHIELD due to a hero selection you have made");
-		return PLUGIN_HANDLED;
-	}
-
-	return PLUGIN_CONTINUE;
-}
-//----------------------------------------------------------------------------------------------
-getVipFlags()
-{
-	return read_flags(CvarBlockVIP);
-}
-//----------------------------------------------------------------------------------------------
-getLoguserIndex()
-{
-	static loguser[80], name[32];
-	read_logargv(0, loguser, charsmax(loguser));
-	parse_loguser(loguser, name, charsmax(name));
-
-	return get_user_index(name);
-}
-//----------------------------------------------------------------------------------------------
-public vip_UserSpawned()
-{
-	// Save if user is a vip here instead of checking cs_get_user_vip all thru the code
-	gXpBonusVIP = getLoguserIndex();
-}
-//----------------------------------------------------------------------------------------------
-public vip_UserEscape()
-{
-	if (!CvarSuperHeros || !CvarObjectiveXP)
-		return;
-
-	new id = getLoguserIndex();
-
-	if (!is_user_connected(id))
-		return;
-
-	if (id != gXpBonusVIP)
-		return;
-
-	if (cs_get_user_team(id) != CS_TEAM_CT)
-		return;
-
-	if (get_playersnum() <= CvarMinPlayersXP)
-		return;
-
-	localAddXP(id, CvarObjectiveXP);
-	chatMessage(id, _, "You got %d XP for escaping as the VIP", CvarObjectiveXP);
-	displayPowers(id, false);
-}
-//----------------------------------------------------------------------------------------------
-public vip_Assassinated()
-{
-	if (!CvarSuperHeros || !CvarObjectiveXP)
-		return;
-
-	new attacker = getLoguserIndex();
-
-	if (!is_user_connected(attacker))
-		return;
-
-	if (cs_get_user_team(attacker) != CS_TEAM_T)
-		return;
-
-	if (get_playersnum() <= CvarMinPlayersXP)
-		return;
-
-	localAddXP(attacker, CvarObjectiveXP);
-	chatMessage(attacker, _, "You got %d XP for assassinating the VIP", CvarObjectiveXP);
-	displayPowers(attacker, false);
-}
-//----------------------------------------------------------------------------------------------
-public vip_Escaped()
-{
-	if (!CvarSuperHeros || !CvarObjectiveXP)
-		return;
-
-	if (get_playersnum() <= CvarMinPlayersXP)
-		return;
-
-	new players[32], playerCount, player;
-	new XPtoGive = CvarObjectiveXP;
-
-	get_players_ex(players, playerCount, GetPlayers_ExcludeHLTV);
-
-	// VIP is considered dead at this point, so we have to check dead players to find him
-	for (new i = 0; i < playerCount; i++) {
-		player = players[i];
-
-		if (player == gXpBonusVIP || (is_user_alive(player) && cs_get_user_team(player) == CS_TEAM_CT)) {
-			localAddXP(player, XPtoGive);
-			chatMessage(player, _, "Your team got %d XP for a successful VIP esacpe", XPtoGive);
-			displayPowers(player, false);
-		}
-	}
-}
-//----------------------------------------------------------------------------------------------
-public host_Killed()
-{
-	if (!CvarSuperHeros || !CvarObjectiveXP)
-		return;
-
-	new id = getLoguserIndex();
-
-	if (id < 1 || id > MaxClients)
-		return;
-
-	localAddXP(id, -CvarObjectiveXP);
-	chatMessage(id, _, "You lost %d XP for killing a hostage", CvarObjectiveXP);
-	displayPowers(id, false);
-}
-//----------------------------------------------------------------------------------------------
-public host_Rescued()
-{
-	if (!CvarSuperHeros || !CvarObjectiveXP)
-		return;
-
-	new id = getLoguserIndex();
-
-	if (!is_user_connected(id))
-		return;
-
-	if (cs_get_user_team(id) != CS_TEAM_CT)
-		return;
-
-	if (get_playersnum() < CvarMinPlayersXP)
-		return;
-
-	// Give at least 1 xp per hostage even if sh_objectivexp is really low
-	// gNumHostages should never be 0 if this is called so no need to check for div by 0
-	new XPtoGive = max(1, floatround(float(CvarObjectiveXP) / gNumHostages));
-
-	localAddXP(id, XPtoGive);
-	chatMessage(id, _, "You got %d XP for rescuing a hostage", XPtoGive);
-	displayPowers(id, false);
-}
-//----------------------------------------------------------------------------------------------
-public host_AllRescued()
-{
-	if (!CvarSuperHeros || !CvarObjectiveXP)
-		return;
-
-	if (get_playersnum() <= CvarMinPlayersXP)
-		return;
-
-	new players[32], playerCount, player;
-	new XPtoGive = CvarObjectiveXP;
-
-	get_players_ex(players, playerCount, GetPlayers_ExcludeDead | GetPlayers_ExcludeHLTV);
-
-	for (new i = 0; i < playerCount; i++) {
-		player = players[i];
-
-		if (cs_get_user_team(player) != CS_TEAM_CT)
-			continue;
-
-		localAddXP(player, XPtoGive);
-		chatMessage(player, _, "Your team got %d XP for rescuing all the hostages", XPtoGive);
-		displayPowers(player, false);
-	}
-}
-//----------------------------------------------------------------------------------------------
-public bomb_HolderSpawned()
-{
-	new id = getLoguserIndex();
-
-	if (id < 1 || id > MaxClients)
-		return;
-
-	// Find the Index of the bomb entity and save to be used as the one that gives xp
-	new ent = -1;
-	while ((ent = cs_find_ent_by_owner(ent, "weapon_c4", id)) != 0) {
-		// set ent to XP bomb
-		gXpBonusC4ID = ent;
-		break;
-	}
-}
-//----------------------------------------------------------------------------------------------
-public bomb_planted(planter)
-{
-	if (!CvarSuperHeros || !CvarObjectiveXP)
-		return;
-
-	if (!is_user_connected(planter) || !pev_valid(gXpBonusC4ID))
-		return;
-
-	if (planter != pev(gXpBonusC4ID, pev_owner))
-		return;
-
-	if (cs_get_user_team(planter) != CS_TEAM_T)
-		return;
-
-	if (get_playersnum() <= CvarMinPlayersXP)
-		return;
-
-	// Only give this out once per round
-	gXpBonusC4ID = -1;
-
-	localAddXP(planter, CvarObjectiveXP);
-	chatMessage(planter, _, "You got %d XP for planting the bomb", CvarObjectiveXP);
-	displayPowers(planter, false);
-}
-//----------------------------------------------------------------------------------------------
-public bomb_defused(defuser)
-{
-	// Need to make sure gXpBonusC4ID was the bomb defused?
-	if (!CvarSuperHeros || !CvarObjectiveXP)
-		return;
-
-	if (!is_user_connected(defuser))
-		return;
-
-	if (cs_get_user_team(defuser) != CS_TEAM_CT)
-		return;
-
-	if (get_playersnum() <= CvarMinPlayersXP)
-		return;
-
-	localAddXP(defuser, CvarObjectiveXP);
-	chatMessage(defuser, _, "You got %d XP for defusing the bomb", CvarObjectiveXP);
-	displayPowers(defuser, false);
-}
-//----------------------------------------------------------------------------------------------
-public bomb_explode(planter, defuser)
-{
-	if (!CvarSuperHeros || !CvarObjectiveXP)
-		return PLUGIN_CONTINUE;
-
-	if (get_playersnum() <= CvarMinPlayersXP)
-		return PLUGIN_CONTINUE;
-
-	new players[32], playerCount, player;
-	new XPtoGive = CvarObjectiveXP;
-
-	get_players_ex(players, playerCount, GetPlayers_ExcludeDead | GetPlayers_ExcludeHLTV);
-
-	for (new i = 0; i < playerCount; i++) {
-		player = players[i];
-
-		if (cs_get_user_team(player) != CS_TEAM_T)
-			continue;
-
-		localAddXP(player, XPtoGive);
-		chatMessage(player, _, "Your team got %d XP for a successful bomb explosion", XPtoGive);
-		displayPowers(player, false);
-	}
-	return PLUGIN_CONTINUE;
 }
 //----------------------------------------------------------------------------------------------
 getHeroLevel(heroIndex)

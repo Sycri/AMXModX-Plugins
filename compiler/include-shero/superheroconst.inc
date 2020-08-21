@@ -24,7 +24,9 @@
 //----------------------------------------------------------------------------------------------
 
 #define SH_VERSION		1.30
+stock const SH_LIBRARY_STR[] =	"SuperHero Core";
 stock const SH_VERSION_STR[] =	"1.3.0.0";
+stock const SH_AUTHOR_STR[] =	"JTP10181/{HOJ}Batman/vittu/AssKicR/Sycri";
 
 // Cooldown task id, required to allow core to stop task
 #define SH_COOLDOWN_TASKID	572910
@@ -43,26 +45,16 @@ stock const SH_VERSION_STR[] =	"1.3.0.0";
 #define SH_DMG_KILL		2	// Kill damage, instantly kills if damage is possible (Note: godmode can block this)
 
 // From HLSDK for sh_screenfade
-#define SH_FFADE_IN			0x0000	// Just here so we don't pass 0 into the function
+#define SH_FFADE_IN		0x0000	// Just here so we don't pass 0 into the function
 #define SH_FFADE_OUT		0x0001	// Fade out (not in)
 #define SH_FFADE_MODULATE	0x0002	// Modulate (don't blend)
 #define SH_FFADE_STAYOUT	0x0004	// Ignores the duration, stays faded out until new ScreenFade message received
 
 // User Flags, saved with XP data
-#define SH_FLAG_HUDHELP		(1<<0)	/* flag "a" */	// Enable the Help HUD
-#define SH_FLAG_NOAUTOMENU	(1<<1)	/* flag "b" */	// Do not show menu automatically on spawn
-#define SH_FLAG_XPIMMUNE	(1<<2)	/* flag "c" */	// Immue to xp reset from savedays. (Not available for nVault)
-#define SH_FLAG_BANNED		(1<<3)	/* flag "d" */	// Flag user banned from having hereos (not used, if used would have to keep info stored and will not work with nVault)
-
-// VIP Flags, set with sh_blockvip CVAR
-#define VIP_BLOCK_POWERKEYS	(1<<0)	/* flag "a" */	// VIP blocked from using power keys
-#define VIP_BLOCK_WEAPONS	(1<<1)	/* flag "b" */	// VIP blocked from receiving weapons thru sh
-#define VIP_BLOCK_HEALTH	(1<<2)	/* flag "c" */	// VIP blocked from receiving health thru sh
-#define VIP_BLOCK_ARMOR		(1<<3)	/* flag "d" */	// VIP blocked from receiving armor thru sh
-#define VIP_BLOCK_SPEED		(1<<4)	/* flag "e" */	// VIP blocked from receiving speed thru sh
-#define VIP_BLOCK_GRAVITY	(1<<5)	/* flag "f" */	// VIP blocked from receiving gravity thru sh
-#define VIP_BLOCK_EXTRADMG	(1<<6)	/* flag "g" */	// VIP blocked from using sh_extra_damage
-#define VIP_BLOCK_CUSTOM	(1<<7)	/* flag "h" */	// Custom VIP block, heroes can use for whatever they want
+#define SH_FLAG_HUDHELP		(1 << 0)	/* flag "a" */	// Enable the Help HUD
+#define SH_FLAG_NOAUTOMENU	(1 << 1)	/* flag "b" */	// Do not show menu automatically on spawn
+#define SH_FLAG_XPIMMUNE	(1 << 2)	/* flag "c" */	// Immue to xp reset from savedays. (Not available for nVault)
+#define SH_FLAG_BANNED		(1 << 3)	/* flag "d" */	// Flag user banned from having hereos (not used, if used would have to keep info stored and will not work with nVault)
 
 // From multiplayer/dlls/player.cpp (Note: Actual CS calculation is unknown)
 #define SH_ARMOR_RATIO		0.5	// Armor Takes 50% of the damage (0.2 in the HL SDK)
