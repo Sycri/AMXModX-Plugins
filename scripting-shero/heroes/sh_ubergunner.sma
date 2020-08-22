@@ -10,18 +10,12 @@ UberGunner_health 200		//Default 100 (no extra health)
 UberGunner_armor 200		//Default 100
 UberGunner_gravity 1.0		//Default 1.0 = no extra gravity (0.50 is 50% normal gravity, ect.)
 UberGunner_speed 600		//-1 = no extra speed, this cvar is for all weapons (for faster then normal speed set to 321 or higher)
+UberGunner_rldmode 0		//Endless ammo mode: 0-server default, 1-no reload, 2-reload, 3-drop wpn
 
 */
 
 //---------- User Changeable Defines --------//
 
-
-// 0-follow server sh_reloadmode cvar setting [Default]
-// 1-no reload, continuous shooting
-// 2-reload, but backpack ammo never depletes
-// 3-drop weapon and get a new one with full clip
-// 4-normal cs, reload and backpack ammo depletes
-#define AMMO_MODE 0
 
 // Comment out to not use the UberGunner player model
 #define USE_PLAYER_MODEL
@@ -35,15 +29,21 @@ UberGunner_speed 600		//-1 = no extra speed, this cvar is for all weapons (for f
 
 //------- Do not edit below this point ------//
 
-#include <superheromod>
+#include <amxmodx>
 #include <amxmisc>
+#include <fakemeta>
+#include <cstrike>
+#include <hamsandwich>
+#include <sh_core_main>
+#include <sh_core_hpap>
+#include <sh_core_speed>
+#include <sh_core_gravity>
+
+#if defined GIVE_WEAPON
+	#include <sh_core_shieldrestrict>
+#endif
 
 #pragma semicolon 1
-
-// CS Weapon CBase Offsets (win32)
-const PDATA_SAFE = 2;
-const OFFSET_WEAPONOWNER = 41;
-const OFFSET_LINUX_WEAPONS = 4;
 
 // GLOBAL VARIABLES
 new gHeroID;
@@ -51,6 +51,8 @@ new const gHeroName[] = "UberGunner";
 
 new bool:gHasUberGunner[MAX_PLAYERS + 1];
 new gmsgSync;
+
+new CvarReloadMode;
 
 #if defined USE_PLAYER_MODEL
 	new bool:gModelPlayerSet[MAX_PLAYERS + 1];
@@ -78,6 +80,7 @@ public plugin_init()
 	new pcvarGravity = create_cvar("UberGunner_gravity", "1.0");
 	new pcvarSpeed = create_cvar("UberGunner_speed", "600");
 	new pcvarM4A1Mult = create_cvar("UberGunner_m4a1mult", "2.0");
+	bind_pcvar_num(create_cvar("UberGunner_rldmode", "0"), CvarReloadMode);
 
 #if defined USE_PLAYER_MODEL
 	bind_pcvar_num(create_cvar("UberGunner_teamglow", "0"), CvarTeamGlow);
@@ -87,8 +90,8 @@ public plugin_init()
 	gHeroID = sh_create_hero(gHeroName, pcvarLevel);
 	sh_set_hero_info(gHeroID, "Wild2k", "Become UberGunner - Get an M4A1, which does more dmg");
 	sh_set_hero_hpap(gHeroID, pcvarHealth, pcvarArmor);
-	sh_set_hero_grav(gHeroID, pcvarGravity);
 	sh_set_hero_speed(gHeroID, pcvarSpeed);
+	sh_set_hero_grav(gHeroID, pcvarGravity);
 	sh_set_hero_dmgmult(gHeroID, pcvarM4A1Mult, CSW_M4A1);
 
 #if defined GIVE_WEAPON
@@ -96,10 +99,8 @@ public plugin_init()
 #endif
 	
 	// REGISTER EVENTS THIS HERO WILL RESPOND TO!
-#if AMMO_MODE < 4
 	// read_data(2) == CSW_M4A1 = 2=22
 	register_event_ex("CurWeapon", "@Event_CurWeapon", RegisterEvent_Single | RegisterEvent_OnlyAlive, "1=1", "2=22", "3=0");
-#endif
 #if defined USE_WEAPON_MODEL
 	if (gModelWeaponLoaded)
 		RegisterHam(Ham_Item_Deploy, "weapon_m4a1", "@Forward_M4A1_Deploy_Post", 1);
@@ -113,8 +114,8 @@ public plugin_precache()
 {
 #if defined USE_PLAYER_MODEL
 	precache_sound(gUberGunnerSound);
+	
 	gModelPlayerLoaded = true;
-
 	if(file_exists(gModelPlayer)) {
 		precache_model(gModelPlayer);
 	} else {
@@ -191,15 +192,13 @@ public sh_client_spawn(id)
 }
 #endif
 //----------------------------------------------------------------------------------------------
-#if AMMO_MODE < 4
 @Event_CurWeapon(id)
 {
 	if (!sh_is_active() || !gHasUberGunner[id])
 		return;
 	
-	sh_reload_ammo(id, AMMO_MODE);
+	sh_reload_ammo(id, CvarReloadMode);
 }
-#endif
 //----------------------------------------------------------------------------------------------
 #if defined USE_WEAPON_MODEL
 @Forward_M4A1_Deploy_Post(weapon_ent)
@@ -224,10 +223,10 @@ switch_model(index)
 stock fm_cs_get_weapon_ent_owner(ent)
 {
 	// Prevent server crash if entity's private data not initalized
-	if (pev_valid(ent) != PDATA_SAFE)
+	if (pev_valid(ent) != 2)
 		return -1;
 	
-	return get_pdata_cbase(ent, OFFSET_WEAPONOWNER, OFFSET_LINUX_WEAPONS);
+	return get_ent_data_entity(ent, "CBasePlayerItem", "m_pPlayer");
 }
 #endif
 //----------------------------------------------------------------------------------------------
@@ -284,7 +283,7 @@ ubergunner_unmorph(index)
 
 		if (CvarTeamGlow) {
 			remove_task(index + 100);
-			set_user_rendering(index);
+			sh_set_rendering(index);
 		}
 	}
 }

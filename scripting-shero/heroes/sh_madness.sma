@@ -7,6 +7,7 @@ madness_level 9
 madness_health 200		//How much health madness has
 madness_armor 100		//How much armor madness has
 madness_m3mult 2.0		//Damage multiplier for his M3
+madness_rldmode 0		//Endless ammo mode: 0-server default, 1-no reload, 2-reload, 3-drop wpn
 
 */
 
@@ -20,12 +21,6 @@ madness_m3mult 2.0		//Damage multiplier for his M3
 
 //---------- User Changeable Defines --------//
 
-// 0-follow server sh_reloadmode cvar setting [Default]
-// 1-no reload, continuous shooting
-// 2-reload, but backpack ammo never depletes
-// 3-drop weapon and get a new one with full clip
-// 4-normal cs, reload and backpack ammo depletes
-#define AMMO_MODE 0
 
 // Comment out to force not using the model, will result in a very small reduction in code/checks
 // Note: If you change anything here from default setting you must recompile the plugin
@@ -34,22 +29,25 @@ madness_m3mult 2.0		//Damage multiplier for his M3
 // Comment out to not give a free M3
 #define GIVE_WEAPON
 
+
 //------- Do not edit below this point ------//
 
-#include <superheromod>
+#include <amxmodx>
+#include <fakemeta>
+#include <hamsandwich>
+#include <sh_core_main>
+#include <sh_core_hpap>
+#include <sh_core_shieldrestrict>
 
 #pragma semicolon 1
-
-// CS Weapon CBase Offsets (win32)
-const PDATA_SAFE = 2;
-const OFFSET_WEAPONOWNER = 41;
-const OFFSET_LINUX_WEAPONS = 4;
 
 // GLOBAL VARIABLES
 new gHeroID;
 new const gHeroName[] = "Madness";
 
 new bool:gHasMadness[MAX_PLAYERS + 1];
+
+new CvarReloadMode;
 
 #if defined USE_WEAPON_MODEL
 	new const gModel_V_M3[] = "models/shmod/madness_m3.mdl";
@@ -66,6 +64,7 @@ public plugin_init()
 	new pcvarHealth = create_cvar("madness_health", "200");
 	new pcvarArmor = create_cvar("madness_armor", "100");
 	new pcvarM3Mult = create_cvar("madness_m3mult", "2.0");
+	bind_pcvar_num(create_cvar("madness_rldmode", "0"), CvarReloadMode);
 	
 	// FIRE THE EVENTS TO CREATE THIS SUPERHERO!
 	gHeroID = sh_create_hero(gHeroName, pcvarLevel);
@@ -78,10 +77,8 @@ public plugin_init()
 #endif
 	
 	// REGISTER EVENTS THIS HERO WILL RESPOND TO!
-#if AMMO_MODE < 4
 	// read_data(2) == CSW_M3 = 2=21
 	register_event_ex("CurWeapon", "@Event_CurWeapon", RegisterEvent_Single | RegisterEvent_OnlyAlive, "1=1", "2=21", "3=0");
-#endif
 #if defined USE_WEAPON_MODEL
 	if (gModelLoaded)
 		RegisterHam(Ham_Item_Deploy, "weapon_m3", "@Forward_M3_Deploy_Post", 1);
@@ -138,15 +135,13 @@ public sh_client_spawn(id)
 }
 #endif
 //----------------------------------------------------------------------------------------------
-#if AMMO_MODE < 4
 @Event_CurWeapon(id)
 {
 	if (!sh_is_active() || !gHasMadness[id])
 		return;
 	
-	sh_reload_ammo(id, AMMO_MODE);
+	sh_reload_ammo(id, CvarReloadMode);
 }
-#endif
 //----------------------------------------------------------------------------------------------
 #if defined USE_WEAPON_MODEL
 @Forward_M3_Deploy_Post(weapon_ent)
@@ -174,10 +169,10 @@ switch_model(index)
 stock fm_cs_get_weapon_ent_owner(ent)
 {
 	// Prevent server crash if entity's private data not initalized
-	if (pev_valid(ent) != PDATA_SAFE)
+	if (pev_valid(ent) != 2)
 		return -1;
 	
-	return get_pdata_cbase(ent, OFFSET_WEAPONOWNER, OFFSET_LINUX_WEAPONS);
+	return get_ent_data_entity(ent, "CBasePlayerItem", "m_pPlayer");
 }
 #endif
 //----------------------------------------------------------------------------------------------

@@ -31,8 +31,13 @@ bass_multishot 0.1			//Delay for multishots on holding key down, set to -1 for o
 *   From original code "Based on dr.doom Hero but added gravity.."
 */
 
-#include <superheromod>
+#include <amxmodx>
 #include <amxmisc>
+#include <cstrike>
+#include <sh_core_main>
+#include <sh_core_hpap>
+#include <sh_core_speed>
+#include <sh_core_gravity>
 
 #pragma semicolon 1
 

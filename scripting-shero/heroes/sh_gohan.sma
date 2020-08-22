@@ -22,8 +22,12 @@ gohan_healmax 400		//Max # HP gohan can heal to
 *         can choose how much goten will heal to now
 */
 
-#include <superheromod>
+#include <amxmodx>
 #include <amxmisc>
+#include <sh_core_main>
+#include <sh_core_hpap>
+#include <sh_core_speed>
+#include <sh_core_gravity>
 
 // GLOBAL VARIABLES
 new gHeroID;
@@ -50,8 +54,8 @@ public plugin_init()
 	gHeroID = sh_create_hero(gHeroName, pcvarLevel);
 	sh_set_hero_info(gHeroID, "Super Power-Up", "Start with more HP, gain even more each second. Jump higher, run faster!");
 	sh_set_hero_hpap(gHeroID, pcvarHealth);
-	sh_set_hero_grav(gHeroID, pcvarGravity);
 	sh_set_hero_speed(gHeroID, pcvarSpeed);
+	sh_set_hero_grav(gHeroID, pcvarGravity);
 	
 	// GOHAN LOOP
 	set_task_ex(1.0, "@Task_GohanLoop", _, _, _, SetTask_Repeat);

@@ -19,4 +19,5 @@
 #include <sh_core_objectives>
 #include <sh_core_hpap>
 #include <sh_core_speed>
+#include <sh_core_gravity>
 #include <sh_core_shieldrestrict>

@@ -57,6 +57,7 @@
 *	- Changed the function chatMessage so that it uses client_print_color
 *	- Changed most cvars from get_pcvar_num to bind_pcvar_num so variables could be used directly
 *	- Changed from RegisterHamFromEntity to RegisterHamPlayer for cleaner code
+*	- Completed setting gravity based on current weapon.
 *	- Forced usage of semicolons for better clarity
 *	- Removed all previous backwards compatibility
 *	- Removed code that uses old syntax for MySQL 3.23
@@ -371,13 +372,11 @@
 *	- Get rid of binaries tables in mysql.
 *	- Make command to autogenerate ini up to X levels.
 *	- Save sh bans using flag into saved data instead of the ban file (possible issue with nvault, and that data must be saved then).
-*	- Add gravity settings based on current weapon (incomplete currently).
 *	- Make use of multilingual support for "core" messages only.
 *	- Remove all use of set_user_info, find a better method to tell when a power is in use (possibly native so hero can say it's in use).
 *	- Possibly change extradamage death to use hamsandwhich Ham_TakeDamage (Maybe have both options?).
 *	- Run a check to make sure no menu is open before opening powers menu.
 *	- Add chosen hero child page to menu to verify hero choice, but mainly to add hero info there instead of using hud messages for powerHelp info.
-*	- Find a better method for blocking shield with primary bug or refine currently used one.
 *	- Clean up any issues with the say commands.
 *	- Possibly use threading only for mysql saving at round end (may require too much recoding).
 *	- Convert the read_file usage in superheromysql.inc to use new file natives.
@@ -424,7 +423,6 @@ new gSuperHeros[SH_MAXHEROS][enumHeros];
 new gSuperHeroCount = 0;
 
 // Changed these from CVARS to straight numbers...
-new gHeroMinGravity[SH_MAXHEROS];
 new gHeroLevelCVAR[SH_MAXHEROS];
 new gHeroMaxDamageMult[SH_MAXHEROS][31];
 
@@ -661,7 +659,6 @@ public plugin_natives()
 	register_native("sh_create_hero", "@Native_CreateHero");
 	register_native("sh_set_hero_info", "@Native_SetHeroInfo");
 	register_native("sh_set_hero_bind", "@Native_SetHeroBind");
-	register_native("sh_set_hero_grav", "@Native_SetHeroGravity");
 	register_native("sh_set_hero_dmgmult", "@Native_SetHeroDamageMultiplier");
 	register_native("sh_get_num_heroes", "@Native_GetNumHeroes");
 	register_native("sh_get_num_lvls", "@Native_GetNumLvls");
@@ -687,7 +684,6 @@ public plugin_natives()
 	register_native("sh_drop_weapon", "@Native_DropWeapon");
 	register_native("sh_give_weapon", "@Native_GiveWeapon");
 	register_native("sh_give_item", "@Native_GiveItem");
-	register_native("sh_reset_min_gravity", "@Native_ResetMinGravity");
 }
 //----------------------------------------------------------------------------------------------
 @Forward_GetGameDescription()
@@ -1407,76 +1403,10 @@ initHero(id, heroIndex, mode)
 	// OK to pass this through when mod off... Let's heroes cleanup after themselves
 	// init event is used to let hero know when a player has selected OR deselected a hero's power
 
-	// Reset Hero hp/ap/speed/grav if needed
-	if (mode == SH_HERO_DROP && is_user_alive(id)) {
-		if (gHeroMinGravity[heroIndex] != 0)
-			resetMinGravity(id);
-	}
-
 	//Init the hero
 	ExecuteForward(fwd_HeroInit, fwdReturn, id, heroIndex, mode);
 
 	gChangedHeroes[id] = true;
-}
-//----------------------------------------------------------------------------------------------
-//native sh_set_hero_grav(heroID, pcvarGravity, const weapons[] = {0}, numofwpns = 1)
-@Native_SetHeroGravity()
-{
-	new heroIndex = get_param(1);
-
-	if (heroIndex < 0 || heroIndex >= gSuperHeroCount)
-		return;
-
-	new pcvarGravity = get_param(2);
-	new numWpns = get_param(4);
-
-	new pWeapons[40];
-	get_array(3, pWeapons, numWpns);
-
-	//Avoid running this unless debug is high enough
-	if (CvarDebugMessages > 2) {
-		//Set up the weapon string for the debug message
-		new weapons[32], number[3], x;
-		for (x = 0; x < numWpns; x++) {
-			formatex(number, charsmax(number), "%d", pWeapons[x]);
-			add(weapons, charsmax(weapons), number);
-			if (pWeapons[x+1] != '^0')
-				add(weapons, charsmax(weapons), ",");
-			else
-				break;
-		}
-
-		debugMsg(0, 3, "Set Min Gravity -> HeroID: %d - Gravity: %.3f - Weapon(s): %s", heroIndex, get_pcvar_float(pcvarGravity), weapons);
-	}
-
-	gHeroMinGravity[heroIndex] = pcvarGravity; // pCVAR expected!
-	//copy(gHeroGravityWeapons[heroIndex], charsmax(gHeroGravityWeapons[]), pWeapons) // Array expected!
-}
-//----------------------------------------------------------------------------------------------
-Float:getMinGravity(id)
-{
-	if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_GRAVITY)
-		return 1.0;
-
-	static Float:returnGravity, Float:heroMinGravity;
-	static x, heroIndex, playerPowerCount, heroGravityPointer;
-	returnGravity = 1.0;
-	playerPowerCount = getPowerCount(id);
-
-	for (x = 1; x <= playerPowerCount; x++) {
-		heroIndex = gPlayerPowers[id][x];
-		if (-1 < heroIndex < gSuperHeroCount) {
-			heroGravityPointer = gHeroMinGravity[heroIndex];
-			if (!heroGravityPointer)
-				continue;
-			
-			heroMinGravity = get_pcvar_float(heroGravityPointer);
-			if (heroMinGravity > 0.0)
-				returnGravity = floatmin(returnGravity, heroMinGravity);
-		}
-	}
-
-	return returnGravity;
 }
 //----------------------------------------------------------------------------------------------
 getPowerCount(id)
@@ -2086,59 +2016,6 @@ public powerKeyUp(id)
 	return PLUGIN_HANDLED;
 }
 //----------------------------------------------------------------------------------------------
-public setPowers(id)
-{
-	if (!is_user_alive(id))
-		return;
-
-	setGravityPowers(id);
-}
-//----------------------------------------------------------------------------------------------
-//native sh_reset_min_gravity(id)
-@Native_ResetMinGravity()
-{
-	if (!CvarSuperHeros)
-		return;
-
-	new id = get_param(1);
-
-	if (!is_user_alive(id))
-		return;
-
-	resetMinGravity(id);
-}
-//----------------------------------------------------------------------------------------------
-resetMinGravity(id)
-{
-	if (!CvarSuperHeros)
-		return;
-
-	if (!is_user_alive(id))
-		return;
-
-	new Float:newGravity = getMinGravity(id);
-	if (get_user_gravity(id) != newGravity)
-		// Set to 1.0 or the next lowest Gravity
-		set_user_gravity(id, newGravity);
-}
-//----------------------------------------------------------------------------------------------
-setGravityPowers(id)
-{
-	if (!CvarSuperHeros)
-		return;
-
-	if (!is_user_alive(id) || gRoundFreeze || gReadXPNextRound[id])
-		return;
-
-	new Float:oldGravity = 1.0;
-	new Float:newGravity = getMinGravity(id);
-
-	if (oldGravity != newGravity) {
-		debugMsg(id, 5, "Setting Gravity to %f", newGravity);
-		set_user_gravity(id, newGravity);
-	}
-}
-//----------------------------------------------------------------------------------------------
 public msg_StatusText()
 {
 	if (!CvarSuperHeros)
@@ -2229,12 +2106,8 @@ displayPowers(id, bool:setThePowers)
 		}
 	}
 
-	if (is_user_alive(id)) {
+	if (is_user_alive(id))
 		writeStatusMessage(id, message);
-
-		if (setThePowers)
-			set_task(0.6, "setPowers", id);
-	}
 
 	// Update menu incase already in menu and levels changed
 	// or user is no longer in menu

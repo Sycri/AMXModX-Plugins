@@ -10,8 +10,11 @@ shadowcat_cliptime 6		//# of seconds Shadowcat has in noclip mode.
 
 */
 
-#include <superheromod>
+#include <amxmodx>
 #include <amxmisc>
+#include <fakemeta>
+#include <fun>
+#include <sh_core_main>
 
 #pragma semicolon 1
 

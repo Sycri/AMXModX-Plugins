@@ -13,8 +13,13 @@ batgirl_teamcolored 1		//1=teamcolored zip lines 0=white zip lines
 
 */
 
-#include <superheromod>
+#include <amxmodx>
 #include <amxmisc>
+#include <fakemeta>
+#include <fun>
+#include <cstrike>
+#include <sh_core_main>
+#include <sh_core_gravity>
 
 #pragma semicolon 1
 

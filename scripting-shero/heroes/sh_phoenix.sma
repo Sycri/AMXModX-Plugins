@@ -28,8 +28,14 @@ phoenix_maxdamage 90	//Maximum damage dealt spread over radius (Default 90)
 
 //------- Do not edit below this point ------//
 
-#include <superheromod>
+#include <amxmodx>
 #include <amxmisc>
+#include <fakemeta>
+#include <fun>
+#include <cstrike>
+#include <hamsandwich>
+#include <sh_core_main>
+#include <sh_core_hpap>
 
 #pragma semicolon 1
 
@@ -138,8 +144,8 @@ public sh_client_death(victim, attacker)
 	sh_set_rendering(id, 248, 20, 25, 16, kRenderFxGlowShell);
 	set_task(3.0, "@Task_Unglow", id);
 	
-	// Need to delay setting half max health because SuperHero mod also delays setting health
-	set_task(0.7, "@Task_SetHealth", id);
+	// Need to delay setting half max health because SuperHero mod sets health
+	set_task(0.1, "@Task_SetHealth", id);
 
 	phoenix_teleport(id);
 	rebirth_explosion(id);

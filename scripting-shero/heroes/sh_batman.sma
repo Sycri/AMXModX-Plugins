@@ -18,7 +18,11 @@ batman_armor 125		//defualt 125
 *        batman so powerful.  Batman is split between Batman and Punisher
 */
 
-#include <superheromod>
+#include <amxmodx>
+#include <cstrike>
+#include <sh_core_main>
+#include <sh_core_hpap>
+#include <sh_core_shieldrestrict>
 
 #pragma semicolon 1
 

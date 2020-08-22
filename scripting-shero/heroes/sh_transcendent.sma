@@ -10,7 +10,10 @@ transcendent_defensemulti 0.2		//Damage X this cvar = New Damage. (Def=0.2)
 
 */
 
-#include <superheromod>
+#include <amxmodx>
+#include <hamsandwich>
+#include <sh_core_main>
+#include <sh_core_hpap>
 
 #pragma semicolon 1
 

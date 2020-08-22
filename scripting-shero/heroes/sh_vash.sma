@@ -6,6 +6,7 @@
 vash_level 4
 vash_deaglemult 2.5		//Damage multiplier for his Deagle
 vash_gravity 1.0		//Default 1.0 = normal gravity (0.50 is 50% of normal gravity, ect.)
+vash_rldmode 2			//Endless ammo mode: 0-server default, 1-no reload, 2-reload, 3-drop wpn
 
 */
 
@@ -32,13 +33,6 @@ vash_gravity 1.0		//Default 1.0 = normal gravity (0.50 is 50% of normal gravity,
 //---------- User Changeable Defines --------//
 
 
-// 0-follow server sh_reloadmode cvar setting
-// 1-no reload, continuous shooting
-// 2-reload, but backpack ammo never depletes [Default]
-// 3-drop weapon and get a new one with full clip
-// 4-normal cs, reload and backpack ammo depletes
-#define AMMO_MODE 2
-
 // Comment out to force not using the Deagle model, will result in a very small reduction in code/checks
 // Note: If you change anything here from default setting you must recompile the plugin
 // #define USE_WEAPON_MODEL
@@ -46,15 +40,15 @@ vash_gravity 1.0		//Default 1.0 = normal gravity (0.50 is 50% of normal gravity,
 
 //------- Do not edit below this point ------//
 
-#include <superheromod>
+#include <amxmodx>
 #include <amxmisc>
+#include <fakemeta>
+#include <cstrike>
+#include <hamsandwich>
+#include <sh_core_main>
+#include <sh_core_gravity>
 
 #pragma semicolon 1
-
-// CS Weapon CBase Offsets (win32)
-const PDATA_SAFE = 2;
-const OFFSET_WEAPONOWNER = 41;
-const OFFSET_LINUX_WEAPONS = 4;
 
 // GLOBAL VARIABLES
 new gHeroID;
@@ -63,6 +57,8 @@ new const gHeroName[] = "Vash the Stampede";
 new bool:gHasVashPower[MAX_PLAYERS + 1];
 new gAllowedHitZones[MAX_PLAYERS + 1];
 new gmsgSync;
+
+new CvarReloadMode;
 
 #if defined USE_WEAPON_MODEL
 	new const gModel_V_Deagle[] = "models/shmod/vash_deagle.mdl";
@@ -78,6 +74,7 @@ public plugin_init()
 	new pcvarLevel = create_cvar("vash_level", "4", .has_min = true, .min_val = 0.0);
 	new pcvarDeagleMult = create_cvar("vash_deaglemult", "2.5");
 	new pcvarGravity = create_cvar("vash_gravity", "1.0");
+	bind_pcvar_num(create_cvar("vash_rldmode", "2"), CvarReloadMode);
 	
 	// FIRE THE EVENTS TO CREATE THIS SUPERHERO!
 	gHeroID = sh_create_hero(gHeroName, pcvarLevel);
@@ -86,10 +83,8 @@ public plugin_init()
 	sh_set_hero_dmgmult(gHeroID, pcvarDeagleMult, CSW_DEAGLE);
 	
 	// REGISTER EVENTS THIS HERO WILL RESPOND TO!
-#if AMMO_MODE < 4
 	// read_data(2) == CSW_DEAGLE = 2=26
 	register_event_ex("CurWeapon", "@Event_CurWeapon", RegisterEvent_Single | RegisterEvent_OnlyAlive, "1=1", "2=26", "3=0");
-#endif
 
 	RegisterHamPlayer(Ham_TraceAttack, "@Forward_Player_TraceAttack_Pre");
 #if defined USE_WEAPON_MODEL
@@ -178,15 +173,13 @@ vash_shutdown(index)
 	ShowSyncHudMsg(index, gmsgSync, "Vash - EVASION OFF");
 }
 //----------------------------------------------------------------------------------------------
-#if AMMO_MODE < 4
 @Event_CurWeapon(id)
 {
 	if (!sh_is_active() || !gHasVashPower[id])
 		return;
 	
-	sh_reload_ammo(id, AMMO_MODE);
+	sh_reload_ammo(id, CvarReloadMode);
 }
-#endif
 //----------------------------------------------------------------------------------------------
 @Forward_Player_TraceAttack_Pre(victim, attacker, Float:damage, Float:direction[3], tracehandle, damagebits)
 {
@@ -231,10 +224,10 @@ switch_model(index)
 stock fm_cs_get_weapon_ent_owner(ent)
 {
 	// Prevent server crash if entity's private data not initalized
-	if (pev_valid(ent) != PDATA_SAFE)
+	if (pev_valid(ent) != 2)
 		return -1;
 	
-	return get_pdata_cbase(ent, OFFSET_WEAPONOWNER, OFFSET_LINUX_WEAPONS);
+	return get_ent_data_entity(ent, "CBasePlayerItem", "m_pPlayer");
 }
 #endif
 //----------------------------------------------------------------------------------------------
@@ -251,7 +244,7 @@ stock fm_cs_get_weapon_ent_owner(ent)
 		
 		if (gHasVashPower[player]) {
 			// new randomHitZone = random_num(1, 7);
-			switch(random_num(1, 7)) {
+			switch (random_num(1, 7)) {
 				case 1: gAllowedHitZones[player] = 127; //remove right leg hitzone
 				case 2: gAllowedHitZones[player] = 191;	//remove left leg hitzone
 				case 3: gAllowedHitZones[player] = 223;	//remove right arm hitzone

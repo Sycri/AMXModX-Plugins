@@ -21,8 +21,12 @@ savitar_forceknife 0			//When running, is Savitar forced to use his knife?
 
 */
 
-#include <superheromod>
+#include <amxmodx>
 #include <amxmisc>
+#include <fakemeta>
+#include <cstrike>
+#include <sh_core_main>
+#include <sh_core_speed>
 
 #pragma semicolon 1
 
@@ -101,10 +105,7 @@ public sh_client_death(id)
 //----------------------------------------------------------------------------------------------
 @Task_SavitarLoop()
 {
-	if (!sh_is_active() || sh_is_freezetime())
-		return;
-	
-	static buttons, Float:velocityVec[3];
+	static Float:velocity[3];
 
 	static players[MAX_PLAYERS], playerCount, player, i;
 	get_players_ex(players, playerCount, GetPlayers_ExcludeDead | GetPlayers_ExcludeHLTV);
@@ -115,16 +116,15 @@ public sh_client_death(id)
 		if (!gHasSavitar[player])
 			continue;
 
-		buttons = pev(player, pev_button);
-		if (!(buttons & MOVEMENT_BUTTONS)) {
+		if (!(pev(player, pev_button) & MOVEMENT_BUTTONS)) {
 			clear_savitar(player);
-			return;
+			continue;
 		}
 
-		pev(player, pev_velocity, velocityVec);
-		if (vector_length(velocityVec) < CvarMinSpeed) {
+		pev(player, pev_velocity, velocity);
+		if (vector_length(velocity) < CvarMinSpeed) {
 			clear_savitar(player);
-			return;
+			continue;
 		}
 
 		if (!gIsMoving[player]) {
@@ -134,7 +134,7 @@ public sh_client_death(id)
 
 		set_invisibility(player);
 		
-		if (get_user_weapon(player) != CSW_KNIFE && CvarForceKnife)
+		if (cs_get_user_weapon(player) != CSW_KNIFE && CvarForceKnife)
 			sh_switch_weapon(player, CSW_KNIFE);
 	}
 }
@@ -227,9 +227,11 @@ create_trail(index)
 //----------------------------------------------------------------------------------------------
 clear_savitar(index)
 {
-	remove_trail(index);
-	sh_set_rendering(index);
-	gIsMoving[index] = false;
+	if (gIsMoving[index]) {
+		remove_trail(index);
+		sh_set_rendering(index);
+		gIsMoving[index] = false;
+	}
 }
 //----------------------------------------------------------------------------------------------
 remove_trail(index)

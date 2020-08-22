@@ -27,8 +27,15 @@ neo_flytoggle 0			//Def=0
 
 //------- Do not edit below this point ------//
 
-#include <superheromod>
+#include <amxmodx>
 #include <amxmisc>
+#include <fakemeta>
+#include <fun>
+#include <cstrike>
+#include <sh_core_main>
+#include <sh_core_hpap>
+#include <sh_core_speed>
+#include <sh_core_gravity>
 
 #pragma semicolon 1
 
@@ -73,8 +80,8 @@ public plugin_init()
 	gHeroID = sh_create_hero(gHeroName, pcvarLevel);
 	sh_set_hero_info(gHeroID, "The Chosen One", "Become like Neo - Gain ability to fly, have more health, armor, run faster and jump higher");
 	sh_set_hero_hpap(gHeroID, pcvarHealth, pcvarArmor);
-	sh_set_hero_grav(gHeroID, pcvarGravity);
 	sh_set_hero_speed(gHeroID, pcvarSpeed);
+	sh_set_hero_grav(gHeroID, pcvarGravity);
 	sh_set_hero_bind(gHeroID);
 	
 	// REGISTER EVENTS THIS HERO WILL RESPOND TO!

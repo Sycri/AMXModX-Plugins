@@ -11,8 +11,10 @@ cyclops_multishot 0.2			//Delay for multishots on holding key down
 
 */
 
-#include <superheromod>
+#include <amxmodx>
 #include <amxmisc>
+#include <cstrike>
+#include <sh_core_main>
 
 #pragma semicolon 1
 

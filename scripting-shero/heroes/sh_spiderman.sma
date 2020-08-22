@@ -12,8 +12,13 @@ spiderman_maxhooks 60		//Max ammout of hooks allowed (-1 is an unlimited ammount
 
 */
 
-#include <superheromod>
+#include <amxmodx>
 #include <amxmisc>
+#include <fakemeta>
+#include <fun>
+#include <cstrike>
+#include <sh_core_main>
+#include <sh_core_gravity>
 
 #pragma semicolon 1
 

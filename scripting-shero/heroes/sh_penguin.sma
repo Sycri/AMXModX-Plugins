@@ -29,15 +29,26 @@ penguin_nadespeed 900		//Speed of Penguin grenades when seeking (def 900)
 *   	Yang wrote, "Cred goez to vittu's sexiness on gambit and cheap_suit who created the original plugin".
 */
 
-#include <superheromod>
+//---------- User Changeable Defines --------//
+
+
+// Comment out to not use the Penguin viewmodel
+#define USE_WEAPON_VIEW_MODEL
+
+// Comment out to not use the Penguin worldmodel
+#define USE_WEAPON_WORLD_MODEL
+
+
+//------- Do not edit below this point ------//
+
+#include <amxmodx>
 #include <amxmisc>
+#include <fakemeta>
+#include <cstrike>
+#include <hamsandwich>
+#include <sh_core_main>
 
 #pragma semicolon 1
-
-// CS Weapon CBase Offsets (win32)
-const PDATA_SAFE = 2;
-const OFFSET_WEAPONOWNER = 41;
-const OFFSET_LINUX_WEAPONS = 4;
 
 const AMMOX_HEGRENADE = 12;
 
@@ -55,8 +66,15 @@ new Float:CvarGrenadeMult, Float:CvarGrenadeTimer;
 new Float:CvarCooldown, Float:CvarFuse, Float:CvarNadeSpeed;
 
 new gSpriteTrail;
-new const gModel_W_HEGrenade[] = "models/shmod/penguin_w_hegrenade.mdl";
-new const gModel_V_HEGrenade[] = "models/shmod/penguin_v_hegrenade.mdl";
+
+#if defined USE_WEAPON_VIEW_MODEL
+	new const gModel_V_HEGrenade[] = "models/shmod/penguin_v_hegrenade.mdl";
+	new bool:gViewModelLoaded;
+#endif
+#if defined USE_WEAPON_WORLD_MODEL
+	new const gModel_W_HEGrenade[] = "models/shmod/penguin_w_hegrenade.mdl";
+	new bool:gWorldModelLoaded;
+#endif
 //----------------------------------------------------------------------------------------------
 public plugin_init()
 {
@@ -82,15 +100,35 @@ public plugin_init()
 	register_forward(FM_Think, "@Forward_Think");
 	register_forward(FM_Touch, "@Forward_Touch");
 
-	RegisterHam(Ham_Item_Deploy, "weapon_hegrenade", "@Forward_HEGrenade_Deploy_Post", 1);
 	RegisterHamPlayer(Ham_TakeDamage, "@Forward_Player_TakeDamage_Pre");
+#if defined USE_WEAPON_VIEW_MODEL
+	if (gViewModelLoaded)
+		RegisterHam(Ham_Item_Deploy, "weapon_hegrenade", "@Forward_HEGrenade_Deploy_Post", 1);
+#endif
 }
 //----------------------------------------------------------------------------------------------
 public plugin_precache()
 {
 	gSpriteTrail = precache_model("sprites/smoke.spr");
-	precache_model(gModel_W_HEGrenade);
-	precache_model(gModel_V_HEGrenade);
+
+#if defined USE_WEAPON_VIEW_MODEL
+	gViewModelLoaded = true;
+	if(file_exists(gModel_V_HEGrenade)) {
+		precache_model(gModel_V_HEGrenade);
+	} else {
+		sh_debug_message(0, 0, "Aborted loading ^"%s^", file does not exist on server", gModel_V_HEGrenade);
+		gViewModelLoaded = false;
+	}
+#endif
+#if defined USE_WEAPON_WORLD_MODEL
+	gWorldModelLoaded = true;
+	if(file_exists(gModel_W_HEGrenade)) {
+		precache_model(gModel_W_HEGrenade);
+	} else {
+		sh_debug_message(0, 0, "Aborted loading ^"%s^", file does not exist on server", gModel_W_HEGrenade);
+		gWorldModelLoaded = false;
+	}
+#endif
 }
 //----------------------------------------------------------------------------------------------
 public sh_hero_init(id, heroID, mode)
@@ -104,11 +142,18 @@ public sh_hero_init(id, heroID, mode)
 
 			@Task_GiveGrenade(id);
 
-			if (get_user_weapon(id) == CSW_HEGRENADE)
+#if defined USE_WEAPON_VIEW_MODEL
+			if (gViewModelLoaded && get_user_weapon(id) == CSW_HEGRENADE)
 				switch_model(id);
+#endif
 		}
 		case SH_HERO_DROP: {
 			gHasPenguinPower[id] = false;
+
+#if defined USE_WEAPON_VIEW_MODEL
+			if (gViewModelLoaded && get_user_weapon(id) == CSW_HEGRENADE)
+				reset_model(id);
+#endif
 		}
 	}
 	
@@ -127,13 +172,13 @@ public sh_client_spawn(id)
 		@Task_GiveGrenade(id);
 	}
 	
-	for (new i = MAX_PLAYERS + 1; i < charsmax(gPauseEntity); i++)
+	for (new i = MaxClients + 1; i < charsmax(gPauseEntity); i++)
 		gPenguinNade[id][i] = false;
 }
 //----------------------------------------------------------------------------------------------
 public sh_round_start()
 {
-	for (new i = MAX_PLAYERS + 1; i < charsmax(gPauseEntity); i++)
+	for (new i = MaxClients + 1; i < charsmax(gPauseEntity); i++)
 		gPauseEntity[i] = false;
 }
 //----------------------------------------------------------------------------------------------
@@ -180,7 +225,10 @@ public sh_round_start()
 		return FMRES_IGNORED;
 	
 	if (!gPlayerInCooldown[owner]) {
-		engfunc(EngFunc_SetModel, ent, gModel_W_HEGrenade);
+#if defined USE_WEAPON_WORLD_MODEL
+		if (gWorldModelLoaded)
+			engfunc(EngFunc_SetModel, ent, gModel_W_HEGrenade);
+#endif
 		
 		gNadeSpeed = CvarNadeSpeed;
 		gPauseEntity[ent] = true;
@@ -257,7 +305,7 @@ public sh_round_start()
 		message_end();
 		
 		parm[2] = nearestPlayer;
-		set_task_ex(0.1, "@Task_SeekTarget", grenadeID+1099, parm, 3, SetTask_Repeat);
+		set_task_ex(0.1, "@Task_SeekTarget", grenadeID + 1099, parm, 3, SetTask_Repeat);
 	}
 }
 //----------------------------------------------------------------------------------------------
@@ -267,14 +315,14 @@ public sh_round_start()
 	new target = parm[2];
 	
 	if (!pev_valid(grenade)) {
-		remove_task(grenade+1099);
+		remove_task(grenade + 1099);
 		return;
 	}
 	
 	if (is_user_alive(target)) {
 		fm_entity_set_follow(grenade, target);
 	} else {
-		remove_task(grenade+1099);
+		remove_task(grenade + 1099);
 		
 		// Stop the Trail
 		message_begin(MSG_BROADCAST, SVC_TEMPENTITY);
@@ -326,7 +374,7 @@ fm_entity_set_follow(entity, target)
 //----------------------------------------------------------------------------------------------
 @Forward_Think(ent)
 {
-	if (ent <= MAX_PLAYERS || ent > charsmax(gPauseEntity))
+	if (ent <= MaxClients || ent > charsmax(gPauseEntity))
 		return FMRES_IGNORED;
 	
 	if (gPauseEntity[ent]) {
@@ -340,7 +388,7 @@ fm_entity_set_follow(entity, target)
 //----------------------------------------------------------------------------------------------
 @Forward_Touch(ptr, ptd)
 {
-	if (ptr <= MAX_PLAYERS || ptr > charsmax(gPauseEntity))
+	if (ptr <= MaxClients || ptr > charsmax(gPauseEntity))
 		return FMRES_IGNORED;
 	
 	if (!pev_valid(ptr) || !pev_valid(ptd))
@@ -384,6 +432,40 @@ fm_entity_set_follow(entity, target)
 	gPauseEntity[grenadeID] = false;
 }
 //----------------------------------------------------------------------------------------------
+@Forward_Player_TakeDamage_Pre(victim, inflictor, attacker, Float:damage, damagebits)
+{
+	if (!sh_is_active() || !is_user_connected(attacker))
+		return HAM_IGNORED;
+	
+	if (!gHasPenguinPower[attacker] || gPlayerInCooldown[attacker])
+		return HAM_IGNORED;
+	
+	if (!(damagebits & DMG_GRENADE))
+		return HAM_IGNORED;
+	
+	SetHamParamFloat(4, damage *= CvarGrenadeMult);
+	
+	static i;
+	for (i = MaxClients + 1; i < charsmax(gPauseEntity); i++) {
+		if (gPenguinNade[attacker][i])
+			set_cooldown(i, attacker);
+	}
+	return HAM_HANDLED;
+}
+//----------------------------------------------------------------------------------------------
+set_cooldown(grenadeID, grenadeOwner)
+{
+	gPenguinNade[grenadeOwner][grenadeID] = false;
+	
+	if (!is_user_alive(grenadeOwner) || gPlayerInCooldown[grenadeOwner])
+		return;
+	
+	new Float:cooldown = CvarCooldown;
+	if (cooldown > 0.0)
+		sh_set_cooldown(grenadeOwner, cooldown);
+}
+//----------------------------------------------------------------------------------------------
+#if defined USE_WEAPON_VIEW_MODEL
 @Forward_HEGrenade_Deploy_Post(weapon_ent)
 {
 	if (!sh_is_active())
@@ -406,44 +488,27 @@ switch_model(id)
 	set_pev(id, pev_viewmodel2, gModel_V_HEGrenade);
 }
 //----------------------------------------------------------------------------------------------
+reset_model(index)
+{
+	if (!is_user_alive(index))
+		return;
+
+	if (cs_get_user_shield(index))
+		return;
+	
+	new weaponEnt = cs_get_user_weapon_entity(index);
+	
+	// Let CS update weapon models
+	ExecuteHamB(Ham_Item_Deploy, weaponEnt);
+}
+//----------------------------------------------------------------------------------------------
 stock fm_cs_get_weapon_ent_owner(ent)
 {
 	// Prevent server crash if entity's private data not initalized
-	if (pev_valid(ent) != PDATA_SAFE)
+	if (pev_valid(ent) != 2)
 		return -1;
 	
-	return get_pdata_cbase(ent, OFFSET_WEAPONOWNER, OFFSET_LINUX_WEAPONS);
+	return get_ent_data_entity(ent, "CBasePlayerItem", "m_pPlayer");
 }
-//----------------------------------------------------------------------------------------------
-@Forward_Player_TakeDamage_Pre(victim, inflictor, attacker, Float:damage, damagebits)
-{
-	if (!sh_is_active() || !is_user_connected(attacker))
-		return HAM_IGNORED;
-	
-	if (!gHasPenguinPower[attacker] || gPlayerInCooldown[attacker])
-		return HAM_IGNORED;
-	
-	if (!(damagebits & DMG_GRENADE))
-		return HAM_IGNORED;
-	
-	SetHamParamFloat(4, damage *= CvarGrenadeMult);
-	
-	for (new i = MAX_PLAYERS + 1; i < charsmax(gPauseEntity); i++) {
-		if (gPenguinNade[attacker][i])
-			set_cooldown(i, attacker);
-	}
-	return HAM_HANDLED;
-}
-//----------------------------------------------------------------------------------------------
-set_cooldown(grenadeID, grenadeOwner)
-{
-	gPenguinNade[grenadeOwner][grenadeID] = false;
-	
-	if (!is_user_alive(grenadeOwner) || gPlayerInCooldown[grenadeOwner])
-		return;
-	
-	new Float:cooldown = CvarCooldown;
-	if (cooldown > 0.0)
-		sh_set_cooldown(grenadeOwner, cooldown);
-}
+#endif
 //----------------------------------------------------------------------------------------------

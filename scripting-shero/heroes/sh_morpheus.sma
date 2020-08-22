@@ -4,19 +4,14 @@
 
 //Morpheus
 morpheus_level 8
-morpheus_gravity 0.35		//Gravity Morpheus has
-morpheus_mp5mult 2.0		//Damage multiplier for his MP5
+morpheus_gravity 0.35	//Gravity Morpheus has
+morpheus_mp5mult 2.0	//Damage multiplier for his MP5
+morpheus_rldmode 0		//Endless ammo mode: 0-server default, 1-no reload, 2-reload, 3-drop wpn
 
 */
 
 //---------- User Changeable Defines --------//
 
-// 0-follow server sh_reloadmode cvar setting [Default]
-// 1-no reload, continuous shooting
-// 2-reload, but backpack ammo never depletes
-// 3-drop weapon and get a new one with full clip
-// 4-normal cs, reload and backpack ammo depletes
-#define AMMO_MODE 0
 
 // Comment out to force not using the model, will result in a very small reduction in code/checks
 // Note: If you change anything here from default setting you must recompile the plugin
@@ -25,22 +20,28 @@ morpheus_mp5mult 2.0		//Damage multiplier for his MP5
 // Comment out to not give a free MP5
 #define GIVE_WEAPON
 
+
 //------- Do not edit below this point ------//
 
-#include <superheromod>
+#include <amxmodx>
+#include <fakemeta>
+#include <hamsandwich>
+#include <sh_core_main>
+#include <sh_core_gravity>
+
+#if defined GIVE_WEAPON
+	#include <sh_core_shieldrestrict>
+#endif
 
 #pragma semicolon 1
-
-// CS Weapon CBase Offsets (win32)
-const PDATA_SAFE = 2;
-const OFFSET_WEAPONOWNER = 41;
-const OFFSET_LINUX_WEAPONS = 4;
 
 // GLOBAL VARIABLES
 new gHeroID;
 new const gHeroName[] = "Morpheus";
 
 new bool:gHasMorpheus[MAX_PLAYERS + 1];
+
+new CvarReloadMode;
 
 #if defined USE_WEAPON_MODEL
 	new const gModel_V_MP5[] = "models/shmod/morpheus_mp5.mdl";
@@ -56,6 +57,7 @@ public plugin_init()
 	new pcvarLevel = create_cvar("morpheus_level", "8", .has_min = true, .min_val = 0.0);
 	new pcvarGravity = create_cvar("morpheus_gravity", "0.35");
 	new pcvarMP5Mult = create_cvar("morpheus_mp5mult", "2.0");
+	bind_pcvar_num(create_cvar("morpheus_rldmode", "0"), CvarReloadMode);
 
 	// FIRE THE EVENT TO CREATE THIS SUPERHERO!
 	gHeroID = sh_create_hero(gHeroName, pcvarLevel);
@@ -68,10 +70,8 @@ public plugin_init()
 #endif
 
 	// REGISTER EVENTS THIS HERO WILL RESPOND TO!
-#if AMMO_MODE < 4
 	// read_data(2) == CSW_MP5NAVY = 2=19
 	register_event_ex("CurWeapon", "@Event_CurWeapon", RegisterEvent_Single | RegisterEvent_OnlyAlive, "1=1", "2=19", "3=0");
-#endif
 #if defined USE_WEAPON_MODEL
 	if (gModelLoaded)
 		RegisterHam(Ham_Item_Deploy, "weapon_mp5navy", "@Forward_MP5Navy_Deploy_Post", 1);
@@ -132,15 +132,13 @@ public sh_client_spawn(id)
 }
 #endif
 //----------------------------------------------------------------------------------------------
-#if AMMO_MODE < 4
 @Event_CurWeapon(id)
 {
 	if (!sh_is_active() || !gHasMorpheus[id])
 		return;
 	
-	sh_reload_ammo(id, AMMO_MODE);
+	sh_reload_ammo(id, CvarReloadMode);
 }
-#endif
 //----------------------------------------------------------------------------------------------
 #if defined USE_WEAPON_MODEL
 @Forward_MP5Navy_Deploy_Post(weapon_ent)
@@ -158,9 +156,6 @@ switch_model(index)
 {
 	if (!is_user_alive(index) || !gHasMorpheus[index])
 		return;
-
-	if (cs_get_user_shield(index))
-		return;
 	
 	set_pev(index, pev_viewmodel2, gModel_V_MP5);
 }
@@ -168,10 +163,10 @@ switch_model(index)
 stock fm_cs_get_weapon_ent_owner(ent)
 {
 	// Prevent server crash if entity's private data not initalized
-	if (pev_valid(ent) != PDATA_SAFE)
+	if (pev_valid(ent) != 2)
 		return -1;
 	
-	return get_pdata_cbase(ent, OFFSET_WEAPONOWNER, OFFSET_LINUX_WEAPONS);
+	return get_ent_data_entity(ent, "CBasePlayerItem", "m_pPlayer");
 }
 #endif
 //----------------------------------------------------------------------------------------------

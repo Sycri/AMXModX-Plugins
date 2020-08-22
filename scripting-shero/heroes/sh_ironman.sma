@@ -13,8 +13,11 @@ ironman_fuelcost 1		//How much armor does it cost per firing, set 0 to not use a
 
 */
 
-#include <superheromod>
+#include <amxmodx>
 #include <amxmisc>
+#include <cstrike>
+#include <sh_core_main>
+#include <sh_core_hpap>
 
 #pragma semicolon 1
 

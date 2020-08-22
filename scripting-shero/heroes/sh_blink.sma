@@ -17,7 +17,10 @@ blink_delay 0.1			//Delay time before the teleport occurs
 
 //------- Do not edit below this point ------//
 
-#include <superheromod>
+#include <amxmodx>
+#include <fakemeta>
+#include <fun>
+#include <sh_core_main>
 
 #pragma semicolon 1
 

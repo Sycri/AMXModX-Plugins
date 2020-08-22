@@ -62,18 +62,23 @@ public plugin_cfg()
 	set_task(5.0, "@Task_SetServerMaxSpeed");
 }
 //----------------------------------------------------------------------------------------------
+public client_connect(id)
+{
+	gPlayerStunTimer[id] = -1;
+}
+//----------------------------------------------------------------------------------------------
 public client_disconnected(id)
 {
 	gPlayerStunTimer[id] = -1;
 }
 //----------------------------------------------------------------------------------------------
-public sh_hero_init(id, heroID, mode)
+public sh_hero_init(id, heroID)
 {
 	if (gHeroMaxSpeed[heroID] > 0.0)
 		setSpeedPowers(id, true);
 }
 //----------------------------------------------------------------------------------------------
-public sh_client_spawn(id, bool:newRound)
+public sh_client_spawn(id)
 {
 	gPlayerStunTimer[id] = -1;
 }
@@ -153,15 +158,7 @@ bool:@Native_GetStun()
 //native sh_reset_max_speed(id)
 @Native_ResetMaxSpeed()
 {
-	if (!sh_is_active())
-		return;
-		
-	new id = get_param(1);
-	
-	if (!is_user_alive(id))
-		return;
-	
-	setSpeedPowers(id, true);
+	setSpeedPowers(get_param(1), true);
 }
 //----------------------------------------------------------------------------------------------
 @Forward_AddPlayerItem_Post(id)
@@ -308,18 +305,18 @@ Float:getMaxSpeed(id, weapon)
 			if (heroSpeed <= 0.0)
 				continue;
 			
-			for (i = 0; i < 31; i++) {
+			for (i = CSW_NONE; i <= CSW_LAST_WEAPON; i++) {
 				heroWeapon = gHeroSpeedWeapons[heroIndex][i];
 
 				//Stop checking, end of list
-				if (i != 0 && heroWeapon == 0)
+				if (i != CSW_NONE && heroWeapon == CSW_NONE)
 					break;
 
 				sh_get_hero_name(heroIndex, heroName, charsmax(heroName));
 				sh_debug_message(id, 5, "Looking for Speed Functions - %s, %d, %d", heroName, heroWeapon, weapon);
 
 				//If 0 or current weapon check max
-				if (heroWeapon == 0 || heroWeapon == weapon) {
+				if (heroWeapon == CSW_NONE || heroWeapon == weapon) {
 					returnSpeed = floatmax(returnSpeed, heroSpeed);
 					break;
 				}

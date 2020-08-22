@@ -21,7 +21,9 @@ thetick_level 0
 *
 */
 
-#include <superheromod>
+#include <amxmodx>
+#include <hamsandwich>
+#include <sh_core_main>
 
 #pragma semicolon 1
 

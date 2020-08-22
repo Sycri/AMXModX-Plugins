@@ -23,18 +23,16 @@ wolv_knifemult 1.35			//Multiplier for knife damage
 
 //------- Do not edit below this point ------//
 
-#include <superheromod>
+#include <amxmodx>
 #include <amxmisc>
+#include <fakemeta>
+#include <cstrike>
+#include <hamsandwich>
+#include <sh_core_main>
+#include <sh_core_hpap>
+#include <sh_core_speed>
 
 #pragma semicolon 1
-
-// CS Weapon CBase Offsets (win32)
-const PDATA_SAFE = 2;
-const OFFSET_WEAPONOWNER = 41;
-const OFFSET_LINUX_WEAPONS = 4;
-
-// CS Player CBase Offsets (win32)
-const OFFSET_ACTIVE_ITEM = 373;
 
 // GLOBAL VARIABLES
 new gHeroID;
@@ -146,7 +144,7 @@ reset_model(index)
 	if (cs_get_user_shield(index))
 		return;
 	
-	new weaponEnt = fm_cs_get_current_weapon_ent(index);
+	new weaponEnt = cs_get_user_weapon_entity(index);
 	
 	// Let CS update weapon models
 	ExecuteHamB(Ham_Item_Deploy, weaponEnt);
@@ -155,19 +153,10 @@ reset_model(index)
 stock fm_cs_get_weapon_ent_owner(ent)
 {
 	// Prevent server crash if entity's private data not initalized
-	if (pev_valid(ent) != PDATA_SAFE)
+	if (pev_valid(ent) != 2)
 		return -1;
 	
-	return get_pdata_cbase(ent, OFFSET_WEAPONOWNER, OFFSET_LINUX_WEAPONS);
-}
-//----------------------------------------------------------------------------------------------
-stock fm_cs_get_current_weapon_ent(index)
-{
-	// Prevent server crash if entity's private data not initalized
-	if (pev_valid(index) != PDATA_SAFE)
-		return -1;
-	
-	return get_pdata_cbase(index, OFFSET_ACTIVE_ITEM);
+	return get_ent_data_entity(ent, "CBasePlayerItem", "m_pPlayer");
 }
 #endif
 //----------------------------------------------------------------------------------------------

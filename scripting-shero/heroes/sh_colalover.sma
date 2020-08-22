@@ -20,7 +20,10 @@ cola_speed 500		//Running Speed (default is 500)
 *
 */
 
-#include <superheromod>
+#include <amxmodx>
+#include <sh_core_main>
+#include <sh_core_hpap>
+#include <sh_core_speed>
 
 #pragma semicolon 1
 

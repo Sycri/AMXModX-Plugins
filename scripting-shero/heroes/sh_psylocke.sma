@@ -22,8 +22,10 @@ psylocke_level 2
 *   Hero Created by StuD|MaN
 */
 
-#include <superheromod>
+#include <amxmodx>
 #include <amxmisc>
+#include <cstrike>
+#include <sh_core_main>
 
 #pragma semicolon 1
 

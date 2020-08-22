@@ -10,8 +10,11 @@ gmaster_cooldown 600		//# of seconds for Grandmaster cooldown
 
 */
 
-#include <superheromod>
+#include <amxmodx>
 #include <amxmisc>
+#include <cstrike>
+#include <hamsandwich>
+#include <sh_core_main>
 
 #pragma semicolon 1
 

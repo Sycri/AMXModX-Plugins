@@ -9,8 +9,10 @@ captaina_godsecs 1.0		//# of seconds of god mode
 
 */
 
-#include <superheromod>
+#include <amxmodx>
 #include <amxmisc>
+#include <fun>
+#include <sh_core_main>
 
 #pragma semicolon 1
 

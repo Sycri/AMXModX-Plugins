@@ -8,7 +8,9 @@ flash_speed 350		//the speed flash can run
 
 */
 
-#include <superheromod>
+#include <amxmodx>
+#include <sh_core_main>
+#include <sh_core_speed>
 
 #pragma semicolon 1
 

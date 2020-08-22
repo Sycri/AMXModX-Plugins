@@ -8,8 +8,8 @@ punisher_rldmode 0		// Endless Ammo mode: 0-server default, 1-no reload, 2-reloa
 
 */
 
-#include <superheromod>
-#include <amxmisc>
+#include <amxmodx>
+#include <sh_core_main>
 
 #pragma semicolon 1
 

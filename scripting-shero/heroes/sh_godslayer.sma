@@ -7,7 +7,11 @@ godslayer_level 8
 
 */
 
-#include <superheromod>
+#include <amxmodx>
+#include <fun>
+#include <cstrike>
+#include <hamsandwich>
+#include <sh_core_main>
 
 #pragma semicolon 1
 

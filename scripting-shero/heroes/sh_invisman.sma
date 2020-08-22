@@ -11,8 +11,11 @@ invisman_checkonground 0	//Must player be on ground to be invisible (Default 0 =
 
 */
 
-#include <superheromod>
+#include <amxmodx>
 #include <amxmisc>
+#include <fakemeta>
+#include <csx>
+#include <sh_core_main>
 
 #pragma semicolon 1
 

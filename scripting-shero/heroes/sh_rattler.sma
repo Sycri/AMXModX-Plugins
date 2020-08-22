@@ -20,13 +20,16 @@ Version History:
 
 */
 
-#include <superheromod>
+#include <amxmodx>
+#include <fun>
+#include <csx>
+#include <sh_core_main>
 
 #pragma semicolon 1
 
 //Global Variables
 new gHeroID;
-new const gHeroName[]="Rattler";
+new const gHeroName[] = "Rattler";
 
 new bool:gHasRattler[MAX_PLAYERS + 1];
 

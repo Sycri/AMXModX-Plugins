@@ -12,8 +12,10 @@ xavier_refreshtimer 5.0			//How often do the trails refresh
 
 */
 
-#include <superheromod>
+#include <amxmodx>
 #include <amxmisc>
+#include <cstrike>
+#include <sh_core_main>
 
 #pragma semicolon 1
 

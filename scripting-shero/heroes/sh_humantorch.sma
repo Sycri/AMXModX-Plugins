@@ -10,8 +10,11 @@ htorch_burndamage 10		//How much damage each burn does
 
 */
 
-#include <superheromod>
+#include <amxmodx>
 #include <amxmisc>
+#include <fakemeta>
+#include <cstrike>
+#include <sh_core_main>
 
 // GLOBAL VARIABLES
 new gHeroID;

@@ -10,7 +10,10 @@ superman_gravity 0.35		//Gravity
 
 */
 
-#include <superheromod>
+#include <amxmodx>
+#include <sh_core_main>
+#include <sh_core_hpap>
+#include <sh_core_gravity>
 
 #pragma semicolon 1
 

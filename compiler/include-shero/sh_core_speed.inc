@@ -25,7 +25,7 @@
  * Sets hero's max speed dependent on currently held weapon. (Optional)
  * Speeds do not stack, values from heroes are compared and greatest is applied.
  * weapons[] is an array of weapons this speed is good for, check CSW_ constants for weapon values.
- * {29, 30} would equal the CSW_ weapon constants corresponding to {CSW_KNIFE, CSW_P90}, etc... (see amxconst.inc)
+ * {29, 30} would equal the CSW_ weapon constants corresponding to {CSW_KNIFE, CSW_P90}, etc... (see cstrike_const.inc)
  *
  * @note		This setting does not effect speed of sniper rifles when scoped.
  *				Max possible running speed is 2000, limited by half-life.

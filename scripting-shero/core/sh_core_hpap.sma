@@ -35,8 +35,8 @@ public plugin_natives()
     register_library("sh_core_hpap");
     
     register_native("sh_set_hero_hpap", "@Native_SetHeroHpAp");
-    register_native("sh_get_max_ap", "@Native_GetMaxAP");
     register_native("sh_get_max_hp", "@Native_GetMaxHP");
+    register_native("sh_get_max_ap", "@Native_GetMaxAP");
 }
 //----------------------------------------------------------------------------------------------
 public plugin_cfg()
@@ -110,18 +110,6 @@ public sh_client_spawn(id)
 		bind_pcvar_num(pcvarMaxArmor, gHeroMaxArmor[heroIndex]);
 }
 //----------------------------------------------------------------------------------------------
-//native sh_get_max_ap(id)
-@Native_GetMaxAP()
-{
-	new id = get_param(1);
-
-	//stupid check - but checking prevents crashes
-	if (id < 1 || id > MaxClients)
-		return 0;
-
-	return gMaxArmor[id];
-}
-//----------------------------------------------------------------------------------------------
 //native sh_get_max_hp(id)
 @Native_GetMaxHP()
 {
@@ -132,6 +120,18 @@ public sh_client_spawn(id)
 		return 0;
 
 	return gMaxHealth[id];
+}
+//----------------------------------------------------------------------------------------------
+//native sh_get_max_ap(id)
+@Native_GetMaxAP()
+{
+	new id = get_param(1);
+
+	//stupid check - but checking prevents crashes
+	if (id < 1 || id > MaxClients)
+		return 0;
+
+	return gMaxArmor[id];
 }
 //----------------------------------------------------------------------------------------------
 @Message_Health(msgid, dest, id)
@@ -146,27 +146,6 @@ public sh_client_spawn(id)
 
 	if (hp % 256 == 0)
 		set_msg_arg_int(1, ARG_BYTE, ++hp);
-}
-//----------------------------------------------------------------------------------------------
-setArmorPowers(id, bool:resetArmor)
-{
-	if (!sh_is_active())
-		return;
-
-	if (!sh_user_is_loaded(id))
-		return;
-
-	new oldArmor = cs_get_user_armor(id);
-	new newArmor = getMaxArmor(id);
-
-	// Little check for armor system
-	if ((oldArmor != 0 || oldArmor >= newArmor) && !resetArmor)
-		return;
-
-	// Set the armor to the correct value
-	cs_set_user_armor(id, newArmor, CS_ARMOR_VESTHELM);
-
-	sh_debug_message(id, 5, "Setting Armor to %d", newArmor);
 }
 //----------------------------------------------------------------------------------------------
 setHealthPowers(id)
@@ -188,28 +167,25 @@ setHealthPowers(id)
 	}
 }
 //----------------------------------------------------------------------------------------------
-getMaxArmor(id)
+setArmorPowers(id, bool:resetArmor)
 {
-    if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_ARMOR)
-        return gMaxArmor[id] = 200;
-        
-    static heroIndex, returnArmor, x, playerPowerCount, heroArmor;
-    returnArmor = 0;
-    playerPowerCount = sh_get_user_powers(id);
-    
-    for (x = 1; x <= playerPowerCount; x++) {
-        heroIndex = sh_get_user_hero(id, x);
+	if (!sh_is_active())
+		return;
 
-        if (-1 < heroIndex < gSuperHeroCount) {
-            heroArmor = gHeroMaxArmor[heroIndex];
-            if (!heroArmor)
-                continue;
+	if (!sh_user_is_loaded(id))
+		return;
 
-            returnArmor = max(returnArmor, heroArmor);
-		}
-	}
-    
-    return gMaxArmor[id] = returnArmor;
+	new oldArmor = cs_get_user_armor(id);
+	new newArmor = getMaxArmor(id);
+
+	// Little check for armor system
+	if ((oldArmor != 0 || oldArmor >= newArmor) && (newArmor == 0 || !resetArmor))
+		return;
+
+	// Set the armor to the correct value
+	cs_set_user_armor(id, newArmor, CS_ARMOR_VESTHELM);
+
+	sh_debug_message(id, 5, "Setting Armor to %d", newArmor);
 }
 //----------------------------------------------------------------------------------------------
 getMaxHealth(id)
@@ -238,5 +214,29 @@ getMaxHealth(id)
     set_pev(id, pev_max_health, returnHealth);
     
     return gMaxHealth[id] = returnHealth;
+}
+//----------------------------------------------------------------------------------------------
+getMaxArmor(id)
+{
+    if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_ARMOR)
+        return gMaxArmor[id] = 200;
+        
+    static heroIndex, returnArmor, x, playerPowerCount, heroArmor;
+    returnArmor = 0;
+    playerPowerCount = sh_get_user_powers(id);
+    
+    for (x = 1; x <= playerPowerCount; x++) {
+        heroIndex = sh_get_user_hero(id, x);
+
+        if (-1 < heroIndex < gSuperHeroCount) {
+            heroArmor = gHeroMaxArmor[heroIndex];
+            if (!heroArmor)
+                continue;
+
+            returnArmor = max(returnArmor, heroArmor);
+		}
+	}
+    
+    return gMaxArmor[id] = returnArmor;
 }
 //----------------------------------------------------------------------------------------------

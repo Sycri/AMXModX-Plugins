@@ -9,11 +9,13 @@ juggernaut_paintolerance 150	//Amount of pain that Juggernaut can endure until h
 
 */
 
-#include <superheromod>
+#include <amxmodx>
+#include <fakemeta>
+#include <hamsandwich>
+#include <sh_core_main>
+#include <sh_core_hpap>
 
 #pragma semicolon 1
-
-const OFFSET_PAINSHOCK = 108;
 
 // GLOBAL VARIABLES
 new gHeroID;
@@ -59,7 +61,7 @@ public sh_hero_init(id, heroID, mode)
 	if (damage > CvarPainTolerance)
 		return HAM_IGNORED;
 	
-	set_pdata_float(victim, OFFSET_PAINSHOCK, 1.0);
+	set_ent_data_float(victim, "CBasePlayer", "m_flVelocityModifier", 1.0);
 	return HAM_IGNORED;
 }
 //----------------------------------------------------------------------------------------------

@@ -21,10 +21,11 @@ bishop_blastradius 150		//Energy Blast damage radius [def=150]
 *
 */
 
-#define DMG_GRENADE (1<<24)
-
-#include <superheromod>
+#include <amxmodx>
 #include <amxmisc>
+#include <cstrike>
+#include <hamsandwich>
+#include <sh_core_main>
 
 #pragma semicolon 1
 
