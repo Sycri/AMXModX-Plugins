@@ -62,9 +62,11 @@
 *
 *  Changelog:
 *   v1.7 - Sycri - 08/22/20
-*		- Readded HUD removement as it is now possible
+*	    - Added a check to verify user's xp has loaded to show level spec info
+*	    - Readded HUD removement as it is now possible
 *	    - Replaced FM_Think with Ham_Think
-*		- Revamped the code
+*	    - Revamped the code
+*	    (Update requires use of SuperHero Mod 1.3.0 or above.)
 *
 *   v1.6 - Jelle - 07/15/13
 *	    - Fixed problem where plugin would only show up to 255 health
@@ -77,16 +79,16 @@
 *	    - Changed to make each item optional
 *	    - Added option to show when godmode is on
 *	    - Added option to show information of player being spectated (similar to wc3ft)
-*	    (Update required use of SuperHero Mod 1.2.0 or above, also made the code ugly.)
+*	    (Update requires use of SuperHero Mod 1.2.0 or above, also made the code ugly.)
 *
 *   v1.3 - vittu - 07/06/07
 *	    - Fixed bug forgot to make sure entity was valid in think forward
-*           - Added requested option to show Gravity and Speed, set as disabled define because it
+*	    - Added requested option to show Gravity and Speed, set as disabled define because it
 *              gets checked constantly
 *
 *   v1.2 - vittu - 06/13/07
 *	    - Conversion to Fakemeta
-*           - Optimization of code all around, much improved
+*	    - Optimization of code all around, much improved
 *
 *   v1.1 - vittu - 06/11/06
 *	    - Used a hud sync object instead of taking up a single hud channel (suggested by jtp10181)
@@ -101,8 +103,7 @@
 *  To-Do:
 *	    - Possibly add other features instead of just HP/AP display,
 *              ie. secondary message showing info of user you aim at
-*           - Maybe add a file to allow user to save location of message
-*           - Maybe add a check to verify users xp has loaded to show spec info (requires change in SH core)
+*	    - Maybe add a file to allow user to save location of message
 *
 ****************************************************************************/
 
@@ -275,10 +276,10 @@ public sh_client_spawn(id)
 		for (i = 0; i < playerCount; i++) {
 			player = players[i];
 			tmp[0] = '^0';
+			len = 0;
 
 			if (is_user_alive(player)) {
 #if defined MONITOR_HP || defined MONITOR_AP || defined MONITOR_GRAVITY || defined MONITOR_SPEED || defined MONITOR_GODMODE
-				len = 0;
 #if defined MONITOR_HP
 				len += formatex(tmp, charsmax(tmp), "HP %d", gUserHealth[player]);
 #endif
@@ -336,13 +337,18 @@ public sh_client_spawn(id)
 
 				pev(specPlayer, pev_velocity, velocity);
 				pev(specPlayer, pev_gravity, gravity);
-				specPlayerLevel = sh_get_user_lvl(specPlayer);
 
-				if (specPlayerLevel < gServerMaxLevel)
-					formatex(tmp, charsmax(tmp), "/%d", sh_get_lvl_xp(specPlayerLevel + 1));
+				if (sh_user_is_loaded(specPlayer)) {
+					specPlayerLevel = sh_get_user_lvl(specPlayer);
+
+					len += formatex(tmp, charsmax(tmp), "Level: %d/%d  |  XP: %d", specPlayerLevel, gServerMaxLevel, sh_get_user_xp(specPlayer));
+
+					if (specPlayerLevel < gServerMaxLevel)
+						formatex(tmp[len], charsmax(tmp) - len, "/%d", sh_get_lvl_xp(specPlayerLevel + 1));
+				}
 
 				set_hudmessage(255, 255, 255, 0.018, 0.9, 2, 0.05, 0.1, 0.01, 3.0);
-				ShowSyncHudMsg(player, gMonitorHudSync, "[SH] Level: %d/%d  |  XP: %d%s^nHealth: %d  |  Armor: %d^nGravity: %d%%  |  Speed: %d", specPlayerLevel, gServerMaxLevel, sh_get_user_xp(specPlayer), tmp, gUserHealth[specPlayer], gUserArmor[specPlayer], floatround(gravity * 100.0), floatround(vector_length(velocity)));
+				ShowSyncHudMsg(player, gMonitorHudSync, "[SH] %s^nHealth: %d  |  Armor: %d^nGravity: %d%%  |  Speed: %d", tmp, gUserHealth[specPlayer], gUserArmor[specPlayer], floatround(gravity * 100.0), floatround(vector_length(velocity)));
 			}
 #endif
 		}

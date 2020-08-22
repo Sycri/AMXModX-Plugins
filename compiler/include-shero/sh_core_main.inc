@@ -130,6 +130,14 @@ native sh_get_num_heroes();
 native sh_get_num_lvls();
 
 /**
+ * Gets the XP given for killing a player of this level.
+ *
+ * @param level		The level number to check.
+ * @return		The XP given for killing a player of this level, otherwise -1 if not a valid level.
+ */
+native sh_get_kill_xp(level);
+
+/**
  * Gets the XP required for the level.
  *
  * @param level		The level number to check.

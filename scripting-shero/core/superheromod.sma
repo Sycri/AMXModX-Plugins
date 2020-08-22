@@ -436,7 +436,6 @@ new gPlayerMenuOffset[MAX_PLAYERS + 1];
 new gPlayerMenuChoices[MAX_PLAYERS + 1][SH_MAXHEROS + 1]; // This will be filled in with # of heroes available
 new gMaxPowersLeft[MAX_PLAYERS + 1][SH_MAXLEVELS + 1];
 new gPlayerGodTimer[MAX_PLAYERS + 1];
-new gPlayerStartXP[MAX_PLAYERS + 1];
 new gPlayerLevel[MAX_PLAYERS + 1];
 new gPlayerXP[MAX_PLAYERS + 1];
 new gXPLevel[SH_MAXLEVELS + 1];
@@ -446,7 +445,6 @@ new bool:gIsPowerBanned[MAX_PLAYERS + 1];
 new bool:gInMenu[MAX_PLAYERS + 1];
 new bool:gReadXPNextRound[MAX_PLAYERS + 1];
 new bool:gFirstRound[MAX_PLAYERS + 1];
-new bool:gBlockMercyXp[MAX_PLAYERS + 1];
 new Float:gReloadTime[MAX_PLAYERS + 1];
 new gInPowerDown[MAX_PLAYERS + 1][SH_MAXBINDPOWERS + 1];
 new bool:gChangedHeroes[MAX_PLAYERS + 1];
@@ -458,7 +456,6 @@ new gHelpHudMsg[340];
 new gmsgStatusText, gmsgScoreInfo, gmsgDeathMsg, gmsgDamage;
 new bool:gRoundStarted;
 new bool:gBetweenRounds;
-new bool:gGiveMercyXP = true;
 new gNumLevels = 0;
 new gMenuID = 0;
 new gHelpHudSync, gHeroHudSync;
@@ -483,12 +480,12 @@ new gSHConfigDir[128], gBanFile[128], gSHConfig[128], gHelpMotd[128];
 //CVARs Bound To Variables
 new CvarSuperHeros, CvarAliveDrop, CvarAutoBalance, CvarCmdProjector;
 new CvarDebugMessages, CvarEndRoundSave, Float:CvarHSMult, CvarLoadImmediate, CvarLvlLimit;
-new CvarMaxBinds, CvarMaxPowers, CvarMenuMode, CvarMercyXPMode, CvarSaveXP;
-new CvarSaveBy, CvarXPSaveDays, CvarMinPlayersXP, CvarReloadMode, CvarFreeForAll;
+new CvarMaxBinds, CvarMaxPowers, CvarMenuMode, CvarSaveXP;
+new CvarSaveBy, CvarXPSaveDays, CvarReloadMode, CvarFreeForAll;
 new CvarFriendlyFire, CvarLan;
 
 //PCVARs
-new sh_mercyxp, sh_minlevel;
+new sh_minlevel;
 
 //Forwards
 new fwdReturn;
@@ -545,17 +542,11 @@ public plugin_init()
 	bind_pcvar_num(create_cvar("sh_maxbinds", "3", .has_max = true, .max_val = float(SH_MAXBINDPOWERS)), CvarMaxBinds);
 	bind_pcvar_num(create_cvar("sh_maxpowers", "20", .has_max = true, .max_val = float(SH_MAXHEROS)), CvarMaxPowers);
 	bind_pcvar_num(create_cvar("sh_menumode", "1"), CvarMenuMode);
-	sh_mercyxp = create_cvar("sh_mercyxp", "0", .has_min = true, .min_val = 0.0);
-	bind_pcvar_num(create_cvar("sh_mercyxpmode", "1"), CvarMercyXPMode);
 	sh_minlevel = create_cvar("sh_minlevel", "0", .has_min = true, .min_val = 0.0);
 	bind_pcvar_num(create_cvar("sh_savexp", "1"), CvarSaveXP);
 	bind_pcvar_num(create_cvar("sh_saveby", "1"), CvarSaveBy);
 	bind_pcvar_num(create_cvar("sh_xpsavedays", "14", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 365.0), CvarXPSaveDays);
 	bind_pcvar_num(create_cvar("sh_reloadmode", "1"), CvarReloadMode);
-	if (cvar_exists("sh_minplayersxp"))
-        bind_pcvar_num(get_cvar_pointer("sh_minplayersxp"), CvarMinPlayersXP);
-	else
-        bind_pcvar_num(create_cvar("sh_minplayersxp", "2"), CvarMinPlayersXP);
 	bind_pcvar_num(create_cvar("sh_ffa", "0"), CvarFreeForAll);
 
 	// Server cvars checked by core
@@ -589,12 +580,6 @@ public plugin_init()
 	// Must use RegisterHamPlayer for special bots to hook
 	RegisterHamPlayer(Ham_Spawn, "ham_PlayerSpawn_Post", 1);
 	RegisterHamPlayer(Ham_TakeDamage, "ham_TakeDamage_Pre");
-
-	// Player choosing a team (t, ct, auto, spec)
-	register_menucmd(register_menuid("IG_Team_Select", 1), 511, "team_chosen");
-	register_menucmd(register_menuid("Team_Select", 1), 511, "team_chosen");
-	register_menucmd(register_menuid("Team_Select_Spect", 1), 511, "team_chosen");
-	register_clcmd("jointeam", "team_chosen");
 
 	// Client Commands
 	register_clcmd("superpowermenu", "cl_superpowermenu", ADMIN_ALL, "superpowermenu");
@@ -662,6 +647,7 @@ public plugin_natives()
 	register_native("sh_set_hero_dmgmult", "@Native_SetHeroDamageMultiplier");
 	register_native("sh_get_num_heroes", "@Native_GetNumHeroes");
 	register_native("sh_get_num_lvls", "@Native_GetNumLvls");
+	register_native("sh_get_kill_xp", "@Native_GetKillXP");
 	register_native("sh_get_lvl_xp", "@Native_GetLvlXP");
 	register_native("sh_get_user_hero", "@Native_GetUserHero");
 	register_native("sh_get_user_lvl", "@Native_GetUserLvl");
@@ -923,7 +909,19 @@ bool:@Native_IsFreezeTime()
 	return gNumLevels;
 }
 //----------------------------------------------------------------------------------------------
-//native sh_get_lvl_xp()
+//native sh_get_kill_xp(level)
+@Native_GetKillXP()
+{
+	new level = get_param(1);
+
+	//stupid check - but checking prevents crashes
+	if (level < 0 || level > gNumLevels)
+		return -1;
+
+	return gXPGiven[level];
+}
+//----------------------------------------------------------------------------------------------
+//native sh_get_lvl_xp(level)
 @Native_GetLvlXP()
 {
 	new level = get_param(1);
@@ -1780,29 +1778,6 @@ public ham_PlayerSpawn_Post(id)
 	else if (gReadXPNextRound[id])
 		readXP(id);
 
-	//MercyXP system
-	if (gGiveMercyXP && !gReadXPNextRound[id] && !gBlockMercyXp[id]) {
-		new mercyXPMode = CvarMercyXPMode;
-
-		if (mercyXPMode != 0 && gPlayerStartXP[id] >= gPlayerXP[id] && get_playersnum() > CvarMinPlayersXP) {
-			new XPtoGive = 0;
-			new mercyXP = get_pcvar_num(sh_mercyxp);
-
-			if (mercyXPMode == 1) {
-				XPtoGive = mercyXP;
-			} else if (mercyXPMode == 2 && gPlayerLevel[id] <= mercyXP) {
-				new giveLvl = mercyXP - gPlayerLevel[id];
-				XPtoGive = gXPGiven[giveLvl] / 2;
-			}
-
-			if (XPtoGive != 0) {
-				localAddXP(id, XPtoGive);
-				chatMessage(id, _, "You were given %d MercyXP points", XPtoGive);
-			}
-		}
-		gPlayerStartXP[id] = gPlayerXP[id];
-	}
-
 	//Display the XP and bind powers to their screen
 	displayPowers(id, true);
 
@@ -1812,9 +1787,6 @@ public ham_PlayerSpawn_Post(id)
 
 	//Prevents resetHUD from getting called twice in a round
 	gNewRoundSpawn[id] = false;
-
-	//Reset this check for the mercyxp system
-	gBlockMercyXp[id] = false;
 
 	//Prevents People from going invisible randomly
 	set_user_rendering(id);
@@ -1873,16 +1845,11 @@ public round_Restart()
 {
 	// Round end is not called when round is set to restart, so lets just force it right away.
 	round_End();
-	gGiveMercyXP = false;
 }
 //----------------------------------------------------------------------------------------------
 public round_End()
 {
 	gBetweenRounds = true;
-
-	gGiveMercyXP = false;
-
-	new CsTeams:idTeam;
 
 	for (new id = 1; id <= MaxClients; id++) {
 		gNewRoundSpawn[id] = true;
@@ -1890,20 +1857,10 @@ public round_End()
 		if (!is_user_connected(id))
 			continue;
 
-		idTeam = cs_get_user_team(id);
-
-		if (idTeam == CS_TEAM_UNASSIGNED)
+		if (cs_get_user_team(id) == CS_TEAM_UNASSIGNED)
 			continue;
 
 		gFirstRound[id] = false;
-
-		// Player must be on a team beyond this point
-		// Find if anyone needs mercy xp to avoid the more expenisve check during spawn
-		if (idTeam == CS_TEAM_SPECTATOR)
-			continue;
-
-		if (!gBlockMercyXp[id])
-			gGiveMercyXP = true;
 	}
 
 	//Save XP Data
@@ -2314,8 +2271,6 @@ public ham_TakeDamage_Pre(victim, inflictor, attacker, Float:damage, damagebits)
 
 			localAddXP(attacker, -gXPGiven[gPlayerLevel[attacker]]);
 
-			gBlockMercyXp[attacker] = true;
-
 			set_user_frags(attacker, --attackerFrags);
 
 			client_print(attacker, print_center, "You killed a teammate");
@@ -2507,7 +2462,6 @@ public event_DeathMsg()
 	if (killer && killer != victim && victim) {
 		if (cs_get_user_team(killer) == cs_get_user_team(victim) && !CvarFreeForAll) {
 			// Killed teammate
-			gBlockMercyXp[killer] = true;
 			localAddXP(killer, -gXPGiven[gPlayerLevel[killer]]);
 		} else {
 			//new headshot = read_data(3);
@@ -3705,18 +3659,6 @@ showHelpHud()
 	}
 }
 //----------------------------------------------------------------------------------------------
-//Called when a client chooses a "team", not a "class type" (could be used to self kill)
-public team_chosen(id)
-{
-	gBlockMercyXp[id] = true;
-}
-//----------------------------------------------------------------------------------------------
-//Called when a client types "kill" in the console
-public client_kill(id)
-{
-	gBlockMercyXp[id] = true;
-}
-//----------------------------------------------------------------------------------------------
 public client_connect(id)
 {
 	// Don't want any left over residuals
@@ -4187,9 +4129,8 @@ readINI()
 		gNumLevels = loadCount;
 	}
 
-	// Add boundaries after getting gNumLevels
+	// Add upper boundary after getting gNumLevels
 	set_pcvar_bounds(sh_minlevel, CvarBound_Upper, true, float(gNumLevels));
-	set_pcvar_bounds(sh_mercyxp, CvarBound_Upper, true, float(gNumLevels));
 }
 //----------------------------------------------------------------------------------------------
 createINIFile(const levelINIFile[])
