@@ -20,49 +20,49 @@ new bool:gShieldRestrict[MAX_PLAYERS + 1];
 //----------------------------------------------------------------------------------------------
 public plugin_init()
 {
-    register_plugin("[SH] Core: Shield Restrict", SH_VERSION_STR, SH_AUTHOR_STR);
-    
-    RegisterHam(Ham_Touch, "weapon_shield", "@Forward_Shield_Touch_Pre");
+	register_plugin("[SH] Core: Shield Restrict", SH_VERSION_STR, SH_AUTHOR_STR);
+	
+	RegisterHam(Ham_Touch, "weapon_shield", "@Forward_Shield_Touch_Pre");
 }
 //----------------------------------------------------------------------------------------------
 public plugin_natives()
 {
-    register_library("sh_core_shieldrestrict");
+	register_library("sh_core_shieldrestrict");
 
-    register_native("sh_set_hero_shield", "@Native_SetHeroShield");
+	register_native("sh_set_hero_shield", "@Native_SetHeroShield");
 }
 //----------------------------------------------------------------------------------------------
 public plugin_cfg()
 {
-    gSuperHeroCount = sh_get_num_heroes();
+	gSuperHeroCount = sh_get_num_heroes();
 }
 //----------------------------------------------------------------------------------------------
 public client_disconnected(id)
 {
-    gShieldRestrict[id] = false;
+	gShieldRestrict[id] = false;
 }
 //----------------------------------------------------------------------------------------------
 // This is called when a user is buying anything (including shield)
 public CS_OnBuy(id, item)
 {
-    if (!sh_is_active())
-        return PLUGIN_CONTINUE;
-    
-    if (gShieldRestrict[id] && item == CSI_SHIELD) {
+	if (!sh_is_active())
+		return PLUGIN_CONTINUE;
+	
+	if (gShieldRestrict[id] && item == CSI_SHIELD) {
 		console_print(id, "[SH] You are not allowed to buy a SHIELD due to a hero selection you have made");
 		client_print(id, print_center, "You are not allowed to buy a SHIELD due to a hero selection you have made");
 		return PLUGIN_HANDLED;
 	}
-    
-    return PLUGIN_CONTINUE;
+	
+	return PLUGIN_CONTINUE;
 }
 //----------------------------------------------------------------------------------------------
 public sh_hero_init(id, heroID, mode)
 {
-    // Reset Shield Restriction if needed for this hero
-    if (gHeroShieldRestrict[heroID]) {
+	// Reset Shield Restriction if needed for this hero
+	if (gHeroShieldRestrict[heroID]) {
 		//If this is called by an added hero they must be restricted
-        if (mode == SH_HERO_ADD) {
+		if (mode == SH_HERO_ADD) {
 			gShieldRestrict[id] = true;
 		} else {
 			new heroIndex, bool:restricted = false;
@@ -82,7 +82,7 @@ public sh_hero_init(id, heroID, mode)
 		}
 
 		//If they are alive make sure they don't have a shield already
-        if (gShieldRestrict[id] && is_user_alive(id)) {
+		if (gShieldRestrict[id] && is_user_alive(id)) {
 			if (cs_get_user_shield(id))
 				engclient_cmd(id, "drop", "weapon_shield");
 		}
@@ -92,30 +92,30 @@ public sh_hero_init(id, heroID, mode)
 //native sh_set_hero_shield(heroID, bool:restricted = false)
 @Native_SetHeroShield()
 {
-    new heroIndex = get_param(1);
-    
-    //Have to access sh_get_num_heroes() directly because doing this during plugin_init()
-    if (heroIndex < 0 || heroIndex >= sh_get_num_heroes())
-        return;
-        
-    new restricted = get_param(2); //Shield Restricted?
-    
-    sh_debug_message(0, 3, "Create Hero-> HeroID: %d - Shield Restricted: %s", heroIndex, restricted ? "TRUE" : "FALSE");
-    
-    gHeroShieldRestrict[heroIndex] = restricted ? true : false;
+	new heroIndex = get_param(1);
+	
+	//Have to access sh_get_num_heroes() directly because doing this during plugin_init()
+	if (heroIndex < 0 || heroIndex >= sh_get_num_heroes())
+		return;
+		
+	new restricted = get_param(2); //Shield Restricted?
+	
+	sh_debug_message(0, 3, "Create Hero-> HeroID: %d - Shield Restricted: %s", heroIndex, restricted ? "TRUE" : "FALSE");
+	
+	gHeroShieldRestrict[heroIndex] = restricted ? true : false;
 }
 //----------------------------------------------------------------------------------------------
 @Forward_Shield_Touch_Pre(item, id)
 {
-    if (!sh_is_active())
-        return HAM_IGNORED;
-    
-    if (!is_user_alive(id))
+	if (!sh_is_active())
 		return HAM_IGNORED;
-        
-    if (gShieldRestrict[id])
+	
+	if (!is_user_alive(id))
+		return HAM_IGNORED;
+		
+	if (gShieldRestrict[id])
 		return HAM_SUPERCEDE;
-        
-    return HAM_IGNORED;
+		
+	return HAM_IGNORED;
 }
 //----------------------------------------------------------------------------------------------

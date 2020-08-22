@@ -319,6 +319,6 @@ cs_reset_user_maxspeed(index)
 			case CSW_SG550, CSW_AWP, CSW_G3SG1: maxSpeed = 150.0;
 		}
 	}
-    
+	
 	set_user_maxspeed(index, maxSpeed);
 }

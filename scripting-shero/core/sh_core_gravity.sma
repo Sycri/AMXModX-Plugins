@@ -25,17 +25,17 @@ new CvarDebugMessages;
 //----------------------------------------------------------------------------------------------
 public plugin_init()
 {
-    register_plugin("[SH] Core: Gravity", SH_VERSION_STR, SH_AUTHOR_STR);
-    
-    RegisterHamPlayer(Ham_AddPlayerItem, "@Forward_AddPlayerItem_Post", 1);
-    
-    new weaponName[32];
-    for (new id = CSW_P228; id <= CSW_P90; id++) {
-        if (get_weaponname(id, weaponName, charsmax(weaponName)))
-            RegisterHam(Ham_Item_Deploy, weaponName, "@Forward_Item_Deploy_Post", 1);
-    }
-    
-    bind_pcvar_num(get_cvar_pointer("sh_debug_messages"), CvarDebugMessages);
+	register_plugin("[SH] Core: Gravity", SH_VERSION_STR, SH_AUTHOR_STR);
+	
+	RegisterHamPlayer(Ham_AddPlayerItem, "@Forward_AddPlayerItem_Post", 1);
+	
+	new weaponName[32];
+	for (new id = CSW_P228; id <= CSW_P90; id++) {
+		if (get_weaponname(id, weaponName, charsmax(weaponName)))
+			RegisterHam(Ham_Item_Deploy, weaponName, "@Forward_Item_Deploy_Post", 1);
+	}
+	
+	bind_pcvar_num(get_cvar_pointer("sh_debug_messages"), CvarDebugMessages);
 }
 //----------------------------------------------------------------------------------------------
 public plugin_natives()
@@ -67,9 +67,9 @@ public sh_client_spawn(id)
 {
 	new heroIndex = get_param(1);
 
-    //Have to access sh_get_num_heroes() directly because doing this during plugin_init()
+	//Have to access sh_get_num_heroes() directly because doing this during plugin_init()
 	if (heroIndex < 0 || heroIndex >= sh_get_num_heroes())
-        return;
+		return;
 
 	new pcvarGravity = get_param(2);
 	new numWpns = get_param(4);
@@ -147,14 +147,14 @@ public sh_client_spawn(id)
 //----------------------------------------------------------------------------------------------
 resetMinGravity(id)
 {
-    if (!sh_is_active())
+	if (!sh_is_active())
 		return;
-        
-    if (!is_user_alive(id))
+		
+	if (!is_user_alive(id))
 		return;
-        
-    new Float:newGravity = getMinGravity(id, cs_get_user_weapon(id));
-    if (get_user_gravity(id) != newGravity)
+		
+	new Float:newGravity = getMinGravity(id, cs_get_user_weapon(id));
+	if (get_user_gravity(id) != newGravity)
 		// Set to 1.0 or the next lowest Gravity
 		set_user_gravity(id, newGravity);
 }
@@ -178,42 +178,42 @@ setGravityPowers(id)
 //----------------------------------------------------------------------------------------------
 Float:getMinGravity(id, weapon)
 {
-    if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_GRAVITY)
+	if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_GRAVITY)
 		return 1.0;
-        
-    static heroName[25];
-    static Float:returnGravity, Float:heroMinGravity, x, i;
-    static playerPowerCount, heroIndex, heroWeapon;
-    returnGravity = 1.0;
-    playerPowerCount = sh_get_user_powers(id);
-    
-    for (x = 1; x <= playerPowerCount; x++) {
-        heroIndex = sh_get_user_hero(id, x);
-        
-        if (-1 < heroIndex < gSuperHeroCount) {
-            heroMinGravity = gHeroMinGravity[heroIndex];
-            if (heroMinGravity <= 0.0)
-                continue;
-                
-            for (i = CSW_NONE; i <= CSW_LAST_WEAPON; i++) {
-                heroWeapon = gHeroGravityWeapons[heroIndex][i];
+		
+	static heroName[25];
+	static Float:returnGravity, Float:heroMinGravity, x, i;
+	static playerPowerCount, heroIndex, heroWeapon;
+	returnGravity = 1.0;
+	playerPowerCount = sh_get_user_powers(id);
+	
+	for (x = 1; x <= playerPowerCount; x++) {
+		heroIndex = sh_get_user_hero(id, x);
+		
+		if (-1 < heroIndex < gSuperHeroCount) {
+			heroMinGravity = gHeroMinGravity[heroIndex];
+			if (heroMinGravity <= 0.0)
+				continue;
+				
+			for (i = CSW_NONE; i <= CSW_LAST_WEAPON; i++) {
+				heroWeapon = gHeroGravityWeapons[heroIndex][i];
 
 				//Stop checking, end of list
-                if (i != CSW_NONE && heroWeapon == CSW_NONE)
+				if (i != CSW_NONE && heroWeapon == CSW_NONE)
 					break;
 
-                sh_get_hero_name(heroIndex, heroName, charsmax(heroName));
-                sh_debug_message(id, 5, "Looking for Gravity Functions - %s, %d, %d", heroName, heroWeapon, weapon);
+				sh_get_hero_name(heroIndex, heroName, charsmax(heroName));
+				sh_debug_message(id, 5, "Looking for Gravity Functions - %s, %d, %d", heroName, heroWeapon, weapon);
 
 				//If 0 or current weapon check max
-                if (heroWeapon == CSW_NONE || heroWeapon == weapon) {
-                    returnGravity = floatmin(returnGravity, heroMinGravity);
-                    break;
+				if (heroWeapon == CSW_NONE || heroWeapon == weapon) {
+					returnGravity = floatmin(returnGravity, heroMinGravity);
+					break;
 				}
 			}
 		}
 	}
-    
-    return returnGravity;
+	
+	return returnGravity;
 }
 //----------------------------------------------------------------------------------------------

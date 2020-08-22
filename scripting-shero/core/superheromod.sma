@@ -1806,9 +1806,9 @@ public event_HLTV()
 	if (gMonsterModRunning) {
 		new flags, monster = -1;
 		while ((monster = engfunc(EngFunc_FindEntityByString, monster, "classname", "func_wall")) != 0) {
-        	flags = pev(monster, pev_flags);
-        	if (flags & FL_MONSTER)
-            	set_pev(monster, pev_flags, flags | FL_KILLME);
+			flags = pev(monster, pev_flags);
+			if (flags & FL_MONSTER)
+				set_pev(monster, pev_flags, flags | FL_KILLME);
 		}
 	}
 

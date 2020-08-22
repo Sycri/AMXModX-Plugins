@@ -24,24 +24,24 @@ new gMaxArmor[MAX_PLAYERS + 1];
 //----------------------------------------------------------------------------------------------
 public plugin_init()
 {
-    register_plugin("[SH] Core: HP/AP", SH_VERSION_STR, SH_AUTHOR_STR);
+	register_plugin("[SH] Core: HP/AP", SH_VERSION_STR, SH_AUTHOR_STR);
 
 	// Fixes bug with HUD showing 0 health and reversing keys
-    register_message(get_user_msgid("Health"), "@Message_Health");
+	register_message(get_user_msgid("Health"), "@Message_Health");
 }
 //----------------------------------------------------------------------------------------------
 public plugin_natives()
 {
-    register_library("sh_core_hpap");
-    
-    register_native("sh_set_hero_hpap", "@Native_SetHeroHpAp");
-    register_native("sh_get_max_hp", "@Native_GetMaxHP");
-    register_native("sh_get_max_ap", "@Native_GetMaxAP");
+	register_library("sh_core_hpap");
+	
+	register_native("sh_set_hero_hpap", "@Native_SetHeroHpAp");
+	register_native("sh_get_max_hp", "@Native_GetMaxHP");
+	register_native("sh_get_max_ap", "@Native_GetMaxAP");
 }
 //----------------------------------------------------------------------------------------------
 public plugin_cfg()
 {
-    gSuperHeroCount = sh_get_num_heroes();
+	gSuperHeroCount = sh_get_num_heroes();
 }
 //----------------------------------------------------------------------------------------------
 public sh_hero_init(id, heroID, mode)
@@ -92,21 +92,21 @@ public sh_client_spawn(id)
 //native sh_set_hero_hpap(heroID, pcvarHealth = 0, pcvarArmor = 0)
 @Native_SetHeroHpAp()
 {
-    new heroIndex = get_param(1);
+	new heroIndex = get_param(1);
 
-    //Have to access sh_get_num_heroes() directly because doing this during plugin_init()
-    if (heroIndex < 0 || heroIndex >= sh_get_num_heroes())
-        return;
+	//Have to access sh_get_num_heroes() directly because doing this during plugin_init()
+	if (heroIndex < 0 || heroIndex >= sh_get_num_heroes())
+		return;
 
-    new pcvarMaxHealth = get_param(2);
-    new pcvarMaxArmor = get_param(3);
+	new pcvarMaxHealth = get_param(2);
+	new pcvarMaxArmor = get_param(3);
 
-    sh_debug_message(0, 3, "Set Max HP/AP -> HeroID: %d - %d - %d", heroIndex, pcvarMaxHealth ? get_pcvar_num(pcvarMaxHealth) : 0, pcvarMaxArmor ? get_pcvar_num(pcvarMaxArmor) : 0);
+	sh_debug_message(0, 3, "Set Max HP/AP -> HeroID: %d - %d - %d", heroIndex, pcvarMaxHealth ? get_pcvar_num(pcvarMaxHealth) : 0, pcvarMaxArmor ? get_pcvar_num(pcvarMaxArmor) : 0);
 
 	// Avoid setting if 0 because backward compatibility method would overwrite value
-    if (pcvarMaxHealth != 0)
+	if (pcvarMaxHealth != 0)
 		bind_pcvar_num(pcvarMaxHealth, gHeroMaxHealth[heroIndex]);
-    if (pcvarMaxArmor != 0)
+	if (pcvarMaxArmor != 0)
 		bind_pcvar_num(pcvarMaxArmor, gHeroMaxArmor[heroIndex]);
 }
 //----------------------------------------------------------------------------------------------
@@ -190,53 +190,53 @@ setArmorPowers(id, bool:resetArmor)
 //----------------------------------------------------------------------------------------------
 getMaxHealth(id)
 {
-    static returnHealth, x;
-    returnHealth = 100;
+	static returnHealth, x;
+	returnHealth = 100;
 
-    if (!(id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_HEALTH)) {
-        static heroIndex, playerPowerCount, heroHealth;
-        playerPowerCount = sh_get_user_powers(id);
+	if (!(id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_HEALTH)) {
+		static heroIndex, playerPowerCount, heroHealth;
+		playerPowerCount = sh_get_user_powers(id);
 
-        for (x = 1; x <= playerPowerCount; x++) {
-            heroIndex = sh_get_user_hero(id, x);
+		for (x = 1; x <= playerPowerCount; x++) {
+			heroIndex = sh_get_user_hero(id, x);
 			
-            if (-1 < heroIndex < gSuperHeroCount) {
-                heroHealth = gHeroMaxHealth[heroIndex];
-                if (!heroHealth)
-                    continue;
+			if (-1 < heroIndex < gSuperHeroCount) {
+				heroHealth = gHeroMaxHealth[heroIndex];
+				if (!heroHealth)
+					continue;
 
-                returnHealth = max(returnHealth, heroHealth);
-            }
-        }
-    }
-    
-    // Other plugins might use this, even maps
-    set_pev(id, pev_max_health, returnHealth);
-    
-    return gMaxHealth[id] = returnHealth;
+				returnHealth = max(returnHealth, heroHealth);
+			}
+		}
+	}
+	
+	// Other plugins might use this, even maps
+	set_pev(id, pev_max_health, returnHealth);
+	
+	return gMaxHealth[id] = returnHealth;
 }
 //----------------------------------------------------------------------------------------------
 getMaxArmor(id)
 {
-    if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_ARMOR)
-        return gMaxArmor[id] = 200;
-        
-    static heroIndex, returnArmor, x, playerPowerCount, heroArmor;
-    returnArmor = 0;
-    playerPowerCount = sh_get_user_powers(id);
-    
-    for (x = 1; x <= playerPowerCount; x++) {
-        heroIndex = sh_get_user_hero(id, x);
+	if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_ARMOR)
+		return gMaxArmor[id] = 200;
+		
+	static heroIndex, returnArmor, x, playerPowerCount, heroArmor;
+	returnArmor = 0;
+	playerPowerCount = sh_get_user_powers(id);
+	
+	for (x = 1; x <= playerPowerCount; x++) {
+		heroIndex = sh_get_user_hero(id, x);
 
-        if (-1 < heroIndex < gSuperHeroCount) {
-            heroArmor = gHeroMaxArmor[heroIndex];
-            if (!heroArmor)
-                continue;
+		if (-1 < heroIndex < gSuperHeroCount) {
+			heroArmor = gHeroMaxArmor[heroIndex];
+			if (!heroArmor)
+				continue;
 
-            returnArmor = max(returnArmor, heroArmor);
+			returnArmor = max(returnArmor, heroArmor);
 		}
 	}
-    
-    return gMaxArmor[id] = returnArmor;
+	
+	return gMaxArmor[id] = returnArmor;
 }
 //----------------------------------------------------------------------------------------------

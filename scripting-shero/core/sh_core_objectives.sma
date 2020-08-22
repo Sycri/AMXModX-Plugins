@@ -23,39 +23,39 @@ new CvarMinPlayersXP;
 //----------------------------------------------------------------------------------------------
 public plugin_init()
 {
-    register_plugin("[SH] Core: Objectives", SH_VERSION_STR, SH_AUTHOR_STR);
+	register_plugin("[SH] Core: Objectives", SH_VERSION_STR, SH_AUTHOR_STR);
 
-    register_logevent("@LogEvent_BombHolderSpawned", 3, "2=Spawned_With_The_Bomb");
-    register_logevent("@LogEvent_HostageKilled", 3, "2=Killed_A_Hostage");
-    register_logevent("@LogEvent_HostageRescued", 3, "2=Rescued_A_Hostage");
-    register_logevent("@LogEvent_AllHostagesRescued", 6, "3=All_Hostages_Rescued");
-    register_logevent("@LogEvent_VIPAssassinated", 3, "2=Assassinated_The_VIP");
-    register_logevent("@LogEvent_VIPEscaped", 6, "3=VIP_Escaped");
-    register_logevent("@LogEvent_VIPUserSpawned", 3, "2=Became_VIP");
-    register_logevent("@LogEvent_VIPUserEscaped", 3, "2=Escaped_As_VIP");
+	register_logevent("@LogEvent_BombHolderSpawned", 3, "2=Spawned_With_The_Bomb");
+	register_logevent("@LogEvent_HostageKilled", 3, "2=Killed_A_Hostage");
+	register_logevent("@LogEvent_HostageRescued", 3, "2=Rescued_A_Hostage");
+	register_logevent("@LogEvent_AllHostagesRescued", 6, "3=All_Hostages_Rescued");
+	register_logevent("@LogEvent_VIPAssassinated", 3, "2=Assassinated_The_VIP");
+	register_logevent("@LogEvent_VIPEscaped", 6, "3=VIP_Escaped");
+	register_logevent("@LogEvent_VIPUserSpawned", 3, "2=Became_VIP");
+	register_logevent("@LogEvent_VIPUserEscaped", 3, "2=Escaped_As_VIP");
 
 	// Count number of hostages for sh_objectivexp
 	// This should have a better method of counting, maybe check when keyvalue is set
-    new ent = -1;
-    while ((ent = cs_find_ent_by_class(ent, "hostage_entity")) > 0)
-        gNumHostages++;
-        
-    bind_pcvar_num(create_cvar("sh_objectivexp", "8", .has_min = true, .min_val = 0.0), CvarObjectiveXP);
-    bind_pcvar_string(create_cvar("sh_blockvip", "abcdef"), CvarBlockVIP, charsmax(CvarBlockVIP));
-    
-    if (cvar_exists("sh_minplayersxp"))
-        bind_pcvar_num(get_cvar_pointer("sh_minplayersxp"), CvarMinPlayersXP);
-    else
-        bind_pcvar_num(create_cvar("sh_minplayersxp", "2"), CvarMinPlayersXP);
+	new ent = -1;
+	while ((ent = cs_find_ent_by_class(ent, "hostage_entity")) > 0)
+		gNumHostages++;
+		
+	bind_pcvar_num(create_cvar("sh_objectivexp", "8", .has_min = true, .min_val = 0.0), CvarObjectiveXP);
+	bind_pcvar_string(create_cvar("sh_blockvip", "abcdef"), CvarBlockVIP, charsmax(CvarBlockVIP));
+	
+	if (cvar_exists("sh_minplayersxp"))
+		bind_pcvar_num(get_cvar_pointer("sh_minplayersxp"), CvarMinPlayersXP);
+	else
+		bind_pcvar_num(create_cvar("sh_minplayersxp", "2"), CvarMinPlayersXP);
 }
 //----------------------------------------------------------------------------------------------
 public plugin_natives()
 {
-    register_library("sh_core_objectives");
+	register_library("sh_core_objectives");
 
-    register_native("sh_get_c4_id", "@Native_GetC4_ID");
-    register_native("sh_get_vip_id", "@Native_GetVIP_ID");
-    register_native("sh_vip_flags", "@Native_VIPFlags");
+	register_native("sh_get_c4_id", "@Native_GetC4_ID");
+	register_native("sh_get_vip_id", "@Native_GetVIP_ID");
+	register_native("sh_vip_flags", "@Native_VIPFlags");
 }
 //----------------------------------------------------------------------------------------------
 //native sh_get_c4_id()
@@ -94,45 +94,45 @@ public plugin_natives()
 //----------------------------------------------------------------------------------------------
 public bomb_planted(planter)
 {
-    if (!sh_is_active() || !CvarObjectiveXP)
+	if (!sh_is_active() || !CvarObjectiveXP)
 		return;
-    
-    if (!is_user_connected(planter) || !pev_valid(gXpBonusC4ID))
-		return;
-
-    if (planter != pev(gXpBonusC4ID, pev_owner))
+	
+	if (!is_user_connected(planter) || !pev_valid(gXpBonusC4ID))
 		return;
 
-    if (cs_get_user_team(planter) != CS_TEAM_T)
+	if (planter != pev(gXpBonusC4ID, pev_owner))
 		return;
 
-    if (get_playersnum() <= CvarMinPlayersXP)
+	if (cs_get_user_team(planter) != CS_TEAM_T)
+		return;
+
+	if (get_playersnum() <= CvarMinPlayersXP)
 		return;
 
 	// Only give this out once per round
-    gXpBonusC4ID = -1;
-    
-    sh_set_user_xp(planter, CvarObjectiveXP, true);
-    sh_chat_message(planter, _, "You got %d XP for planting the bomb", CvarObjectiveXP);
+	gXpBonusC4ID = -1;
+	
+	sh_set_user_xp(planter, CvarObjectiveXP, true);
+	sh_chat_message(planter, _, "You got %d XP for planting the bomb", CvarObjectiveXP);
 }
 //----------------------------------------------------------------------------------------------
 public bomb_defused(defuser)
 {
 	// Need to make sure gXpBonusC4ID was the bomb defused?
-    if (!sh_is_active() || !CvarObjectiveXP)
+	if (!sh_is_active() || !CvarObjectiveXP)
 		return;
-    
-    if (!is_user_connected(defuser))
+	
+	if (!is_user_connected(defuser))
 		return;
-        
-    if (cs_get_user_team(defuser) != CS_TEAM_CT)
+		
+	if (cs_get_user_team(defuser) != CS_TEAM_CT)
 		return;
-        
-    if (get_playersnum() <= CvarMinPlayersXP)
+		
+	if (get_playersnum() <= CvarMinPlayersXP)
 		return;
-        
-    sh_set_user_xp(defuser, CvarObjectiveXP, true);
-    sh_chat_message(defuser, _, "You got %d XP for defusing the bomb", CvarObjectiveXP);
+		
+	sh_set_user_xp(defuser, CvarObjectiveXP, true);
+	sh_chat_message(defuser, _, "You got %d XP for defusing the bomb", CvarObjectiveXP);
 }
 //----------------------------------------------------------------------------------------------
 public bomb_explode(planter, defuser)

@@ -88,9 +88,9 @@ public sh_client_spawn(id)
 {
 	new heroIndex = get_param(1);
 
-    //Have to access sh_get_num_heroes() directly because doing this during plugin_init()
+	//Have to access sh_get_num_heroes() directly because doing this during plugin_init()
 	if (heroIndex < 0 || heroIndex >= sh_get_num_heroes())
-        return;
+		return;
 
 	new pcvarSpeed = get_param(2);
 	new numWpns = get_param(4);
