@@ -102,13 +102,9 @@ public sh_client_death(victim)
 		return;
 
 	static bool:sameTeam;
-	static bool:showTeam;
-	static bool:showEnemy;
 	static CsTeams:idTeam;
 	static CsTeams:playerTeam;
 
-	showTeam = CvarShowTeam ? true : false;
-	showEnemy = CvarShowEnemy ? true : false;
 	idTeam = cs_get_user_team(id);
 
 	static players[MAX_PLAYERS], playerCount, player, i;
@@ -122,9 +118,9 @@ public sh_client_death(victim)
 
 		playerTeam = cs_get_user_team(player);
 
-		sameTeam = idTeam == playerTeam ? true : false;
+		sameTeam = idTeam == playerTeam;
 
-		if ((sameTeam && showTeam) || (!sameTeam && showEnemy)) {
+		if ((sameTeam && CvarShowTeam) || (!sameTeam && CvarShowEnemy)) {
 			remove_mark(id, player);
 
 			switch(playerTeam) {

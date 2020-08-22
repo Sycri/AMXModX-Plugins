@@ -52,7 +52,7 @@
 		* Removed all the cvars except rp_version
 		* Changed the command amx_reset_player so the player could reset different parts of the player's stats
 
-		- v1.9 (10th August 2020)
+		- v1.9 (20th August 2020)
 		* Added multilingual support to the description of the command amx_reset_player
 		* Added FCVAR_SPONLY to cvar rp_version to make it unchangeable
 		* Changed the required admin level of the command amx_reset_player from ADMIN_BAN to ADMIN_SLAY

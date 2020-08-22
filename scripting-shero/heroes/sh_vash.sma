@@ -242,18 +242,17 @@ stock fm_cs_get_weapon_ent_owner(ent)
 	for (i = 0; i < playerCount; i++) {
 		player = players[i];
 		
-		if (gHasVashPower[player]) {
-			// new randomHitZone = random_num(1, 7);
-			switch (random_num(1, 7)) {
-				case 1: gAllowedHitZones[player] = 127; //remove right leg hitzone
-				case 2: gAllowedHitZones[player] = 191;	//remove left leg hitzone
-				case 3: gAllowedHitZones[player] = 223;	//remove right arm hitzone
-				case 4: gAllowedHitZones[player] = 239;	//remove left arm hitzone
-				case 5: gAllowedHitZones[player] = 247;	//remove stomach hitzone
-				case 6: gAllowedHitZones[player] = 251;	//remove chest hitzone
-				case 7: gAllowedHitZones[player] = 253;	//remove head hitzone
-			}
-		}
+		if (!gHasVashPower[player])
+			continue;
+		
+		//255 - (1 << 7) = 127 = remove right leg hitzone
+		//255 - (1 << 6) = 191 = remove left leg hitzone
+		//255 - (1 << 5) = 223 = remove right arm hitzone
+		//255 - (1 << 4) = 239 = remove left arm hitzone
+		//255 - (1 << 3) = 247 = remove stomach hitzone
+		//255 - (1 << 2) = 251 = remove chest hitzone
+		//255 - (1 << 1) = 253 = remove head hitzone
+		gAllowedHitZones[player] = 255 - (1 << random_num(1, 7));
 	}
 }
 //----------------------------------------------------------------------------------------------

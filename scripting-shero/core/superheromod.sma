@@ -12,7 +12,7 @@
 
 /****************************************************************************
 *
-*   Version 1.3.0 - Date: 08/10/2020
+*   Version 1.3.0 - Date: 08/22/2020
 *
 *   Original by {HOJ} Batman <johnbroderick@sbcglobal.net>
 *
@@ -53,7 +53,8 @@
 *
 *  Changelog:
 *
-*  v1.3.0 - Sycri (Kristaps08) - 08/20/20
+*  v1.3.0 - Sycri (Kristaps08) - 08/22/20
+*	- Added Ham_AddPlayerItem since Ham_CS_Item_GetMaxSpeed does not catch weapon pickups or purchases
 *	- Changed the function chatMessage so that it uses client_print_color
 *	- Changed most cvars from get_pcvar_num to bind_pcvar_num so variables could be used directly
 *	- Changed from RegisterHamFromEntity to RegisterHamPlayer for cleaner code
@@ -455,7 +456,6 @@ new bool:gPlayerPutInServer[MAX_PLAYERS + 1];
 // Other miscellaneous global variables
 new gHelpHudMsg[340];
 new gmsgStatusText, gmsgScoreInfo, gmsgDeathMsg, gmsgDamage;
-new bool:gRoundFreeze;
 new bool:gRoundStarted;
 new bool:gBetweenRounds;
 new bool:gGiveMercyXP = true;
@@ -1828,7 +1828,6 @@ public ham_PlayerSpawn_Post(id)
 //New Round
 public event_HLTV()
 {
-	gRoundFreeze = true;
 	gRoundStarted = false;
 
 	//Remove all Monster Mod monsters, stops them from attacking during freezetime
@@ -1850,7 +1849,6 @@ public round_Start()
 	if (!CvarSuperHeros)
 		return;
 
-	gRoundFreeze = false;
 	gBetweenRounds = false;
 
 	set_task(0.1, "roundStartDelay");

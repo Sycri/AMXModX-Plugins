@@ -47,6 +47,11 @@ public plugin_precache()
 	precache_sound(gSoundGmaster);
 }
 //----------------------------------------------------------------------------------------------
+public client_disconnected(id)
+{
+	remove_task(id);
+}
+//----------------------------------------------------------------------------------------------
 public sh_hero_init(id, heroID, mode)
 {
 	if (gHeroID != heroID)
@@ -86,7 +91,7 @@ public sh_client_death(victim)
 			// We got a Grandmaster willing to raise the dead!
 			parm[0] = victim;
 			parm[1] = player;
-			set_task(1.0, "@Task_Respawn", _, parm, 2);
+			set_task(1.0, "@Task_Respawn", victim, parm, 2);
 		}
 	}
 }

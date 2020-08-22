@@ -227,7 +227,7 @@ start_flying(id)
 	set_user_gravity(id, 0.000001);
 	
 	gIsFlying[id] = true;
-	set_task_ex(1.0, "@Task_Flight", id+1199, _, _, SetTask_Repeat);
+	set_task_ex(1.0, "@Task_Flight", id + 100, _, _, SetTask_Repeat);
 } 
 //----------------------------------------------------------------------------------------------
 stop_flying(id)
@@ -236,12 +236,12 @@ stop_flying(id)
 	sh_reset_max_speed(id);
 	
 	gIsFlying[id] = false;
-	remove_task(id+1199);
+	remove_task(id + 100);
 }
 //----------------------------------------------------------------------------------------------
 @Task_Flight(id)
 {
-	id -= 1199;
+	id -= 100;
 	
 	if (!sh_is_active() || !is_user_connected(id)) {
 		stop_flying(id);

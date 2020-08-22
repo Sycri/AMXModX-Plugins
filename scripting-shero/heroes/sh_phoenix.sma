@@ -88,6 +88,11 @@ public plugin_precache()
 	gSpriteExplosion = precache_model("sprites/explode1.spr");
 }
 //----------------------------------------------------------------------------------------------
+public client_disconnected(id)
+{
+	remove_task(id);
+}
+//----------------------------------------------------------------------------------------------
 public sh_hero_init(id, heroID, mode)
 {
 	if (gHeroID != heroID)

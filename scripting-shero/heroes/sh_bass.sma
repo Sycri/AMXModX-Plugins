@@ -133,11 +133,6 @@ public client_disconnected(id)
 	remove_task(id);
 }
 //----------------------------------------------------------------------------------------------
-public client_connect(id)
-{
-	remove_task(id);
-}
-//----------------------------------------------------------------------------------------------
 public sh_hero_init(id, heroID, mode)
 {
 	if (gHeroID != heroID)

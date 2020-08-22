@@ -55,6 +55,11 @@ public plugin_precache()
 	precache_sound(gSoundBlink);
 }
 //----------------------------------------------------------------------------------------------
+public client_disconnected(id)
+{
+	remove_task(id);
+}
+//----------------------------------------------------------------------------------------------
 public sh_client_spawn(id)
 {
 	remove_task(id);

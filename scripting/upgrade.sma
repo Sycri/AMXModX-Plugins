@@ -48,9 +48,10 @@
 		- v1.6 (29th August 2012)
 		* Optimized the code a little bit again
 
-		- v1.7 (10th August 2020)
+		- v1.7 (21th August 2020)
 		* Added multilingual support to the description of the command amx_upgrade
 		* Added FCVAR_SPONLY to cvar upgrade_version to make it unchangeable
+		* Added Ham_AddPlayerItem since Ham_CS_Item_GetMaxSpeed does not catch weapon pickups or purchases
 		* Changed from fakemeta to fun because the functions of the latter are native
 		* Changed from get_pcvar_num to bind_pcvar_num so variables could be used directly
 		* Changed the required admin level of the command amx_upgrade from ADMIN_SLAY to ADMIN_LEVEL_A

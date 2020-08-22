@@ -61,8 +61,9 @@
 *          at 800x600 to 1280x1024.
 *
 *  Changelog:
-*   v1.7 - Sycri - 08/13/20
+*   v1.7 - Sycri - 08/22/20
 *		- Readded HUD removement as it is now possible
+*	    - Replaced FM_Think with Ham_Think
 *		- Revamped the code
 *
 *   v1.6 - Jelle - 07/15/13
@@ -122,8 +123,13 @@
 
 /************* Do Not Edit Below Here **************/
 
-#include <superheromod>
+#include <amxmodx>
 #include <amxmisc>
+#include <fakemeta>
+#include <fun>
+#include <cstrike>
+#include <hamsandwich>
+#include <sh_core_main>
 
 #pragma semicolon 1
 
@@ -145,7 +151,6 @@
 #endif
 
 new gMonitorHudSync;
-new const gTaskClassname[] = "monitorloop";
 //----------------------------------------------------------------------------------------------
 public plugin_init()
 {
@@ -166,11 +171,10 @@ public plugin_init()
 
 	gMonitorHudSync = CreateHudSyncObj();
 
-	new monitor = engfunc(EngFunc_CreateNamedEntity, engfunc(EngFunc_AllocString, "info_target"));
+	new monitor = cs_create_entity("info_target");
 	if (monitor) {
-		set_pev(monitor, pev_classname, gTaskClassname);
 		set_pev(monitor, pev_nextthink, get_gametime() + 0.1);
-		register_forward(FM_Think, "@Forward_Monitor_Think");
+		RegisterHamFromEntity(Ham_Think, monitor, "@Forward_Monitor_Think");
 	}
 }
 //----------------------------------------------------------------------------------------------
@@ -245,15 +249,6 @@ public sh_client_spawn(id)
 //----------------------------------------------------------------------------------------------
 @Forward_Monitor_Think(ent)
 {
-	if (!pev_valid(ent))
-		return FMRES_IGNORED;
-
-	static class[32];
-	pev(ent, pev_classname, class, charsmax(class));
-
-	if (!equal(class, gTaskClassname))
-		return FMRES_IGNORED;
-
 	if (sh_is_active()) {
 #if defined MONITOR_SPEED || defined MONITOR_SPEC
 		static Float:velocity[3];
@@ -356,7 +351,7 @@ public sh_client_spawn(id)
 	// Keep monitorloop active even if shmod is not, incase sh is turned back on
 	set_pev(ent, pev_nextthink, get_gametime() + 0.1);
 
-	return FMRES_IGNORED;
+	return HAM_IGNORED;
 }
 //----------------------------------------------------------------------------------------------
 #if defined REPLACE_HUD

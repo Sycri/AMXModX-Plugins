@@ -56,7 +56,7 @@
 		* Addded a new translation
 		* Changed a tiny little bit of code
 
-		- v1.9 (10th August 2020)
+		- v1.9 (20th August 2020)
 		* Added multilingual support to the description of the command amx_invisible
 		* Added FCVAR_SPONLY to cvar amx_invisible_version to make it unchangeable
 		* Changed from fakemeta to fun because the functions of the latter are native

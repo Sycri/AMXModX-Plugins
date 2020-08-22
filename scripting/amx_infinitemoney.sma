@@ -27,7 +27,7 @@
 		* Optimized the code a little bit
 		* First public release
 
-		- v1.3 (10th August 2020)
+		- v1.3 (20th August 2020)
 		* Added multilingual support to the description of the command amx_infinitemoney
 		* Added FCVAR_SPONLY to cvar amx_infinitemoney_version to make it unchangeable
 		* Changed from fakemeta to cstrike because the functions of the latter are native
