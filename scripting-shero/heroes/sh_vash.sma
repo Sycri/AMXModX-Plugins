@@ -47,6 +47,7 @@ vash_rldmode 2			//Endless ammo mode: 0-server default, 1-no reload, 2-reload, 3
 #include <hamsandwich>
 #include <sh_core_main>
 #include <sh_core_gravity>
+#include <sh_core_weapons>
 
 #pragma semicolon 1
 

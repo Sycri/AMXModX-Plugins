@@ -14,6 +14,7 @@ goblin_grenadetimer 10		//How many second delay for new grenade
 #include <amxmodx>
 #include <amxmisc>
 #include <sh_core_main>
+#include <sh_core_weapons>
 
 #pragma semicolon 1
 

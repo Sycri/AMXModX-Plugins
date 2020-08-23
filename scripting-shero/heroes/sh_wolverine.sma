@@ -31,6 +31,7 @@ wolv_knifemult 1.35			//Multiplier for knife damage
 #include <sh_core_main>
 #include <sh_core_hpap>
 #include <sh_core_speed>
+#include <sh_core_weapons>
 
 #pragma semicolon 1
 

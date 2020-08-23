@@ -28,6 +28,7 @@ morpheus_rldmode 0		//Endless ammo mode: 0-server default, 1-no reload, 2-reload
 #include <hamsandwich>
 #include <sh_core_main>
 #include <sh_core_gravity>
+#include <sh_core_weapons>
 
 #if defined GIVE_WEAPON
 	#include <sh_core_shieldrestrict>

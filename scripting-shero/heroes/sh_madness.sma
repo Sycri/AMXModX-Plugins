@@ -37,6 +37,7 @@ madness_rldmode 0		//Endless ammo mode: 0-server default, 1-no reload, 2-reload,
 #include <hamsandwich>
 #include <sh_core_main>
 #include <sh_core_hpap>
+#include <sh_core_weapons>
 #include <sh_core_shieldrestrict>
 
 #pragma semicolon 1

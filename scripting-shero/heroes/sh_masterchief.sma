@@ -82,6 +82,7 @@ masterchief_teamglow 0		//Glow Team Color when player skin in use (0=no 1=yes)
 #include <sh_core_hpap>
 #include <sh_core_speed>
 #include <sh_core_gravity>
+#include <sh_core_weapons>
 #include <sh_core_shieldrestrict>
 
 #pragma semicolon 1

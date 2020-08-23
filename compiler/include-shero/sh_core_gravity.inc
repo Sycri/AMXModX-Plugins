@@ -35,6 +35,8 @@
  */
 native sh_set_hero_grav(heroID, pcvarGravity, const weapons[] = {0}, numofwpns = 1);
 
+//------------
+
 /**
  * Reset client's min gravity according to heroes they have.
  * Useful incase a temporary value was set.

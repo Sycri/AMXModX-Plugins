@@ -115,7 +115,7 @@ public sh_client_spawn(id)
 		sh_debug_message(0, 3, "Set Max Speed -> HeroID: %d - Speed: %f - Weapon(s): %s", heroIndex, get_pcvar_float(pcvarSpeed), weapons);
 	}
 
-	bind_pcvar_float(pcvarSpeed, gHeroMaxSpeed[heroIndex]);
+	bind_pcvar_float(pcvarSpeed, gHeroMaxSpeed[heroIndex]); // pCVAR expected!
 	copy(gHeroSpeedWeapons[heroIndex], charsmax(gHeroSpeedWeapons[]), weaponList); // Array expected!
 }
 //----------------------------------------------------------------------------------------------

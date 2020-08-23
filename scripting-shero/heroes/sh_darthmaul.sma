@@ -50,6 +50,7 @@ darth_knifemult 2.70		//multiplier for knife damage...
 #include <sh_core_main>
 #include <sh_core_hpap>
 #include <sh_core_speed>
+#include <sh_core_weapons>
 
 #pragma semicolon 1
 

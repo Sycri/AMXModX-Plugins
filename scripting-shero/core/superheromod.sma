@@ -66,6 +66,7 @@
 *	- Removed repetitive checks in natives
 *	- Removed variables which cache cvars since AMX Mod X 1.9.0 does it now itself
 *	- Renamed nearly all functions for a unified style
+*	- Replaced checking team joining by commands with event TextMsg (&#Game_join_) in the MercyXP system
 *	- Replaced client command buy blocking with forward CS_OnBuy
 *	- Replaced deprecated function client_disconnect with client_disconnected
 *	- Replaced deprecated function strbreak with argbreak
@@ -404,9 +405,9 @@
 #include <amxmodx>
 #include <amxmisc>
 #include <fakemeta>
-#include <hamsandwich>
 #include <fun>
 #include <cstrike>
+#include <hamsandwich>
 #include <sh_core_main>
 #include <sh_core_objectives>
 #include <sh_core_hpap>
@@ -425,7 +426,6 @@ new gSuperHeroCount = 0;
 
 // Changed these from CVARS to straight numbers...
 new gHeroLevelCVAR[SH_MAXHEROS];
-new gHeroMaxDamageMult[SH_MAXHEROS][31];
 
 // Player Variables Used by Various Functions
 // Player IDS are base 1 (i.e. 1-32 so we have to diminsion for 33)
@@ -445,7 +445,6 @@ new bool:gIsPowerBanned[MAX_PLAYERS + 1];
 new bool:gInMenu[MAX_PLAYERS + 1];
 new bool:gReadXPNextRound[MAX_PLAYERS + 1];
 new bool:gFirstRound[MAX_PLAYERS + 1];
-new Float:gReloadTime[MAX_PLAYERS + 1];
 new gInPowerDown[MAX_PLAYERS + 1][SH_MAXBINDPOWERS + 1];
 new bool:gChangedHeroes[MAX_PLAYERS + 1];
 new bool:gPlayerPutInServer[MAX_PLAYERS + 1];
@@ -459,7 +458,6 @@ new bool:gBetweenRounds;
 new gNumLevels = 0;
 new gMenuID = 0;
 new gHelpHudSync, gHeroHudSync;
-new bool:gMapBlockWeapons[31]; //1-30 CSW_ constants
 new bool:gXrtaDmgClientKill;
 new gXrtaDmgWpnName[32];
 new gXrtaDmgAttacker;
@@ -481,7 +479,7 @@ new gSHConfigDir[128], gBanFile[128], gSHConfig[128], gHelpMotd[128];
 new CvarSuperHeros, CvarAliveDrop, CvarAutoBalance, CvarCmdProjector;
 new CvarDebugMessages, CvarEndRoundSave, Float:CvarHSMult, CvarLoadImmediate, CvarLvlLimit;
 new CvarMaxBinds, CvarMaxPowers, CvarMenuMode, CvarSaveXP;
-new CvarSaveBy, CvarXPSaveDays, CvarReloadMode, CvarFreeForAll;
+new CvarSaveBy, CvarXPSaveDays, CvarFreeForAll;
 new CvarFriendlyFire, CvarLan;
 
 //PCVARs
@@ -546,7 +544,6 @@ public plugin_init()
 	bind_pcvar_num(create_cvar("sh_savexp", "1"), CvarSaveXP);
 	bind_pcvar_num(create_cvar("sh_saveby", "1"), CvarSaveBy);
 	bind_pcvar_num(create_cvar("sh_xpsavedays", "14", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 365.0), CvarXPSaveDays);
-	bind_pcvar_num(create_cvar("sh_reloadmode", "1"), CvarReloadMode);
 	bind_pcvar_num(create_cvar("sh_ffa", "0"), CvarFreeForAll);
 
 	// Server cvars checked by core
@@ -579,7 +576,6 @@ public plugin_init()
 	// Must use post or else is_user_alive will return false when dead player respawns
 	// Must use RegisterHamPlayer for special bots to hook
 	RegisterHamPlayer(Ham_Spawn, "ham_PlayerSpawn_Post", 1);
-	RegisterHamPlayer(Ham_TakeDamage, "ham_TakeDamage_Pre");
 
 	// Client Commands
 	register_clcmd("superpowermenu", "cl_superpowermenu", ADMIN_ALL, "superpowermenu");
@@ -644,7 +640,6 @@ public plugin_natives()
 	register_native("sh_create_hero", "@Native_CreateHero");
 	register_native("sh_set_hero_info", "@Native_SetHeroInfo");
 	register_native("sh_set_hero_bind", "@Native_SetHeroBind");
-	register_native("sh_set_hero_dmgmult", "@Native_SetHeroDamageMultiplier");
 	register_native("sh_get_num_heroes", "@Native_GetNumHeroes");
 	register_native("sh_get_num_lvls", "@Native_GetNumLvls");
 	register_native("sh_get_kill_xp", "@Native_GetKillXP");
@@ -666,10 +661,6 @@ public plugin_natives()
 	register_native("sh_set_godmode", "@Native_SetGodmode");
 	register_native("sh_is_freezetime", "@Native_IsFreezeTime");
 	register_native("sh_is_inround", "@Native_IsInRound");
-	register_native("sh_reload_ammo", "@Native_ReloadAmmo");
-	register_native("sh_drop_weapon", "@Native_DropWeapon");
-	register_native("sh_give_weapon", "@Native_GiveWeapon");
-	register_native("sh_give_item", "@Native_GiveItem");
 }
 //----------------------------------------------------------------------------------------------
 @Forward_GetGameDescription()
@@ -708,9 +699,6 @@ public plugin_cfg()
 #endif
 
 	register_concmd("amx_shresetxp", "adminEraseXP", ADMIN_RCON, "- Erases ALL saved XP (may take some time with a large vault file)");
-
-	// Check to see if we need to block weapon giving heroes
-	giveWeaponConfig();
 
 	// Setup XPGiven and XP
 	readINI();
@@ -775,93 +763,6 @@ loadConfig()
 	} else {
 		debugMsg(0, 0, "**WARNING** SuperHero Config File not found, correct location: %s", gSHConfig);
 	}
-}
-//----------------------------------------------------------------------------------------------
-// This will set the sh_give_weapon blocks for the map
-giveWeaponConfig()
-{
-	new wpnBlockFile[128];
-	formatex(wpnBlockFile, charsmax(wpnBlockFile), "%s/shweapon.cfg", gSHConfigDir);
-
-	if (!file_exists(wpnBlockFile)) {
-		//Create the file if it doesn't exist
-		createGiveWeaponConfig(wpnBlockFile);
-		return;
-	}
-
-	new blockWpnFile = fopen(wpnBlockFile, "rt");
-
-	if (!blockWpnFile) {
-		debugMsg(0, 0, "Failed to open shweapon.cfg, please verify file/folder permissions");
-		return;
-	}
-
-	new data[512], mapName[32], blockMapName[32];
-	new blockWeapons[512], weapon[16], weaponName[32];
-	new checkLength, x, weaponID;
-
-	get_mapname(mapName, charsmax(mapName));
-
-	while (!feof(blockWpnFile)) {
-		fgets(blockWpnFile, data, charsmax(data));
-		trim(data);
-
-		//Comments or blank skip it
-		switch (data[0]) {
-			case '^0', '^n', ';', '/', '\', '#': continue;
-		}
-
-		argbreak(data, blockMapName, charsmax(blockMapName), blockWeapons, charsmax(blockWeapons));
-
-		//all maps or check for something more specific?
-		if (blockMapName[0] != '*') {
-
-			//How much of the map name do we check?
-			checkLength = strlen(blockMapName);
-
-			if (blockMapName[checkLength-1] == '*')
-				--checkLength;
-			else //Largest length between the 2, do this because of above check
-				checkLength = max(checkLength, strlen(mapName));
-
-			//Keep checking or did we find the map?
-			if (!equali(mapName, blockMapName, checkLength))
-				continue;
-		}
-
-		//If gotten this far a map has been found
-		remove_quotes(blockWeapons);
-
-		//Idiot check, make sure weapon names are lowercase before going further
-		strtolower(blockWeapons);
-
-		while (blockWeapons[0] != '^0') {
-			//trim any spaces left over especially from strtok
-			trim(blockWeapons);
-			strtok(blockWeapons, weapon, charsmax(weapon), blockWeapons, 415, ',', 1);
-
-			if (equal(weapon, "all")) {
-				//Set all 1-30 CSW_ constants
-				for (x = 1; x < 31; x++)
-					gMapBlockWeapons[x] = gMapBlockWeapons[x] ? false : true;
-			} else {
-				//Set named weapon
-				formatex(weaponName, charsmax(weaponName), "weapon_%s", weapon);
-				weaponID = get_weaponid(weaponName);
-
-				if (!weaponID) {
-					debugMsg(0, 0, "Invalid block weapon name ^"%s^" for entry ^"%s^" check shweapon.cfg", weapon, blockMapName);
-					continue;
-				}
-
-				gMapBlockWeapons[weaponID] = gMapBlockWeapons[weaponID] ? false : true;
-			}
-		}
-
-		// Map found stop looking for more
-		break;
-	}
-	fclose(blockWpnFile);
 }
 //----------------------------------------------------------------------------------------------
 public loopMain()
@@ -1199,141 +1100,6 @@ bool:@Native_UserIsLoaded()
 		return false;
 
 	return gReadXPNextRound[id] ? false : true;
-}
-//----------------------------------------------------------------------------------------------
-//native sh_drop_weapon(id, weaponID, bool:remove = false)
-@Native_DropWeapon()
-{
-	new id = get_param(1);
-	new weaponID = get_param(2);
-	
-	dropWeapon(id, weaponID, get_param(3) ? true : false);
-}
-//---------------------------------------------------------------------------------------------
-dropWeapon(id, weaponID, bool:remove)
-{
-	if (!CvarSuperHeros)
-		return;
-
-	if (!is_user_alive(id))
-		return;
-
-	// If VIPs are not allowed other weapons, protect them from losing what they have
-	if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_WEAPONS)
-		return;
-
-	if (!user_has_weapon(id, weaponID))
-		return;
-
-	new slot = sh_get_weapon_slot(weaponID);
-	if (slot == 1 || slot == 2 || slot == 5) {
-		//Don't drop/remove the main c4
-		if (weaponID == CSW_C4 && pev_valid(sh_get_c4_id()) && id == pev(sh_get_c4_id(), pev_owner))
-			return;
-
-		static weaponName[32];
-		get_weaponname(weaponID, weaponName, charsmax(weaponName));
-
-		engclient_cmd(id, "drop", weaponName);
-
-		if (!remove)
-			return;
-
-		new Float:weaponVel[3];
-		new weaponBox = -1;
-
-		while ((weaponBox = cs_find_ent_by_owner(weaponBox, "weaponbox", id)) > 0) {
-			// Skip anything not owned by this client
-			if (!pev_valid(weaponBox))
-				continue;
-
-			// If Velocities are all zero its on the ground already and should stay there
-			pev(weaponBox, pev_velocity, weaponVel);
-			if (weaponVel[0] == 0.0 && weaponVel[1] == 0.0 && weaponVel[2] == 0.0)
-				continue;
-
-			// Forcing a think cleanly removes weaponbox and it's contents
-			dllfunc(DLLFunc_Think, weaponBox);
-		}
-	}
-}
-//---------------------------------------------------------------------------------------------
-//native sh_give_weapon(id, weaponID, bool:switchTo = false)
-@Native_GiveWeapon()
-{
-	new id = get_param(1);
-	new weaponID = get_param(2);
-
-	return giveWeapon(id, weaponID, get_param(3) ? true : false);
-}
-//---------------------------------------------------------------------------------------------
-giveWeapon(id, weaponID, bool:switchTo)
-{
-	if (!CvarSuperHeros)
-		return 0;
-
-	if (!is_user_alive(id))
-		return 0;
-
-	if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_WEAPONS)
-		return 0;
-
-	if (weaponID < CSW_P228 || weaponID > CSW_P90)
-		return 0;
-
-	if (gMapBlockWeapons[weaponID])
-		return 0;
-
-	if (!user_has_weapon(id, weaponID)) {
-		static weaponName[32];
-		get_weaponname(weaponID, weaponName, charsmax(weaponName));
-
-		new itemID = give_item(id, weaponName);
-
-		// Switch to the given weapon?
-		if (switchTo)
-			engclient_cmd(id, weaponName);
-
-		return itemID;
-	}
-
-	return 0;
-}
-//---------------------------------------------------------------------------------------------
-//native sh_give_item(id, const itemName[], bool:switchTo = false)
-@Native_GiveItem()
-{
-	if (!CvarSuperHeros)
-		return 0;
-
-	new id = get_param(1);
-
-	if (!is_user_alive(id))
-		return 0;
-
-	new itemName[32], itemID;
-	get_array(2, itemName, charsmax(itemName));
-
-	if (equal(itemName, "weapon", 6)) {
-		if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_WEAPONS)
-			return 0;
-
-		new weaponID = get_weaponid(itemName);
-		if (weaponID) {
-			//It's a weapon see if it is blocked or user already has it
-			if (gMapBlockWeapons[weaponID] || user_has_weapon(id, weaponID))
-				return 0;
-		}
-
-		itemID = give_item(id, itemName);
-
-		if (get_param(3))
-			engclient_cmd(id, itemName);
-	} else {
-		itemID = give_item(id, itemName);
-	}
-
-	return itemID;
 }
 //---------------------------------------------------------------------------------------------
 //native sh_create_hero(const heroName[], pcvarMinLevel)
@@ -2105,88 +1871,6 @@ localAddXP(id, xp)
 	displayPowers(id, false);
 }
 //----------------------------------------------------------------------------------------------
-//native sh_set_hero_dmgmult(heroID, pcvarDamage, const weaponID = 0)
-@Native_SetHeroDamageMultiplier()
-{
-	new heroIndex = get_param(1);
-
-	if (heroIndex < 0 || heroIndex >= gSuperHeroCount)
-		return;
-
-	new pcvarDamageMult = get_param(2);
-	new weaponID = get_param(3);
-
-	debugMsg(0, 3, "Set Damage Multiplier -> HeroID: %d - Multiplier: %d - Weapon: %d", heroIndex, get_pcvar_num(pcvarDamageMult), weaponID);
-
-	gHeroMaxDamageMult[heroIndex][weaponID] = pcvarDamageMult; // pCVAR expected!
-}
-//----------------------------------------------------------------------------------------------
-Float:getMaxDamageMult(id, weaponID)
-{
-	if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_EXTRADMG)
-		return 1.0;
-
-	static Float:returnDmgMult, x;
-	static playerPowerCount, heroIndex, heroDmgMultPointer;
-	returnDmgMult = 1.0;
-	playerPowerCount = getPowerCount(id);
-
-	for (x = 1; x <= playerPowerCount; x++) {
-		heroIndex = gPlayerPowers[id][x];
-		if (-1 < heroIndex < gSuperHeroCount) {
-			// Check hero for All weapons wildcard first
-			heroDmgMultPointer = gHeroMaxDamageMult[heroIndex][0];
-			if (!heroDmgMultPointer) {
-				// Check hero for weapon that was passed in
-				heroDmgMultPointer = gHeroMaxDamageMult[heroIndex][weaponID];
-
-				if (!heroDmgMultPointer)
-					continue;
-			}
-
-			returnDmgMult = floatmax(returnDmgMult, get_pcvar_float(heroDmgMultPointer));
-		}
-	}
-
-	return returnDmgMult;
-}
-//----------------------------------------------------------------------------------------------
-public ham_TakeDamage_Pre(victim, inflictor, attacker, Float:damage, damagebits)
-{
-	if (damage <= 0.0)
-		return HAM_IGNORED;
-
-	if (!is_user_connected(attacker) || !is_user_alive(victim))
-		return HAM_IGNORED;
-
-	// if (victim != attacker && cs_get_user_team(victim) == cs_get_user_team(attacker) && !CvarFreeForAll)
-		// return HAM_IGNORED;
-
-	if (attacker == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_EXTRADMG)
-		return HAM_IGNORED;
-
-	new weaponID;
-	if (damagebits & DMG_GRENADE)
-		weaponID = CSW_HEGRENADE;
-	else if (damagebits & DMG_BULLET && inflictor == attacker)
-		//includes knife and any other weapon
-		weaponID = get_user_weapon(attacker);
-
-	//Damage not from a CS weapon
-	if (!weaponID)
-		return HAM_IGNORED;
-
-	new Float:dmgmult = getMaxDamageMult(attacker, weaponID);
-
-	//Damage is not increased damage
-	if (dmgmult <= 1.0)
-		return HAM_IGNORED;
-
-	SetHamParamFloat(4, (damage * dmgmult));
-
-	return HAM_HANDLED;
-}
-//----------------------------------------------------------------------------------------------
 //native sh_extra_damage(victim, attacker, damage, const wpnDescription[], headshot = 0, dmgMode = SH_DMG_MULT, bool:dmgStun = false, bool:dmgFFmsg = true, const dmgOrigin[3] = {0,0,0});
 @Native_ExtraDamage()
 {
@@ -2475,102 +2159,6 @@ public event_DeathMsg()
 	}
 
 	displayPowers(victim, false);
-}
-//----------------------------------------------------------------------------------------------
-//native sh_reload_ammo(id, mode = 0)
-@Native_ReloadAmmo()
-{
-	new id = get_param(1);
-
-	if (!is_user_alive(id))
-		return;
-
-	// re-entrency check
-	new Float:gametime = get_gametime();
-	if (gametime - gReloadTime[id] < 0.5)
-		return;
-	gReloadTime[id] = gametime;
-
-	new clip, ammo;
-	new wpnid = get_user_weapon(id, clip, ammo);
-	new wpnslot = sh_get_weapon_slot(wpnid);
-
-	if (wpnslot != 1 && wpnslot != 2)
-		return;
-
-	new mode = get_param(2);
-
-	if (mode == 0) {
-		// Server decides what mode to use
-		mode = CvarReloadMode;
-
-		if (!mode)
-			return;
-	}
-
-	switch (mode) {
-		// No reload, reset max clip (most common)
-		case 1: {
-			if (clip != 0)
-				return;
-
-			new weaponEnt = -1;
-			new wpn[32];
-			get_weaponname(wpnid, wpn, charsmax(wpn));
-
-			while ((weaponEnt = engfunc(EngFunc_FindEntityByString, weaponEnt, "classname", wpn)) != 0) {
-				if (id == pev(weaponEnt, pev_owner)) {
-					cs_set_weapon_ammo(weaponEnt, sh_get_max_clipammo(wpnid));
-					break;
-				}
-			}
-		}
-		// Requires reload, but reset max backpack ammo
-		case 2: {
-			new maxbpammo = sh_get_max_bpammo(wpnid);
-			if (ammo < maxbpammo)
-				cs_set_user_bpammo(id, wpnid, maxbpammo);
-		}
-		// Drop weapon and get a new one with full clip
-		case 3: {
-			if (clip != 0)
-				return;
-
-			new idSilence, idBurst;
-			if (wpnid == CSW_M4A1 || wpnid == CSW_USP) {
-				new weaponEnt = -1;
-				new wpn[32];
-				get_weaponname(wpnid, wpn, charsmax(wpn));
-
-				while ((weaponEnt = engfunc(EngFunc_FindEntityByString, weaponEnt, "classname", wpn)) != 0) {
-					if (id == pev(weaponEnt, pev_owner)) {
-						idSilence = cs_get_weapon_silen(weaponEnt);
-						break;
-					}
-				}
-			} else if (wpnid == CSW_FAMAS || wpnid == CSW_GLOCK18) {
-				new weaponEnt = -1;
-				new wpn[32];
-				get_weaponname(wpnid, wpn, charsmax(wpn));
-
-				while ((weaponEnt = engfunc(EngFunc_FindEntityByString, weaponEnt, "classname", wpn)) != 0) {
-					if (id == pev(weaponEnt, pev_owner)) {
-						idBurst = cs_get_weapon_burst(weaponEnt);
-						break;
-					}
-				}
-			}
-
-			dropWeapon(id, wpnid, true);
-
-			new entityID = giveWeapon(id, wpnid, true);
-
-			if (idSilence)
-				cs_set_weapon_silen(entityID, idSilence, 0);
-			else if (idBurst)
-				cs_set_weapon_burst(entityID, idBurst);
-		}
-	}
 }
 //----------------------------------------------------------------------------------------------
 timerAll()
@@ -4155,41 +3743,6 @@ createINIFile(const levelINIFile[])
 	fputs(levelsFile, "LTXPGIVEN  6 8 10 12 14 16 20 24 28 32 40");
 
 	fclose(levelsFile);
-}
-//----------------------------------------------------------------------------------------------
-createGiveWeaponConfig(const wpnBlockFile[])
-{
-	new blockWpnFile = fopen(wpnBlockFile, "wt");
-	if (!blockWpnFile) {
-		debugMsg(0, 0, "Failed to create shweapon.cfg, please verify file/folder permissions");
-		return;
-	}
-
-	fputs(blockWpnFile, "// Use this file to block SuperHero from giving weapons by map. This only blocks shmod from giving weapons.^n");
-	fputs(blockWpnFile, "// For example you can block all heroes from giving any weapon on all ka_ maps instead of disabling the hero.^n");
-	fputs(blockWpnFile, "// You can even force people to buy weapons for all maps by blocking all weapons on all maps.^n");
-	fputs(blockWpnFile, "//^n");
-	fputs(blockWpnFile, "// Usage for maps:^n");
-	fputs(blockWpnFile, "// - The asterisk * symbol will act as wildcard or by itself will be all maps, ie de_* is all maps that start with de_^n");
-	fputs(blockWpnFile, "// - If setting a map prefix with wildcard and setting a map that has the same prefix, place map name before the^n");
-	fputs(blockWpnFile, "//     prefix is used to use it over the prefix. ie set de_dust before de_* to use de_dust over the de_* config.^n");
-	fputs(blockWpnFile, "// Usage for weapon:^n");
-	fputs(blockWpnFile, "// - Place available weapon shorthand names from list below inside quotes and separate by commas.^n");
-	fputs(blockWpnFile, "// - Works like an on/off switch so if you set a weapon twice it will block then unblock it.^n");
-	fputs(blockWpnFile, "// - A special ^"all^" shorthand name can be used to toggle all weapons at once.^n");
-	fputs(blockWpnFile, "// Valid shorthand weapon names:^n");
-	fputs(blockWpnFile, "// - all, p228, scout, hegrenade, xm1014, c4, mac10, aug, smokegrenade, elite, fiveseven, ump45, sg550, galil,^n");
-	fputs(blockWpnFile, "// - famas, usp, glock18, awp, mp5navy, m249, m3, m4a1, tmp, g3sg1, flashbang, deagle, sg552, ak47, knife, p90^n");
-	fputs(blockWpnFile, "//^n");
-	fputs(blockWpnFile, "// Examples of proper usage are as follows (these can be used by removing the // from the line):^n");
-	fputs(blockWpnFile, "// - below blocks sh from giving the awp and p90 on de_dust.^n");
-	fputs(blockWpnFile, "//de_dust ^"awp, p90^"^n");
-	fputs(blockWpnFile, "// - below blocks sh from giving all weapons on all ka_ maps.^n");
-	fputs(blockWpnFile, "//ka_* ^"all^"^n");
-	fputs(blockWpnFile, "// - below blocks sh from giving all weapons then unblocks hegrenade on all he_ maps.^n");
-	fputs(blockWpnFile, "//he_* ^"all, hegrenade^"^n");
-
-	fclose(blockWpnFile);
 }
 //----------------------------------------------------------------------------------------------
 createHelpMotdFile(const helpMotdFile[])

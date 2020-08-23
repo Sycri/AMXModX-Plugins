@@ -14,6 +14,7 @@ magneto_giveglock 1				//Give the poor victim a glock?
 #include <fakemeta>
 #include <csx>
 #include <sh_core_main>
+#include <sh_core_weapons>
 #include <sh_core_shieldrestrict>
 
 #pragma semicolon 1

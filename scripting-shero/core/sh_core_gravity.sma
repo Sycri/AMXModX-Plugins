@@ -20,6 +20,8 @@ new gSuperHeroCount;
 new Float:gHeroMinGravity[SH_MAXHEROS];
 new gHeroGravityWeapons[SH_MAXHEROS][31]; // array weapons of weapon's i.e. {4,30} Note:{0}=all
 
+new gIsFreezeTime;
+
 new CvarDebugMessages;
 
 //----------------------------------------------------------------------------------------------
@@ -27,6 +29,9 @@ public plugin_init()
 {
 	register_plugin("[SH] Core: Gravity", SH_VERSION_STR, SH_AUTHOR_STR);
 	
+	register_event_ex("HLTV", "@Event_HLTV", RegisterEvent_Global, "1=0", "2=0"); // New Round
+	register_logevent("@LogEvent_RoundStart", 2, "1=Round_Start");
+
 	RegisterHamPlayer(Ham_AddPlayerItem, "@Forward_AddPlayerItem_Post", 1);
 	
 	new weaponName[32];
@@ -94,7 +99,7 @@ public sh_client_spawn(id)
 		sh_debug_message(0, 3, "Set Min Gravity -> HeroID: %d - Gravity: %.3f - Weapon(s): %s", heroIndex, get_pcvar_float(pcvarGravity), weapons);
 	}
 
-	bind_pcvar_float(pcvarGravity, gHeroMinGravity[heroIndex]);
+	bind_pcvar_float(pcvarGravity, gHeroMinGravity[heroIndex]); // pCVAR expected!
 	copy(gHeroGravityWeapons[heroIndex], charsmax(gHeroGravityWeapons[]), weaponList); // Array expected!
 }
 //----------------------------------------------------------------------------------------------
@@ -104,12 +109,31 @@ public sh_client_spawn(id)
 	resetMinGravity(get_param(1));
 }
 //----------------------------------------------------------------------------------------------
+@Event_HLTV()
+{
+	gIsFreezeTime = true;
+}
+//----------------------------------------------------------------------------------------------
+@LogEvent_RoundStart()
+{
+	gIsFreezeTime = false;
+
+	static players[32], playerCount, player, i;
+	get_players_ex(players, playerCount, GetPlayers_ExcludeDead | GetPlayers_ExcludeHLTV);
+
+	for (i = 0; i < playerCount; i++) {
+		player = players[i];
+
+		setGravityPowers(player);
+	}
+}
+//----------------------------------------------------------------------------------------------
 @Forward_AddPlayerItem_Post(id)
 {
 	if (!sh_is_active())
 		return HAM_IGNORED;
 
-	if (!is_user_alive(id) || !sh_user_is_loaded(id))
+	if (!is_user_alive(id) || gIsFreezeTime || !sh_user_is_loaded(id))
 		return HAM_IGNORED;
 
 	if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_GRAVITY)
@@ -131,7 +155,7 @@ public sh_client_spawn(id)
 	static owner;
 	owner = pev(weapon, pev_owner);
 
-	if (!is_user_alive(owner) || !sh_user_is_loaded(owner))
+	if (!is_user_alive(owner) || gIsFreezeTime || !sh_user_is_loaded(owner))
 		return HAM_IGNORED;
 
 	if (owner == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_GRAVITY)
@@ -164,7 +188,7 @@ setGravityPowers(id)
 	if (!sh_is_active())
 		return;
 
-	if (!is_user_alive(id) || !sh_user_is_loaded(id))
+	if (!is_user_alive(id) || gIsFreezeTime || !sh_user_is_loaded(id))
 		return;
 
 	new Float:oldGravity = 1.0;

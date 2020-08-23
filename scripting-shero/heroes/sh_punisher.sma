@@ -10,6 +10,7 @@ punisher_rldmode 0		// Endless Ammo mode: 0-server default, 1-no reload, 2-reloa
 
 #include <amxmodx>
 #include <sh_core_main>
+#include <sh_core_weapons>
 
 #pragma semicolon 1
 

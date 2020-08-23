@@ -40,6 +40,8 @@
  */
 native sh_set_hero_speed(heroID, pcvarSpeed, const weapons[] = {0}, numofwpns = 1);
 
+//------------
+
 /**
  * Speed stuns client for time specified. Bind powers are not usable when stunned.
  *
@@ -68,6 +70,7 @@ native bool:sh_get_stun(id);
  * @noreturn
  */
 native sh_reset_max_speed(id);
+
 
 /**************************
  *         STOCKS         *

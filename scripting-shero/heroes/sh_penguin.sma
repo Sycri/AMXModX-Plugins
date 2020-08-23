@@ -47,6 +47,7 @@ penguin_nadespeed 900		//Speed of Penguin grenades when seeking (def 900)
 #include <cstrike>
 #include <hamsandwich>
 #include <sh_core_main>
+#include <sh_core_weapons>
 
 #pragma semicolon 1
 

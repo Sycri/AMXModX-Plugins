@@ -22,6 +22,7 @@ batman_armor 125		//defualt 125
 #include <cstrike>
 #include <sh_core_main>
 #include <sh_core_hpap>
+#include <sh_core_weapons>
 #include <sh_core_shieldrestrict>
 
 #pragma semicolon 1

@@ -17,22 +17,6 @@
  *        NATIVES         *
  **************************/
 
-/**
- * Gets the client's max health based on the heroes client has.
- *
- * @param id		The index of the client.
- * @return		The max hero HP of the client, else 0 if invalid client.
- */
-native sh_get_max_hp(id);
-
-/**
- * Gets the client's max armor based on the heroes client has.
- *
- * @param id		The index of the client.
- * @return		The max hero AP of the client, else 0 if invalid client.
- */
-native sh_get_max_ap(id);
-
 //------------
 // Hero Creation/Property Natives
 //------------
@@ -50,6 +34,25 @@ native sh_get_max_ap(id);
  * @noreturn
  */
 native sh_set_hero_hpap(heroID, pcvarHealth = 0, pcvarArmor = 0);
+
+//------------
+
+/**
+ * Gets the client's max health based on the heroes client has.
+ *
+ * @param id		The index of the client.
+ * @return		The max hero HP of the client, else 0 if invalid client.
+ */
+native sh_get_max_hp(id);
+
+/**
+ * Gets the client's max armor based on the heroes client has.
+ *
+ * @param id		The index of the client.
+ * @return		The max hero AP of the client, else 0 if invalid client.
+ */
+native sh_get_max_ap(id);
+
 
 /**************************
  *         STOCKS         *

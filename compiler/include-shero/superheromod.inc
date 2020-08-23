@@ -20,4 +20,5 @@
 #include <sh_core_hpap>
 #include <sh_core_speed>
 #include <sh_core_gravity>
+#include <sh_core_weapons>
 #include <sh_core_shieldrestrict>
