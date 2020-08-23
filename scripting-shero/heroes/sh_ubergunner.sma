@@ -4,13 +4,14 @@
 
 //Uber Gunner
 UberGunner_level 4
-UberGunner_teamglow 0		//Glow Team Color when player skin in use (0=no 1=yes)
 UberGunner_m4a1mult 2.0		//Damage multiplier for his M4A1
 UberGunner_health 200		//Default 100 (no extra health)
 UberGunner_armor 200		//Default 100
 UberGunner_gravity 1.0		//Default 1.0 = no extra gravity (0.50 is 50% normal gravity, ect.)
 UberGunner_speed 600		//-1 = no extra speed, this cvar is for all weapons (for faster then normal speed set to 321 or higher)
 UberGunner_rldmode 0		//Endless ammo mode: 0-server default, 1-no reload, 2-reload, 3-drop wpn
+// Below only used if USE_PLAYER_MODEL is defined
+UberGunner_teamglow 1		//Glow Team Color when player skin in use (0=no 1=yes)
 
 */
 
@@ -84,7 +85,7 @@ public plugin_init()
 	bind_pcvar_num(create_cvar("UberGunner_rldmode", "0"), CvarReloadMode);
 
 #if defined USE_PLAYER_MODEL
-	bind_pcvar_num(create_cvar("UberGunner_teamglow", "0"), CvarTeamGlow);
+	bind_pcvar_num(create_cvar("UberGunner_teamglow", "1"), CvarTeamGlow);
 #endif
 
 	// FIRE THE EVENT TO CREATE THIS SUPERHERO!

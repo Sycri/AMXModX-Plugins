@@ -173,10 +173,7 @@ giveWeaponConfig()
 //native sh_drop_weapon(id, weaponID, bool:remove = false)
 @Native_DropWeapon()
 {
-	new id = get_param(1);
-	new weaponID = get_param(2);
-	
-	dropWeapon(id, weaponID, get_param(3) ? true : false);
+	dropWeapon(get_param(1), get_param(2), get_param(3) ? true : false);
 }
 //---------------------------------------------------------------------------------------------
 dropWeapon(id, weaponID, bool:remove)
@@ -230,10 +227,7 @@ dropWeapon(id, weaponID, bool:remove)
 //native sh_give_weapon(id, weaponID, bool:switchTo = false)
 @Native_GiveWeapon()
 {
-	new id = get_param(1);
-	new weaponID = get_param(2);
-
-	return giveWeapon(id, weaponID, get_param(3) ? true : false);
+	return giveWeapon(get_param(1), get_param(2), get_param(3) ? true : false);
 }
 //---------------------------------------------------------------------------------------------
 giveWeapon(id, weaponID, bool:switchTo)
