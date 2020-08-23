@@ -27,6 +27,7 @@ savitar_forceknife 0			//When running, is Savitar forced to use his knife?
 #include <cstrike>
 #include <sh_core_main>
 #include <sh_core_speed>
+#include <sh_core_weapons>
 
 #pragma semicolon 1
 

@@ -20,6 +20,7 @@ breaker_glow 1
 #include <amxmodx>
 #include <cstrike>
 #include <sh_core_main>
+#include <sh_core_weapons>
 
 #pragma semicolon 1
 
