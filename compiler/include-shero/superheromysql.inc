@@ -157,23 +157,23 @@ parseXP(id, const data[])
 	copy(Right, charsmax(Right), data);
 
 	//Get the key out
-	strbrkqt(Right, Left, charsmax(Left), Right, charsmax(Right));
+	argbreak(Right, Left, charsmax(Left), Right, charsmax(Right));
 	replace(Left, charsmax(Left), "shinfo.", "");
 	copy(gMemoryTableKeys[id], charsmax(gMemoryTableKeys[]), Left);
 
 	//Get the name out
-	strbrkqt(Right, Left, charsmax(Left), Right, charsmax(Right));
+	argbreak(Right, Left, charsmax(Left), Right, charsmax(Right));
 	copy(gMemoryTableNames[id], charsmax(gMemoryTableNames[]), Left);
 
 	//Get the epochtime out
-	strbrkqt(Right, Left, charsmax(Left), Right, charsmax(Right));
+	argbreak(Right, Left, charsmax(Left), Right, charsmax(Right));
 
 	//Get the XP out and save it
-	strbrkqt(Right, Left, charsmax(Left), Right, charsmax(Right));
+	argbreak(Right, Left, charsmax(Left), Right, charsmax(Right));
 	gMemoryTableXP[id] = str_to_num(Left);
 
 	//Get the HUD Status out
-	strbrkqt(Right, Left, charsmax(Left), Right, charsmax(Right));
+	argbreak(Right, Left, charsmax(Left), Right, charsmax(Right));
 	gMemoryTableFlags[id] = str_to_num(Left);
 
 	//Now load in all the skills
@@ -181,7 +181,7 @@ parseXP(id, const data[])
 	new maxPowers = min(CvarMaxPowers, SH_MAXLEVELS);
 
 	while (Right[0] != '^0' && powerCount < maxPowers) {
-		strbrkqt(Right, Left, charsmax(Left), Right, charsmax(Right));
+		argbreak(Right, Left, charsmax(Left), Right, charsmax(Right));
 		heroIndex = getHeroID(Left);
 
 		if (heroIndex >= 0) {

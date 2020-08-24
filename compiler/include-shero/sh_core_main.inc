@@ -648,52 +648,6 @@ public sh_end_cooldown(id)
 //------------
 
 /**
- * Breaks a string into two parts, Left[] and Right[], keeping the quotes intact.
- *
- * @param text		The string to break.
- * @param Left		The string containing the first paramter broken.
- * @param leftLen	The size of the Left string.
- * @param Right		The string containing the rest after first parameter was broken off, not including the starting space. 
- * @param rightLen	The size of the Right string.
- * @return		True upon completion.
- */
-stock strbrkqt(const text[], Left[], leftLen, Right[], rightLen)
-{
-	// Breaks text[] into two parts, Left[], and Right[]
-	// Left[] will contain the first parameter (either quoted or non-quoted)
-	// Right[] contain the rest of the string after Left[], not including the space
-	new bool:in_quotes = false;
-	new bool:done_flag = false;
-	new i, left_pos = 0;
-	new textLen = strlen(text);
-
-	for (i = 0; i < textLen; i++) {
-
-		if (text[i] == '^"' && !done_flag) {
-			if (in_quotes) {
-				done_flag = true;
-				in_quotes = false;
-			} else {
-				in_quotes = true;
-			}
-		} else if (isspace(text[i]) && !in_quotes) {
-			if (left_pos > 0)
-				done_flag = true;
-		} else if (!done_flag && left_pos <= leftLen) {
-			setc(Left[left_pos], 1, text[i]);
-			left_pos++;
-		} else if (done_flag) {
-			break;
-		}
-	}
-
-	Left[left_pos] = '^0';
-	copy(Right, rightLen, text[i]);
-
-	return true;
-}
-
-/**
  * Prints heapsize. This is ONLY used to debug runtime 3 errors.
  *
  * @note		Unused but keep incase it is needed for debugging.

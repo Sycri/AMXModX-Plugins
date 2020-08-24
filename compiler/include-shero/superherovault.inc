@@ -33,19 +33,19 @@ parseXP(id, const data[])
 	copy(Right, charsmax(Right), data);
 
 	//Get the name out
-	strbrkqt(Right, Left, charsmax(Left), Right, charsmax(Right));
+	argbreak(Right, Left, charsmax(Left), Right, charsmax(Right));
 
 	//Get the epochtime out
-	strbrkqt(Right, Left, charsmax(Left), Right, charsmax(Right));
+	argbreak(Right, Left, charsmax(Left), Right, charsmax(Right));
 
 	//Get the XP out and save it
-	strbrkqt(Right, Left, charsmax(Left), Right, charsmax(Right));
+	argbreak(Right, Left, charsmax(Left), Right, charsmax(Right));
 	gPlayerXP[id] = str_to_num(Left);
 	gPlayerLevel[id] = getPlayerLevel(id);
 	setLevel(id, gPlayerLevel[id]);
 
 	//Get the User Flags out and save them
-	strbrkqt(Right, Left, charsmax(Left), Right, charsmax(Right));
+	argbreak(Right, Left, charsmax(Left), Right, charsmax(Right));
 	gPlayerFlags[id] = str_to_num(Left);
 
 	//Now load in all the skills
@@ -53,7 +53,7 @@ parseXP(id, const data[])
 	new maxPowers = min(CvarMaxPowers, SH_MAXLEVELS);
 
 	while (Right[0] != '^0' && powerCount < maxPowers) {
-		strbrkqt(Right, Left, charsmax(Left), Right, charsmax(Right));
+		argbreak(Right, Left, charsmax(Left), Right, charsmax(Right));
 		heroIndex = getHeroID(Left);
 		if (-1 < heroIndex < gSuperHeroCount)  {
 			if (getHeroLevel(heroIndex) <= gPlayerLevel[id]) {
@@ -110,9 +110,8 @@ writeData(id)
 
 	set_vaultdata(vaultSaveKey, data);
 
-	if (0 < id <= MAX_PLAYERS) {
+	if (0 < id <= MAX_PLAYERS)
 		gChangedHeroes[id] = false;
-	}
 }
 //----------------------------------------------------------------------------------------------
 loadXP(id, const savekey[32])

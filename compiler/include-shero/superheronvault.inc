@@ -89,18 +89,18 @@ loadXP(id, const savekey[32])
 		Left[0] = '^0';
 
 		// Get the name out
-		strbrkqt(Right, Left, charsmax(Left), Right, charsmax(Right));
+		argbreak(Right, Left, charsmax(Left), Right, charsmax(Right));
 		Left[0] = '^0';
 
 		// Get the XP out and save it
-		strbrkqt(Right, Left, charsmax(Left), Right, charsmax(Right));
+		argbreak(Right, Left, charsmax(Left), Right, charsmax(Right));
 		gPlayerXP[id] = str_to_num(Left);
 		gPlayerLevel[id] = playerLevel = getPlayerLevel(id);
 		setLevel(id, playerLevel);
 		Left[0] = '^0';
 
 		// Get the User Flags out and save them
-		strbrkqt(Right, Left, charsmax(Left), Right, charsmax(Right));
+		argbreak(Right, Left, charsmax(Left), Right, charsmax(Right));
 		gPlayerFlags[id] = str_to_num(Left);
 
 		// Now load in all the skills
@@ -109,7 +109,7 @@ loadXP(id, const savekey[32])
 
 		while (Right[0] != '^0' && powerCount < maxPowers) {
 			Left[0] = '^0';
-			strbrkqt(Right, Left, charsmax(Left), Right, charsmax(Right));
+			argbreak(Right, Left, charsmax(Left), Right, charsmax(Right));
 			heroIndex = getHeroID(Left);
 			if (-1 < heroIndex < gSuperHeroCount) {
 				if (getHeroLevel(heroIndex) <= playerLevel) {

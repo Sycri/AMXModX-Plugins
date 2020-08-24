@@ -70,7 +70,7 @@
 *	- Replaced checking team joining by commands with event TextMsg (&#Game_join_) in the MercyXP system
 *	- Replaced client command buy blocking with forward CS_OnBuy
 *	- Replaced deprecated function client_disconnect with client_disconnected
-*	- Replaced deprecated function strbreak with argbreak
+*	- Replaced deprecated function strbreak and stock function strbrkqt with argbreak
 *	- Replaced event CurWeapon with forward Ham_CS_Item_GetMaxSpeed for more reliable speed change
 *	- Replaced forward FM_Touch with Ham_Touch since the former is less efficient
 *	- Replaced register_cvar with create_cvar
@@ -486,7 +486,6 @@ new CvarFriendlyFire, CvarLan;
 new sh_minlevel;
 
 //Forwards
-new fwdReturn;
 new fwd_HeroInit, fwd_HeroKey, fwd_Spawn, fwd_Death;
 new fwd_RoundStart, fwd_RoundEnd, fwd_NewRound;
 
@@ -1168,7 +1167,7 @@ initHero(id, heroIndex, mode)
 	// init event is used to let hero know when a player has selected OR deselected a hero's power
 
 	//Init the hero
-	ExecuteForward(fwd_HeroInit, fwdReturn, id, heroIndex, mode);
+	ExecuteForward(fwd_HeroInit, _, id, heroIndex, mode);
 
 	gChangedHeroes[id] = true;
 }
@@ -1533,7 +1532,7 @@ public ham_PlayerSpawn_Post(id)
 		displayPowers(id, true);
 
 		//Let heroes know someone just spawned mid-round
-		ExecuteForward(fwd_Spawn, fwdReturn, id, 0);
+		ExecuteForward(fwd_Spawn, _, id, 0);
 
 		return HAM_IGNORED;
 	}
@@ -1558,7 +1557,7 @@ public ham_PlayerSpawn_Post(id)
 	set_user_rendering(id);
 
 	//Let heroes know someone just spawned from a new round
-	ExecuteForward(fwd_Spawn, fwdReturn, id, 1);
+	ExecuteForward(fwd_Spawn, _, id, 1);
 
 	return HAM_IGNORED;
 }
@@ -1579,7 +1578,7 @@ public event_HLTV()
 	}
 
 	//Lets let all the heroes know
-	ExecuteForward(fwd_NewRound, fwdReturn);
+	ExecuteForward(fwd_NewRound, _);
 }
 //----------------------------------------------------------------------------------------------
 public round_Start()
@@ -1604,7 +1603,7 @@ public roundStartDelay()
 	gRoundStarted = true;
 
 	//Lets let all the heroes know
-	ExecuteForward(fwd_RoundStart, fwdReturn);
+	ExecuteForward(fwd_RoundStart, _);
 }
 //----------------------------------------------------------------------------------------------
 public round_Restart()
@@ -1634,7 +1633,7 @@ public round_End()
 		set_task(2.0, "memoryTableWrite");
 
 	//Lets let all the heroes know
-	ExecuteForward(fwd_RoundEnd, fwdReturn);
+	ExecuteForward(fwd_RoundEnd, _);
 }
 //----------------------------------------------------------------------------------------------
 public cl_fullupdate(id)
@@ -1694,7 +1693,7 @@ public powerKeyDown(id)
 	gInPowerDown[id][whichKey] = true;
 
 	if (playerHasPower(id, heroIndex))
-		ExecuteForward(fwd_HeroKey, fwdReturn, id, heroIndex, SH_KEYDOWN);
+		ExecuteForward(fwd_HeroKey, _, id, heroIndex, SH_KEYDOWN);
 
 	return PLUGIN_HANDLED;
 }
@@ -1732,7 +1731,7 @@ public powerKeyUp(id)
 		return PLUGIN_HANDLED;
 
 	if (playerHasPower(id, heroIndex))
-		ExecuteForward(fwd_HeroKey, fwdReturn, id, heroIndex, SH_KEYUP);
+		ExecuteForward(fwd_HeroKey, _, id, heroIndex, SH_KEYUP);
 
 	return PLUGIN_HANDLED;
 }
@@ -2130,7 +2129,7 @@ public msg_DeathMsg()
 	}
 
 	// Send the sh_client_death forward
-	ExecuteForward(fwd_Death, fwdReturn, get_msg_arg_int(2), attacker, headshot, wpnDescription);
+	ExecuteForward(fwd_Death, _, get_msg_arg_int(2), attacker, headshot, wpnDescription);
 }
 //---------------------------------------------------------------------------------------------
 // Must use death event since csx client_death does not catch worldspawn or suicides
@@ -3682,14 +3681,14 @@ readINI()
 	}
 
 	// Get the data tag out of the way
-	strbrkqt(XP, LeftXP, charsmax(LeftXP), XP, charsmax(XP));
-	strbrkqt(XPG, LeftXPG, charsmax(LeftXPG), XPG, charsmax(XPG));
+	argbreak(XP, LeftXP, charsmax(LeftXP), XP, charsmax(XP));
+	argbreak(XPG, LeftXPG, charsmax(LeftXPG), XPG, charsmax(XPG));
 
 	while (XP[0] != '^0' && XPG[0] != '^0' && loadCount < gNumLevels) {
 		++loadCount;
 
-		strbrkqt(XP, LeftXP, charsmax(LeftXP), XP, charsmax(XP));
-		strbrkqt(XPG, LeftXPG, charsmax(LeftXPG), XPG, charsmax(XPG));
+		argbreak(XP, LeftXP, charsmax(LeftXP), XP, charsmax(XP));
+		argbreak(XPG, LeftXPG, charsmax(LeftXPG), XPG, charsmax(XPG));
 
 		gXPLevel[loadCount] = str_to_num(LeftXP);
 		gXPGiven[loadCount] = str_to_num(LeftXPG);
