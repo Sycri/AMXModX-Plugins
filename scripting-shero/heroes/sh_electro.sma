@@ -208,7 +208,7 @@ public sh_hero_key(id, heroID, key)
 		new radius = CvarJumpRadius;
 
 		// Loop through every alive player
-		for (i = 0; i < playerCount; i++) {
+		for (i = 0; i < playerCount; ++i) {
 			target = players[i];
 
 			if (target == attacker ||  target == lastVictim)
@@ -254,7 +254,7 @@ public sh_hero_key(id, heroID, key)
 	}
 
 	// No valid target found - reset all lightning hit variables
-	for (i = 0; i < playerCount; i++)
+	for (i = 0; i < playerCount; ++i)
 		gLightningHit[players[i]] = false;
 }
 //----------------------------------------------------------------------------------------------

@@ -99,7 +99,7 @@ give_weapons(index)
 	if (!is_user_alive(index))
 		return;
 
-	for (new i = 0; i < giveTotal; i++)
+	for (new i = 0; i < giveTotal; ++i)
 		sh_give_weapon(index, weapArray[i]);
 
 	// Give CTs a Defuse Kit
@@ -113,7 +113,7 @@ drop_weapons(index)
 		return;
 
 	// Start at 2 since 0 and 1 are nades that can not be dropped
-	for (new i = 2; i < giveTotal; i++)
+	for (new i = 2; i < giveTotal; ++i)
 		sh_drop_weapon(index, weapArray[i], true);
 }
 //----------------------------------------------------------------------------------------------

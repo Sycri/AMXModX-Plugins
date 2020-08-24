@@ -35,8 +35,8 @@ public plugin_init()
 	RegisterHamPlayer(Ham_AddPlayerItem, "@Forward_AddPlayerItem_Post", 1);
 	
 	new weaponName[32];
-	for (new id = CSW_P228; id <= CSW_P90; id++) {
-		if (get_weaponname(id, weaponName, charsmax(weaponName)))
+	for (new i = CSW_P228; i <= CSW_P90; ++i) {
+		if (get_weaponname(i, weaponName, charsmax(weaponName)))
 			RegisterHam(Ham_CS_Item_GetMaxSpeed, weaponName, "@Forward_CS_Item_GetMaxSpeed_Pre", 0);
 	}
 
@@ -101,12 +101,12 @@ public sh_client_spawn(id)
 	//Avoid running this unless debug is high enough
 	if (CvarDebugMessages > 2) {
 		//Set up the weapon string for the debug message
-		new weapons[32], number[3], x;
-		for (x = 0; x < numWpns; x++) {
-			formatex(number, charsmax(number), "%d", weaponList[x]);
+		new weapons[32], number[3];
+		for (new i = 0; i < numWpns; ++i) {
+			formatex(number, charsmax(number), "%d", weaponList[i]);
 			add(weapons, charsmax(weapons), number);
 			
-			if (weaponList[x + 1] != '^0')
+			if (weaponList[i + 1] != '^0')
 				add(weapons, charsmax(weapons), ",");
 			else
 				break;
@@ -297,7 +297,7 @@ Float:getMaxSpeed(id, weapon)
 	returnSpeed = -1.0;
 	playerPowerCount = sh_get_user_powers(id);
 
-	for (x = 1; x <= playerPowerCount; x++) {
+	for (x = 1; x <= playerPowerCount; ++x) {
 		heroIndex = sh_get_user_hero(id, x);
 		
 		if (-1 < heroIndex < gSuperHeroCount) {
@@ -305,7 +305,7 @@ Float:getMaxSpeed(id, weapon)
 			if (heroSpeed <= 0.0)
 				continue;
 			
-			for (i = CSW_NONE; i <= CSW_LAST_WEAPON; i++) {
+			for (i = CSW_NONE; i <= CSW_LAST_WEAPON; ++i) {
 				heroWeapon = gHeroSpeedWeapons[heroIndex][i];
 
 				//Stop checking, end of list
@@ -332,7 +332,7 @@ Float:getMaxSpeed(id, weapon)
 	static players[32], playerCount, player, i;
 	get_players_ex(players, playerCount, GetPlayers_ExcludeDead | GetPlayers_ExcludeHLTV);
 
-	for (i = 0; i < playerCount; i++) {
+	for (i = 0; i < playerCount; ++i) {
 		player = players[i];
 
 		// Switches are faster but we don't want to do anything with -1
@@ -353,9 +353,9 @@ Float:getMaxSpeed(id, weapon)
 @Task_SetServerMaxSpeed()
 {
 	new maxSpeed = 320; // Server Default
-	for (new x = 0; x < gSuperHeroCount; x++) {
-		if (gHeroMaxSpeed[x] != 0)
-			maxSpeed = max(maxSpeed, floatround(gHeroMaxSpeed[x], floatround_ceil));
+	for (new i = 0; i < gSuperHeroCount; ++i) {
+		if (gHeroMaxSpeed[i] != 0)
+			maxSpeed = max(maxSpeed, floatround(gHeroMaxSpeed[i], floatround_ceil));
 	}
 
 	// Only set if below required speed to avoid setting lower then server op may want

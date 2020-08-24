@@ -74,7 +74,7 @@ public sh_hero_init(id, heroID, mode)
 	
 	get_players_ex(players, playerCount, GetPlayers_ExcludeDead | GetPlayers_ExcludeHLTV);
 	
-	for (i = 0; i < playerCount; i++) {
+	for (i = 0; i < playerCount; ++i) {
 		player = players[i];
 
 		if (is_user_bot(player) || !gHasPsylocke[player])
@@ -85,7 +85,7 @@ public sh_hero_init(id, heroID, mode)
 		
 		closestEnemy = 1201;
 		
-		for (e = 0; e < playerCount; e++) {
+		for (e = 0; e < playerCount; ++e) {
 			enemy = players[e];
 
 			if (playerTeam == cs_get_user_team(enemy))

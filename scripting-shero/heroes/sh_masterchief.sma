@@ -11,7 +11,7 @@ masterchief_speed -1		//Default -1 = no extra speed, this cvar is for all weapon
 masterchief_p90mult 1.3		//Damage multiplyer for his P90
 masterchief_rldmode 0		//Endless ammo mode: 0-server default, 1-no reload, 2-reload, 3-drop wpn
 // Below only used if PLAYER_MODEL define = 1
-masterchief_teamglow 0		//Glow Team Color when player skin in use (0=no 1=yes)
+masterchief_teamglow 0		//Glow in a color based on player's team when hero in use (0=no 1=yes)
 
 */
 
@@ -159,6 +159,11 @@ public plugin_init()
 		RegisterHam(Ham_Item_Deploy, "weapon_p90", "@Forward_P90_Deploy_Post", 1);
 #endif
 
+	// GLOW LOOP
+#if PLAYER_MODEL == 1
+	set_task_ex(1.0, "@Task_GlowLoop", _, _, _, SetTask_Repeat);
+#endif
+
 	gmsgSync = CreateHudSyncObj();
 }
 //----------------------------------------------------------------------------------------------
@@ -230,7 +235,7 @@ public sh_hero_init(id, heroID, mode)
 				
 #if PLAYER_MODEL > 0
 			if (gModelPlayerLoaded)
-				masterchief_tasks(id);
+				set_task(1.1, "@Task_Morph", id);
 #endif
 		}
 		case SH_HERO_DROP: {
@@ -260,7 +265,7 @@ public sh_client_spawn(id) {
 	
 #if PLAYER_MODEL > 0
 	if (gModelPlayerLoaded)
-		masterchief_tasks(id);
+		set_task(1.1, "@Task_Morph", id);
 #endif
 }
 #endif
@@ -305,28 +310,18 @@ stock fm_cs_get_weapon_ent_owner(ent)
 #endif
 //----------------------------------------------------------------------------------------------
 #if PLAYER_MODEL > 0
-public client_connect(id)
+public client_disconnected(id)
 {
 	gModelPlayerSet[id] = false;
 }
 //----------------------------------------------------------------------------------------------
 public sh_client_death(id)
 {
-	if (!sh_is_active() || is_user_alive(id) || !gHasMasterChief[id])
+	if (is_user_alive(id) || !gHasMasterChief[id])
 		return;
 	
 	if (gModelPlayerLoaded)
 		masterchief_unmorph(id);
-}
-//----------------------------------------------------------------------------------------------
-masterchief_tasks(id)
-{
-	set_task(1.1, "@Task_Morph", id);
-	
-#if PLAYER_MODEL == 1
-	if (CvarTeamGlow)
-		set_task_ex(1.0, "@Task_Glow", id + 100, _, _, SetTask_Repeat);
-#endif
 }
 //----------------------------------------------------------------------------------------------
 @Task_Morph(id)
@@ -367,10 +362,8 @@ masterchief_unmorph(index)
 		gModelPlayerSet[index] = false;
 		
 #if PLAYER_MODEL == 1
-		if (CvarTeamGlow) {
-			remove_task(index + 100);
+		if (CvarTeamGlow)
 			sh_set_rendering(index);
-		}
 #endif
 	}
 }
@@ -382,20 +375,23 @@ masterchief_sound(index)
 }
 //----------------------------------------------------------------------------------------------
 #if PLAYER_MODEL == 1
-@Task_Glow(id)
+@Task_GlowLoop()
 {
-	id -= 100;
-
-	if (!sh_is_active() || !is_user_connected(id)) {
-		remove_task(id + 100);
+	if (!sh_is_active() || !CvarTeamGlow)
 		return;
-	}
 
-	if (gHasMasterChief[id] && is_user_alive(id)) {
-		switch (cs_get_user_team(id)) {
-			case CS_TEAM_T: sh_set_rendering(id, 100, 0, 0, 16, kRenderFxGlowShell);
-			case CS_TEAM_CT: sh_set_rendering(id, 0, 0, 100, 16, kRenderFxGlowShell);
-			default: sh_set_rendering(id, 100, 100, 100, 16, kRenderFxGlowShell);
+	static players[MAX_PLAYERS], playerCount, player, i;
+	get_players_ex(players, playerCount, GetPlayers_ExcludeDead | GetPlayers_ExcludeHLTV);
+
+	for (i = 0; i < playerCount; ++i) {
+		player = players[i];
+
+		if (gHasMasterChief[player]) {
+			switch (cs_get_user_team(player)) {
+				case CS_TEAM_T: sh_set_rendering(player, 100, 0, 0, 16, kRenderFxGlowShell);
+				case CS_TEAM_CT: sh_set_rendering(player, 0, 0, 100, 16, kRenderFxGlowShell);
+				default: sh_set_rendering(player, 100, 100, 100, 16, kRenderFxGlowShell);
+			}
 		}
 	}
 }

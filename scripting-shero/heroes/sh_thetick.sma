@@ -60,7 +60,7 @@ public sh_hero_init(id, heroID, mode)
 //----------------------------------------------------------------------------------------------
 @Forward_Player_TakeDamage(victim, inflictor, attacker, Float:damage, damagebits)
 {
-	if (damagebits & DMG_FALL && gHasTheTick[victim])
+	if (damagebits & DMG_FALL && gHasTheTick[victim] && sh_is_active())
 		return HAM_SUPERCEDE;
 
 	return HAM_IGNORED;

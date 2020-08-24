@@ -131,7 +131,7 @@ giveWeaponConfig()
 
 			if (equal(weapon, "all")) {
 				//Set all 1-30 CSW_ constants
-				for (i = CSW_P228; i <= CSW_P90; i++)
+				for (i = CSW_P228; i <= CSW_P90; ++i)
 					gMapBlockWeapons[i] = gMapBlockWeapons[i] ? false : true;
 			} else {
 				//Set named weapon
@@ -435,7 +435,7 @@ Float:getMaxDamageMult(id, weaponID)
 	returnDamageMult = 1.0;
 	playerPowerCount = sh_get_user_powers(id);
 
-	for (i = 1; i <= playerPowerCount; i++) {
+	for (i = 1; i <= playerPowerCount; ++i) {
 		heroIndex = sh_get_user_hero(id, i);
 
 		if (-1 < heroIndex < gSuperHeroCount) {

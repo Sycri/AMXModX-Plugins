@@ -175,7 +175,7 @@ public sh_round_end()
 	static players[MAX_PLAYERS], playerCount, player;
 	get_players_ex(players, playerCount, GetPlayers_ExcludeHLTV);
 
-	for (new i = 0; i < playerCount; i++) {
+	for (new i = 0; i < playerCount; ++i) {
 		player = players[i];
 
 		remove_task(player);
@@ -222,7 +222,7 @@ rebirth_explosion(id)
 	static players[MAX_PLAYERS], playerCount, player, i;
 	get_players_ex(players, playerCount, GetPlayers_ExcludeDead | GetPlayers_ExcludeHLTV);
 	
-	for (i = 0; i < playerCount; i++) {
+	for (i = 0; i < playerCount; ++i) {
 		player = players[i];
 
 		if ((cs_get_user_team(id) == cs_get_user_team(player) && !FFOn) || player == id)

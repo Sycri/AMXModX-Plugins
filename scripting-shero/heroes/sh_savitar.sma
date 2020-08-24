@@ -106,12 +106,15 @@ public sh_client_death(id)
 //----------------------------------------------------------------------------------------------
 @Task_SavitarLoop()
 {
+	if (!sh_is_active() || sh_is_freezetime())
+		return;
+
 	static Float:velocity[3];
 
 	static players[MAX_PLAYERS], playerCount, player, i;
 	get_players_ex(players, playerCount, GetPlayers_ExcludeDead | GetPlayers_ExcludeHLTV);
 
-	for (i = 0; i < playerCount; i++) {
+	for (i = 0; i < playerCount; ++i) {
 		player = players[i];
 
 		if (!gHasSavitar[player])

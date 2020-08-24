@@ -35,8 +35,8 @@ public plugin_init()
 	RegisterHamPlayer(Ham_AddPlayerItem, "@Forward_AddPlayerItem_Post", 1);
 	
 	new weaponName[32];
-	for (new id = CSW_P228; id <= CSW_P90; id++) {
-		if (get_weaponname(id, weaponName, charsmax(weaponName)))
+	for (new i = CSW_P228; i <= CSW_P90; ++i) {
+		if (get_weaponname(i, weaponName, charsmax(weaponName)))
 			RegisterHam(Ham_Item_Deploy, weaponName, "@Forward_Item_Deploy_Post", 1);
 	}
 	
@@ -85,12 +85,12 @@ public sh_client_spawn(id)
 	//Avoid running this unless debug is high enough
 	if (CvarDebugMessages > 2) {
 		//Set up the weapon string for the debug message
-		new weapons[32], number[3], x;
-		for (x = 0; x < numWpns; x++) {
-			formatex(number, charsmax(number), "%d", weaponList[x]);
+		new weapons[32], number[3];
+		for (new i = 0; i < numWpns; ++i) {
+			formatex(number, charsmax(number), "%d", weaponList[i]);
 			add(weapons, charsmax(weapons), number);
 
-			if (weaponList[x + 1] != '^0')
+			if (weaponList[i + 1] != '^0')
 				add(weapons, charsmax(weapons), ",");
 			else
 				break;
@@ -121,7 +121,7 @@ public sh_client_spawn(id)
 	static players[32], playerCount, player, i;
 	get_players_ex(players, playerCount, GetPlayers_ExcludeDead | GetPlayers_ExcludeHLTV);
 
-	for (i = 0; i < playerCount; i++) {
+	for (i = 0; i < playerCount; ++i) {
 		player = players[i];
 
 		setGravityPowers(player);
@@ -211,7 +211,7 @@ Float:getMinGravity(id, weapon)
 	returnGravity = 1.0;
 	playerPowerCount = sh_get_user_powers(id);
 	
-	for (x = 1; x <= playerPowerCount; x++) {
+	for (x = 1; x <= playerPowerCount; ++x) {
 		heroIndex = sh_get_user_hero(id, x);
 		
 		if (-1 < heroIndex < gSuperHeroCount) {
@@ -219,7 +219,7 @@ Float:getMinGravity(id, weapon)
 			if (heroMinGravity <= 0.0)
 				continue;
 				
-			for (i = CSW_NONE; i <= CSW_LAST_WEAPON; i++) {
+			for (i = CSW_NONE; i <= CSW_LAST_WEAPON; ++i) {
 				heroWeapon = gHeroGravityWeapons[heroIndex][i];
 
 				//Stop checking, end of list

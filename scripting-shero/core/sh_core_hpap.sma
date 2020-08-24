@@ -190,15 +190,15 @@ setArmorPowers(id, bool:resetArmor)
 //----------------------------------------------------------------------------------------------
 getMaxHealth(id)
 {
-	static returnHealth, x;
+	static returnHealth, i;
 	returnHealth = 100;
 
 	if (!(id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_HEALTH)) {
 		static heroIndex, playerPowerCount, heroHealth;
 		playerPowerCount = sh_get_user_powers(id);
 
-		for (x = 1; x <= playerPowerCount; x++) {
-			heroIndex = sh_get_user_hero(id, x);
+		for (i = 1; i <= playerPowerCount; ++i) {
+			heroIndex = sh_get_user_hero(id, i);
 			
 			if (-1 < heroIndex < gSuperHeroCount) {
 				heroHealth = gHeroMaxHealth[heroIndex];
@@ -221,12 +221,12 @@ getMaxArmor(id)
 	if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_ARMOR)
 		return gMaxArmor[id] = 200;
 		
-	static heroIndex, returnArmor, x, playerPowerCount, heroArmor;
+	static heroIndex, returnArmor, i, playerPowerCount, heroArmor;
 	returnArmor = 0;
 	playerPowerCount = sh_get_user_powers(id);
 	
-	for (x = 1; x <= playerPowerCount; x++) {
-		heroIndex = sh_get_user_hero(id, x);
+	for (i = 1; i <= playerPowerCount; ++i) {
+		heroIndex = sh_get_user_hero(id, i);
 
 		if (-1 < heroIndex < gSuperHeroCount) {
 			heroArmor = gHeroMaxArmor[heroIndex];

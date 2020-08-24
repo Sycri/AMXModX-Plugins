@@ -273,7 +273,7 @@ public sh_client_spawn(id)
 		static tmp[128];
 		get_players_ex(players, playerCount, GetPlayers_ExcludeBots | GetPlayers_ExcludeHLTV);
 
-		for (i = 0; i < playerCount; i++) {
+		for (i = 0; i < playerCount; ++i) {
 			player = players[i];
 			tmp[0] = '^0';
 			len = 0;

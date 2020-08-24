@@ -173,13 +173,13 @@ public sh_client_spawn(id)
 		@Task_GiveGrenade(id);
 	}
 	
-	for (new i = MaxClients + 1; i < charsmax(gPauseEntity); i++)
+	for (new i = MaxClients + 1; i < charsmax(gPauseEntity); ++i)
 		gPenguinNade[id][i] = false;
 }
 //----------------------------------------------------------------------------------------------
 public sh_round_start()
 {
-	for (new i = MaxClients + 1; i < charsmax(gPauseEntity); i++)
+	for (new i = MaxClients + 1; i < charsmax(gPauseEntity); ++i)
 		gPauseEntity[i] = false;
 }
 //----------------------------------------------------------------------------------------------
@@ -272,7 +272,7 @@ public sh_round_start()
 	
 	get_players_ex(players, playerCount, GetPlayers_ExcludeDead | GetPlayers_ExcludeHLTV);
 	
-	for (i = 0; i < playerCount; i++) {
+	for (i = 0; i < playerCount; ++i) {
 		player = players[i];
 		
 		if (cs_get_user_team(player) == userTeam)
@@ -447,7 +447,7 @@ fm_entity_set_follow(entity, target)
 	SetHamParamFloat(4, damage *= CvarGrenadeMult);
 	
 	static i;
-	for (i = MaxClients + 1; i < charsmax(gPauseEntity); i++) {
+	for (i = MaxClients + 1; i < charsmax(gPauseEntity); ++i) {
 		if (gPenguinNade[attacker][i])
 			set_cooldown(i, attacker);
 	}

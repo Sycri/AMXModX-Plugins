@@ -12,7 +12,7 @@
 
 /****************************************************************************
 *
-*   Version 1.3.0 - Date: 08/22/2020
+*   Version 1.3.0 - Date: 08/24/2020
 *
 *   Original by {HOJ} Batman <johnbroderick@sbcglobal.net>
 *
@@ -53,13 +53,14 @@
 *
 *  Changelog:
 *
-*  v1.3.0 - Sycri (Kristaps08) - 08/22/20
+*  v1.3.0 - Sycri (Kristaps08) - 08/24/20
 *	- Added Ham_AddPlayerItem since Ham_CS_Item_GetMaxSpeed does not catch weapon pickups or purchases
 *	- Changed the function chatMessage so that it uses client_print_color
 *	- Changed most cvars from get_pcvar_num to bind_pcvar_num so variables could be used directly
 *	- Changed from RegisterHamFromEntity to RegisterHamPlayer for cleaner code
 *	- Completed setting gravity based on current weapon.
 *	- Forced usage of semicolons for better clarity
+* 	- Improved sh_minplayersxp to count only players that are on a team (the minplayers for MercyXP are now calculated only at round end)
 *	- Removed all previous backwards compatibility
 *	- Removed code that uses old syntax for MySQL 3.23
 *	- Removed cvar sh_adminaccess in favor of cmdaccess.ini
@@ -384,7 +385,6 @@
 *	- Convert the read_file usage in superheromysql.inc to use new file natives.
 *	- Add check to skip power key if pressed too fast to stop aliasing multiple power keys at the same time.
 *	- Make sh more csdm/respawn friendly, remove reliance on round ending
-* 	- Improve sh_minplayersxp to count only players that are on a team
 * 	- Make restricting bonus xp bomb tracking optional
 *
 **************************************************************************/
@@ -584,7 +584,7 @@ public plugin_init()
 	register_clcmd("fullupdate", "cl_fullupdate");
 
 	// Power Commands, using a loop so it adjusts with SH_MAXBINDPOWERS
-	for (new x = 1; x <= SH_MAXBINDPOWERS; x++) {
+	for (new x = 1; x <= SH_MAXBINDPOWERS; ++x) {
 		new powerDown[10], powerUp[10];
 		formatex(powerDown, charsmax(powerDown), "+power%d", x);
 		formatex(powerUp, charsmax(powerUp), "-power%d", x);
@@ -782,7 +782,7 @@ public setHeroLevels()
 {
 	debugMsg(0, 1, "Reloading Levels for %d Heroes", gSuperHeroCount);
 
-	for ( new x = 0; x < gSuperHeroCount && x <= SH_MAXHEROS; x++)
+	for ( new x = 0; x < gSuperHeroCount && x <= SH_MAXHEROS; ++x)
 		gSuperHeros[x][availableLevel] = get_pcvar_num(gHeroLevelCVAR[x]);
 }
 //----------------------------------------------------------------------------------------------
@@ -1043,7 +1043,7 @@ debugMsg(id, level, const message[], any:...)
 //----------------------------------------------------------------------------------------------
 getHeroID(const heroName[])
 {
-	for (new x = 0; x < gSuperHeroCount; x++) {
+	for (new x = 0; x < gSuperHeroCount; ++x) {
 		if (equali(heroName, gSuperHeros[x][hero]))
 			return x;
 	}
@@ -1082,8 +1082,8 @@ bool:@Native_UserHasHero()
 //----------------------------------------------------------------------------------------------
 bool:playerHasPower(id, heroIndex)
 {
-	new playerpowercount = getPowerCount(id);
-	for (new x = 1; x <= playerpowercount && x <= SH_MAXLEVELS; x++) {
+	new playerPowerCount = getPowerCount(id);
+	for (new x = 1; x <= playerPowerCount && x <= SH_MAXLEVELS; ++x) {
 		if (gPlayerPowers[id][x] == heroIndex)
 			return true;
 	}
@@ -1182,7 +1182,7 @@ getPowerCount(id)
 //----------------------------------------------------------------------------------------------
 getBindNumber(id, heroIndex)
 {
-	for (new x = 1; x <= CvarMaxBinds; x++) {
+	for (new x = 1; x <= CvarMaxBinds; ++x) {
 		if (gPlayerBinds[id][x] == heroIndex)
 			return x;
 	}
@@ -1221,7 +1221,7 @@ menuSuperPowers(id, menuOffset)
 	if (LvlLimit == 0)
 		LvlLimit = SH_MAXLEVELS;
 
-	for (new x = 0; x <= gNumLevels; x++) {
+	for (new x = 0; x <= gNumLevels; ++x) {
 		if (playerLevel >= x)
 			gMaxPowersLeft[id][x] = playerLevel - x + LvlLimit;
 		else
@@ -1231,7 +1231,7 @@ menuSuperPowers(id, menuOffset)
 	// Now decrement the level powers that they've picked
 	new heroIndex, heroLevel;
 
-	for (new x = 1; x <= playerPowerCount && x <= SH_MAXLEVELS; x++) {
+	for (new x = 1; x <= playerPowerCount && x <= SH_MAXLEVELS; ++x) {
 		heroIndex = gPlayerPowers[id][x];
 		if (heroIndex < 0 || heroIndex >= gSuperHeroCount)
 			continue;
@@ -1259,7 +1259,7 @@ menuSuperPowers(id, menuOffset)
 	new menuMode = CvarMenuMode;
 	new bool:thisEnabled;
 
-	for (new x = 0; x < gSuperHeroCount; x++) {
+	for (new x = 0; x < gSuperHeroCount; ++x) {
 		heroIndex = x;
 		heroLevel = getHeroLevel(heroIndex);
 		thisEnabled = false;
@@ -1273,7 +1273,7 @@ menuSuperPowers(id, menuOffset)
 				gPlayerMenuChoices[id][count] = heroIndex;
 
 				if (thisEnabled)
-					enabled++;
+					++enabled;
 			}
 		}
 	}
@@ -1310,7 +1310,7 @@ menuSuperPowers(id, menuOffset)
 	formatex(message, 68, "\ySelect Super Power:%-16s\r(You've Selected %d/%d)^n^n", " ", playerPowerCount, total);
 
 	// OK Display the Menu
-	for (new x = menuOffset; x < menuOffset + 8; x++) {
+	for (new x = menuOffset; x < menuOffset + 8; ++x) {
 		// Only allow a selection from powers the player doesn't have
 		if (x > gPlayerMenuChoices[id][0]) {
 			add(message, charsmax(message), "^n");
@@ -1431,7 +1431,7 @@ clearPower(id, level)
 
 	// Ok shift over any levels higher
 	new playerPowerCount = getPowerCount(id);
-	for (new x = level; x <= playerPowerCount && x <= SH_MAXLEVELS; x++) {
+	for (new x = level; x <= playerPowerCount && x <= SH_MAXLEVELS; ++x) {
 		if (x != SH_MAXLEVELS)
 			gPlayerPowers[id][x] = gPlayerPowers[id][x + 1];
 	}
@@ -1441,7 +1441,7 @@ clearPower(id, level)
 		gPlayerPowers[id][0] = 0;
 
 	//Clear out powers higher than powercount
-	for (new x = powers + 1; x <= gNumLevels && x <= SH_MAXLEVELS; x++)
+	for (new x = powers + 1; x <= gNumLevels && x <= SH_MAXLEVELS; ++x)
 		gPlayerPowers[id][x] = -1;
 
 	// Disable this power
@@ -1481,7 +1481,7 @@ clearAllPowers(id, bool:dispStatusText)
 	new bool:userConnected = is_user_connected(id) ? true : false;
 
 	// Clear the power before sending the drop init
-	for (new x = 1; x <= gNumLevels && x <= SH_MAXLEVELS; x++) {
+	for (new x = 1; x <= gNumLevels && x <= SH_MAXLEVELS; ++x) {
 		// Save heroid for init forward
 		heroIndex = gPlayerPowers[id][x];
 
@@ -1594,7 +1594,7 @@ public round_Start()
 //----------------------------------------------------------------------------------------------
 public roundStartDelay()
 {
-	for (new x = 1; x <= MaxClients; x++) {
+	for (new x = 1; x <= MaxClients; ++x) {
 		displayPowers(x, true);
 		//Prevents People from going invisible randomly
 		if (is_user_alive(x))
@@ -1797,18 +1797,18 @@ displayPowers(id, bool:setThePowers)
 
 	//Resets All Bind assignments
 	maxBinds = CvarMaxBinds;
-	for (new x = 1; x <= maxBinds; x++)
+	for (new x = 1; x <= maxBinds; ++x)
 		gPlayerBinds[id][x] = -1;
 
 	playerPowerCount = getPowerCount(id);
 
-	for (new x = 1; x <= gNumLevels && x <= playerPowerCount; x++) {
+	for (new x = 1; x <= gNumLevels && x <= playerPowerCount; ++x) {
 		heroIndex = gPlayerPowers[id][x];
 		if (-1 < heroIndex < gSuperHeroCount) {
 			// 2 types of heroes - auto heroes and bound heroes...
 			// Bound Heroes require special work...
 			if (gSuperHeros[heroIndex][requiresKeys]) {
-				count++;
+				++count;
 				if (count <= 3) {
 					if (message[0] != '^0')
 						add(message, charsmax(message), " ");
@@ -2221,7 +2221,7 @@ public cl_say(id)
 	// If first character is "/" start command check after that character
 	new pos;
 	if (said[pos] == '/')
-		pos++;
+		++pos;
 
 	if (equali(said[pos], "superherohelp") || equali(said[pos], "help")) {
 		showHelp(id);
@@ -2305,7 +2305,7 @@ dropPower(id, const said[])
 	debugMsg(id, 5, "Trying to Drop Hero: %s", heroName);
 
 	new playerPowerCount = getPowerCount(id);
-	for (new x = 1; x <= playerPowerCount && x <= SH_MAXLEVELS; x++) {
+	for (new x = 1; x <= playerPowerCount && x <= SH_MAXLEVELS; ++x) {
 		heroIndex = gPlayerPowers[id][x];
 		if (-1 < heroIndex < gSuperHeroCount) {
 			if (containi(gSuperHeros[heroIndex][hero], heroName) != -1) {
@@ -2348,7 +2348,7 @@ showHeroList(id)
 	n += copy(buffer[n], charsmax(buffer)-n, "TIP: Use ^"herolist^" in the console for better output and searchability.^n^n");
 	n += copy(buffer[n], charsmax(buffer)-n, "Installed Heroes:^n^n");
 
-	for (new x = 0; x < gSuperHeroCount; x++)
+	for (new x = 0; x < gSuperHeroCount; ++x)
 		n += formatex(buffer[n], charsmax(buffer)-n, "%s (%d%s) - %s^n", gSuperHeros[x][hero], getHeroLevel(x), gSuperHeros[x][requiresKeys] ? "b" : "", gSuperHeros[x][superpower]);
 
 	copy(buffer[n], charsmax(buffer)-n, "</pre></body></html>");
@@ -2399,7 +2399,7 @@ showPlayerLevels(id, say, said[])
 
 	new pid, teamName[5], name[32];
 	for (new team = 2; team >= 0; team--) {
-		for (new x = 0; x < playerCount; x++) {
+		for (new x = 0; x < playerCount; ++x) {
 			pid = players[x];
 			if (get_user_team(pid) != team)
 				continue;
@@ -2476,7 +2476,7 @@ showPlayerSkills(id, say, said[])
 
 	new pid, teamName[5], idx, heroIndex, playerPowerCount;
 	for (new team = 2; team >= 0; team--) {
-		for (new x = 0; x < playerCount; x++) {
+		for (new x = 0; x < playerCount; ++x) {
 			tn = 0;
 			pid = players[x];
 			if (get_user_team(pid) != team)
@@ -2543,7 +2543,7 @@ showWhoHas(id, say, said[])
 
 	new heroIndex = -1;
 
-	for (new i = 0; i < gSuperHeroCount; i++) {
+	for (new i = 0; i < gSuperHeroCount; ++i) {
 		if (containi(gSuperHeros[i][hero], who) != -1) {
 			heroIndex = i;
 			break;
@@ -2572,7 +2572,7 @@ showWhoHas(id, say, said[])
 
 	new pid, teamName[5], name[32];
 	for (new team = 2; team >= 0; team--) {
-		for (new x = 0; x < playerCount; x++) {
+		for (new x = 0; x < playerCount; ++x) {
 			pid = players[x];
 			if (get_user_team(pid) != team)
 				continue;
@@ -3075,7 +3075,7 @@ public adminEraseXP(id, level, cid)
 
 	console_print(id, "[SH] Please wait while the XP is erased");
 
-	for (new x = 1; x <= MaxClients; x++) {
+	for (new x = 1; x <= MaxClients; ++x) {
 		gPlayerXP[x] = 0;
 		gPlayerLevel[x] = 0;
 		writeStatusMessage(x, "All XP has been ERASED");
@@ -3111,7 +3111,7 @@ showHeroes(id)
 
 	n += copy(buffer[n], charsmax(buffer) - n, "Your Heroes Are:^n^n");
 	new playerPowerCount = getPowerCount(id);
-	for (x = 1; x <= playerPowerCount; x++) {
+	for (x = 1; x <= playerPowerCount; ++x) {
 		heroIndex = gPlayerPowers[id][x];
 		bindNum = getBindNumber(id, heroIndex);
 		bindNumtxt[0] = '^0';
@@ -3183,12 +3183,12 @@ public showHeroListCon(id)
 		if (start != 0)
 			start--;
 		end = start + HEROAMOUNT;
-		for (new x = 0; x < gSuperHeroCount; x++) {
+		for (new x = 0; x < gSuperHeroCount; ++x) {
 			if ((containi(gSuperHeros[x][hero], argx) != -1) || (containi(gSuperHeros[x][help], argx) != -1)) {
 				if (n > start && n <= end)
 					console_print(id, "%3d: %s (%d%s) - %s", n, gSuperHeros[x][hero], getHeroLevel(x), gSuperHeros[x][requiresKeys] ? "b" : "", gSuperHeros[x][help]);
 
-				n++;
+				++n;
 			}
 		}
 
@@ -3213,7 +3213,7 @@ public showHeroListCon(id)
 		end = start + HEROAMOUNT;
 		if (end > gSuperHeroCount)
 			end = gSuperHeroCount;
-		for (new i = start; i < end; i++)
+		for (new i = start; i < end; ++i)
 			console_print(id, "%3d: %s (%d%s) - %s", i + 1, gSuperHeros[i][hero], getHeroLevel(i), gSuperHeros[i][requiresKeys] ? "b" : "", gSuperHeros[i][help]);
 
 		console_print(id, "----- Entries %d - %d of %d -----", start + 1, end, gSuperHeroCount);
@@ -3228,20 +3228,21 @@ showHelpHud()
 	if (!CvarSuperHeros)
 		return;
 
-	static flags[4];
+	static GetPlayersFlags:flags;
+	flags = GetPlayers_ExcludeBots | GetPlayers_ExcludeHLTV; // show to live or dead non-bots
 	switch (CvarCmdProjector) {
-		case 1: copy(flags, charsmax(flags), "bch"); // show to dead non-bots only
-		case 2: copy(flags, charsmax(flags), "ch"); // show to live or dead non-bots
+		case 1: flags |= GetPlayers_ExcludeAlive; // show to dead non-bots only
 		default: return; // off 
 	}
 
-	set_hudmessage(230, 100, 10, 0.80, 0.28, 0, 1.0, 1.0, 0.9, 0.9, -1);
+	set_hudmessage(230, 100, 10, 0.80, 0.28, 0, 1.0, 1.0, 0.9, 0.9);
 
 	static players[MAX_PLAYERS], playerCount, player, i;
-	get_players(players, playerCount, flags);
+	get_players_ex(players, playerCount, flags);
 
-	for (i = 0; i < playerCount; i++) {
+	for (i = 0; i < playerCount; ++i) {
 		player = players[i];
+
 		if (gPlayerFlags[player] & SH_FLAG_HUDHELP)
 			ShowSyncHudMsg(player, gHelpHudSync, "%s", gHelpHudMsg);
 	}
@@ -3289,9 +3290,9 @@ getAverageXP()
 	new count = 0;
 	new Float:sum = 0.0;
 
-	for (new i = 1; i <= MaxClients; i++) {
+	for (new i = 1; i <= MaxClients; ++i) {
 		if (is_user_connected(i) && gPlayerXP[i] > 0) {
-			count++;
+			++count;
 			sum += gPlayerXP[i];
 		}
 	}
@@ -3372,7 +3373,7 @@ testLevel(id)
 	if (newLevel < oldLevel) {
 		new heroIndex;
 		playerPowerCount = getPowerCount(id);
-		for (new x = 1; x <= gNumLevels && x <= playerPowerCount; x++) {
+		for (new x = 1; x <= gNumLevels && x <= playerPowerCount; ++x) {
 			heroIndex = gPlayerPowers[id][x];
 			if (-1 < heroIndex < gSuperHeroCount) {
 				if (getHeroLevel(heroIndex) > gPlayerLevel[id]) {
@@ -3386,7 +3387,7 @@ testLevel(id)
 	// Uh oh - Rip away a level from powers if they loose a level
 	playerPowerCount = getPowerCount(id);
 	if (playerPowerCount > newLevel) {
-		for (new x = newLevel + 1; x <= playerPowerCount && x <= SH_MAXLEVELS; x++)
+		for (new x = newLevel + 1; x <= playerPowerCount && x <= SH_MAXLEVELS; ++x)
 			clearPower(id, x); // Keep clearing level above cuz levels shift!
 
 		gPlayerPowers[id][0] = newLevel;
@@ -3559,10 +3560,10 @@ memoryTableUpdate(id)
 			gMemoryTableFlags[gMemoryTableCount] = gMemoryTableFlags[id];
 			powerCount = gMemoryTablePowers[id][0];
 
-			for (x = 0; x <= powerCount && x <= SH_MAXLEVELS; x++)
+			for (x = 0; x <= powerCount && x <= SH_MAXLEVELS; ++x)
 				gMemoryTablePowers[gMemoryTableCount][x] = gMemoryTablePowers[id][x];
 
-			gMemoryTableCount++; // started with position 33
+			++gMemoryTableCount; // started with position 33
 		}
 	}
 
@@ -3573,7 +3574,7 @@ memoryTableUpdate(id)
 	gMemoryTableFlags[id] = gPlayerFlags[id];
 
 	powerCount = getPowerCount(id);
-	for (x = 0; x <= powerCount && x <= SH_MAXLEVELS; x++)
+	for (x = 0; x <= powerCount && x <= SH_MAXLEVELS; ++x)
 		gMemoryTablePowers[id][x] = gPlayerPowers[id][x];
 }
 //----------------------------------------------------------------------------------------------
@@ -3584,7 +3585,7 @@ memoryTableRead(id, const savekey[])
 
 	static x, p, idLevel, powerCount, heroIndex;
 
-	for (x = 1; x < gMemoryTableCount; x++) {
+	for (x = 1; x < gMemoryTableCount; ++x) {
 		if (gMemoryTableKeys[x][0] != '^0' && equal(gMemoryTableKeys[x], savekey)) {
 			gPlayerXP[id] = gMemoryTableXP[x];
 			idLevel = gPlayerLevel[id] = getPlayerLevel(id);
@@ -3685,7 +3686,7 @@ readINI()
 	strbrkqt(XPG, LeftXPG, charsmax(LeftXPG), XPG, charsmax(XPG));
 
 	while (XP[0] != '^0' && XPG[0] != '^0' && loadCount < gNumLevels) {
-		loadCount++;
+		++loadCount;
 
 		strbrkqt(XP, LeftXP, charsmax(LeftXP), XP, charsmax(XP));
 		strbrkqt(XPG, LeftXPG, charsmax(LeftXPG), XPG, charsmax(XPG));

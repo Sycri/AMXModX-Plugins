@@ -135,8 +135,8 @@ public plugin_init()
 	RegisterHamPlayer(Ham_AddPlayerItem, "@Forward_AddPlayerItem_Post", 1);
 
 	new weaponName[32];
-	for (new id = CSW_P228; id <= CSW_P90; id++) {
-		if (get_weaponname(id, weaponName, charsmax(weaponName)))
+	for (new i = CSW_P228; i <= CSW_P90; ++i) {
+		if (get_weaponname(i, weaponName, charsmax(weaponName)))
 			RegisterHam(Ham_CS_Item_GetMaxSpeed, weaponName, "@Forward_CS_Item_GetMaxSpeed_Pre", 0);
 	}
 

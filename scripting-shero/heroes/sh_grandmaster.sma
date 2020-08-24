@@ -84,7 +84,7 @@ public sh_client_death(victim)
 	static parm[2];
 
 	// Look for alive players with unused Grandmaster Powers on the same team
-	for (i = 0; i < playerCount; i++) {
+	for (i = 0; i < playerCount; ++i) {
 		player = players[i];
 
 		if (player != victim && gHasGrandmaster[player] && !gPlayerInCooldown[player] && idTeam == cs_get_user_team(player)) {

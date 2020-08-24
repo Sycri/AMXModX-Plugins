@@ -164,7 +164,7 @@ public sh_hero_key(id, heroID, key)
 
 		// Make sure 0 is not returned so we don't divide by it
 		if (length == 0)
-			length++;
+			++length;
 
 		velocityVec[0] = vecDif[0] * speed / length;
 		velocityVec[1] = vecDif[1] * speed / length;
@@ -235,7 +235,7 @@ check_burnzone(id, Float:vec[], Float:vecDif[], Float:length, speed1, speed2, ra
 	new Float:origin[3];
 	get_players_ex(players, playerCount, GetPlayers_ExcludeDead | GetPlayers_ExcludeHLTV);
 
-	for (new i = 0; i < playerCount; i++) {
+	for (new i = 0; i < playerCount; ++i) {
 		player = players[i];
 
 		if (player != id && (idTeam != cs_get_user_team(player) || FFOn)) {

@@ -198,7 +198,7 @@ stock fm_cs_get_weapon_ent_owner(ent)
 	static players[MAX_PLAYERS], playerCount, player, i;
 	get_players_ex(players, playerCount, GetPlayers_ExcludeDead | GetPlayers_ExcludeHLTV);
 
-	for (i = 0; i < playerCount; i++) {
+	for (i = 0; i < playerCount; ++i) {
 		player = players[i];
 
 		if (gHasDarthMaul[player])

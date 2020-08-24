@@ -38,7 +38,7 @@ public plugin_init()
 	// This should have a better method of counting, maybe check when keyvalue is set
 	new ent = -1;
 	while ((ent = cs_find_ent_by_class(ent, "hostage_entity")) > 0)
-		gNumHostages++;
+		++gNumHostages;
 		
 	bind_pcvar_num(create_cvar("sh_objectivexp", "8", .has_min = true, .min_val = 0.0), CvarObjectiveXP);
 	bind_pcvar_string(create_cvar("sh_blockvip", "abcdef"), CvarBlockVIP, charsmax(CvarBlockVIP));
@@ -106,7 +106,10 @@ public bomb_planted(planter)
 	if (cs_get_user_team(planter) != CS_TEAM_T)
 		return;
 
-	if (get_playersnum() <= CvarMinPlayersXP)
+	new activePlayerCount = get_playersnum_ex(GetPlayers_ExcludeHLTV | GetPlayers_MatchTeam, "CT");
+	activePlayerCount += get_playersnum_ex(GetPlayers_ExcludeHLTV | GetPlayers_MatchTeam, "TERRORIST");
+
+	if (activePlayerCount <= CvarMinPlayersXP)
 		return;
 
 	// Only give this out once per round
@@ -128,7 +131,10 @@ public bomb_defused(defuser)
 	if (cs_get_user_team(defuser) != CS_TEAM_CT)
 		return;
 		
-	if (get_playersnum() <= CvarMinPlayersXP)
+	new activePlayerCount = get_playersnum_ex(GetPlayers_ExcludeHLTV | GetPlayers_MatchTeam, "CT");
+	activePlayerCount += get_playersnum_ex(GetPlayers_ExcludeHLTV | GetPlayers_MatchTeam, "TERRORIST");
+
+	if (activePlayerCount <= CvarMinPlayersXP)
 		return;
 		
 	sh_set_user_xp(defuser, CvarObjectiveXP, true);
@@ -140,7 +146,10 @@ public bomb_explode(planter, defuser)
 	if (!sh_is_active() || !CvarObjectiveXP)
 		return PLUGIN_CONTINUE;
 
-	if (get_playersnum() <= CvarMinPlayersXP)
+	new activePlayerCount = get_playersnum_ex(GetPlayers_ExcludeHLTV | GetPlayers_MatchTeam, "CT");
+	activePlayerCount += get_playersnum_ex(GetPlayers_ExcludeHLTV | GetPlayers_MatchTeam, "TERRORIST");
+
+	if (activePlayerCount <= CvarMinPlayersXP)
 		return PLUGIN_CONTINUE;
 
 	new players[32], playerCount, player;
@@ -148,7 +157,7 @@ public bomb_explode(planter, defuser)
 
 	get_players_ex(players, playerCount, GetPlayers_ExcludeDead | GetPlayers_ExcludeHLTV);
 
-	for (new i = 0; i < playerCount; i++) {
+	for (new i = 0; i < playerCount; ++i) {
 		player = players[i];
 
 		if (cs_get_user_team(player) != CS_TEAM_T)
@@ -187,7 +196,10 @@ public bomb_explode(planter, defuser)
 	if (cs_get_user_team(id) != CS_TEAM_CT)
 		return;
 
-	if (get_playersnum() < CvarMinPlayersXP)
+	new activePlayerCount = get_playersnum_ex(GetPlayers_ExcludeHLTV | GetPlayers_MatchTeam, "CT");
+	activePlayerCount += get_playersnum_ex(GetPlayers_ExcludeHLTV | GetPlayers_MatchTeam, "TERRORIST");
+
+	if (activePlayerCount <= CvarMinPlayersXP)
 		return;
 
 	// Give at least 1 xp per hostage even if sh_objectivexp is really low
@@ -203,7 +215,10 @@ public bomb_explode(planter, defuser)
 	if (!sh_is_active() || !CvarObjectiveXP)
 		return;
 
-	if (get_playersnum() <= CvarMinPlayersXP)
+	new activePlayerCount = get_playersnum_ex(GetPlayers_ExcludeHLTV | GetPlayers_MatchTeam, "CT");
+	activePlayerCount += get_playersnum_ex(GetPlayers_ExcludeHLTV | GetPlayers_MatchTeam, "TERRORIST");
+
+	if (activePlayerCount <= CvarMinPlayersXP)
 		return;
 
 	new players[32], playerCount, player;
@@ -211,7 +226,7 @@ public bomb_explode(planter, defuser)
 
 	get_players_ex(players, playerCount, GetPlayers_ExcludeDead | GetPlayers_ExcludeHLTV);
 
-	for (new i = 0; i < playerCount; i++) {
+	for (new i = 0; i < playerCount; ++i) {
 		player = players[i];
 
 		if (cs_get_user_team(player) != CS_TEAM_CT)
@@ -235,7 +250,10 @@ public bomb_explode(planter, defuser)
 	if (cs_get_user_team(attacker) != CS_TEAM_T)
 		return;
 
-	if (get_playersnum() <= CvarMinPlayersXP)
+	new activePlayerCount = get_playersnum_ex(GetPlayers_ExcludeHLTV | GetPlayers_MatchTeam, "CT");
+	activePlayerCount += get_playersnum_ex(GetPlayers_ExcludeHLTV | GetPlayers_MatchTeam, "TERRORIST");
+
+	if (activePlayerCount <= CvarMinPlayersXP)
 		return;
 
 	sh_set_user_xp(attacker, CvarObjectiveXP, true);
@@ -247,7 +265,10 @@ public bomb_explode(planter, defuser)
 	if (!sh_is_active() || !CvarObjectiveXP)
 		return;
 
-	if (get_playersnum() <= CvarMinPlayersXP)
+	new activePlayerCount = get_playersnum_ex(GetPlayers_ExcludeHLTV | GetPlayers_MatchTeam, "CT");
+	activePlayerCount += get_playersnum_ex(GetPlayers_ExcludeHLTV | GetPlayers_MatchTeam, "TERRORIST");
+
+	if (activePlayerCount <= CvarMinPlayersXP)
 		return;
 
 	new players[32], playerCount, player;
@@ -256,7 +277,7 @@ public bomb_explode(planter, defuser)
 	get_players_ex(players, playerCount, GetPlayers_ExcludeHLTV);
 
 	// VIP is considered dead at this point, so we have to check dead players to find him
-	for (new i = 0; i < playerCount; i++) {
+	for (new i = 0; i < playerCount; ++i) {
 		player = players[i];
 
 		if (player == gXpBonusVIP || (is_user_alive(player) && cs_get_user_team(player) == CS_TEAM_CT)) {
@@ -288,7 +309,10 @@ public bomb_explode(planter, defuser)
 	if (cs_get_user_team(id) != CS_TEAM_CT)
 		return;
 
-	if (get_playersnum() <= CvarMinPlayersXP)
+	new activePlayerCount = get_playersnum_ex(GetPlayers_ExcludeHLTV | GetPlayers_MatchTeam, "CT");
+	activePlayerCount += get_playersnum_ex(GetPlayers_ExcludeHLTV | GetPlayers_MatchTeam, "TERRORIST");
+
+	if (activePlayerCount <= CvarMinPlayersXP)
 		return;
 
 	sh_set_user_xp(id, CvarObjectiveXP, true);

@@ -11,7 +11,7 @@ UberGunner_gravity 1.0		//Default 1.0 = no extra gravity (0.50 is 50% normal gra
 UberGunner_speed 600		//-1 = no extra speed, this cvar is for all weapons (for faster then normal speed set to 321 or higher)
 UberGunner_rldmode 0		//Endless ammo mode: 0-server default, 1-no reload, 2-reload, 3-drop wpn
 // Below only used if USE_PLAYER_MODEL is defined
-UberGunner_teamglow 1		//Glow Team Color when player skin in use (0=no 1=yes)
+UberGunner_teamglow 1		//Glow in a color based on player's team when hero in use (0=no 1=yes)
 
 */
 
@@ -108,6 +108,11 @@ public plugin_init()
 		RegisterHam(Ham_Item_Deploy, "weapon_m4a1", "@Forward_M4A1_Deploy_Post", 1);
 #endif
 
+	// GLOW LOOP
+#if defined USE_PLAYER_MODEL
+	set_task_ex(1.0, "@Task_GlowLoop", _, _, _, SetTask_Repeat);
+#endif
+
 	gmsgSync = CreateHudSyncObj();
 }
 //----------------------------------------------------------------------------------------------
@@ -157,7 +162,7 @@ public sh_hero_init(id, heroID, mode)
 			
 #if defined USE_PLAYER_MODEL
 			if (gModelPlayerLoaded)
-				ubergunner_tasks(id);
+				set_task(1.0, "@Task_Morph", id);
 #endif
 		}
 		case SH_HERO_DROP: {
@@ -189,7 +194,7 @@ public sh_client_spawn(id)
 
 #if defined USE_PLAYER_MODEL
 	if (gModelPlayerLoaded)
-		ubergunner_tasks(id);
+		set_task(1.0, "@Task_Morph", id);
 #endif
 }
 #endif
@@ -233,25 +238,17 @@ stock fm_cs_get_weapon_ent_owner(ent)
 #endif
 //----------------------------------------------------------------------------------------------
 #if defined USE_PLAYER_MODEL
-public client_connect(id)
+public client_disconnected(id)
 {
 	gModelPlayerSet[id] = false;
 }
 //----------------------------------------------------------------------------------------------
 public sh_client_death(id)
 {
-	if (!sh_is_active() || is_user_alive(id) || !gHasUberGunner[id])
+	if (is_user_alive(id) || !gHasUberGunner[id])
 		return;
 	
 	ubergunner_unmorph(id);
-}
-//----------------------------------------------------------------------------------------------
-ubergunner_tasks(id)
-{
-	set_task(1.0, "@Task_Morph", id);
-	
-	if (CvarTeamGlow)
-		set_task_ex(1.0, "@Task_Glow", id + 100, _, _, SetTask_Repeat);
 }
 //----------------------------------------------------------------------------------------------
 @Task_Morph(id)
@@ -283,10 +280,8 @@ ubergunner_unmorph(index)
 
 		gModelPlayerSet[index] = false;
 
-		if (CvarTeamGlow) {
-			remove_task(index + 100);
+		if (CvarTeamGlow)
 			sh_set_rendering(index);
-		}
 	}
 }
 //----------------------------------------------------------------------------------------------
@@ -296,20 +291,23 @@ ubergunner_sound(index)
 	emit_sound(index, CHAN_AUTO, gUberGunnerSound, 0.2, ATTN_NORM, 0, PITCH_NORM);
 }
 //----------------------------------------------------------------------------------------------
-@Task_Glow(id)
+@Task_GlowLoop()
 {
-	id -= 100;
-	
-	if (!sh_is_active() || !is_user_connected(id)) {
-		remove_task(id + 100);
+	if (!sh_is_active() || !CvarTeamGlow)
 		return;
-	}
-	
-	if (gHasUberGunner[id] && is_user_alive(id)) {
-		switch (cs_get_user_team(id)) {
-			case CS_TEAM_T: sh_set_rendering(id, 100, 0, 0, 16, kRenderFxGlowShell);
-			case CS_TEAM_CT: sh_set_rendering(id, 0, 0, 100, 16, kRenderFxGlowShell);
-			default: sh_set_rendering(id, 100, 100, 100, 16, kRenderFxGlowShell);
+
+	static players[MAX_PLAYERS], playerCount, player, i;
+	get_players_ex(players, playerCount, GetPlayers_ExcludeDead | GetPlayers_ExcludeHLTV);
+
+	for (i = 0; i < playerCount; ++i) {
+		player = players[i];
+
+		if (gHasUberGunner[player]) {
+			switch (cs_get_user_team(player)) {
+				case CS_TEAM_T: sh_set_rendering(player, 100, 0, 0, 16, kRenderFxGlowShell);
+				case CS_TEAM_CT: sh_set_rendering(player, 0, 0, 100, 16, kRenderFxGlowShell);
+				default: sh_set_rendering(player, 100, 100, 100, 16, kRenderFxGlowShell);
+			}
 		}
 	}
 }

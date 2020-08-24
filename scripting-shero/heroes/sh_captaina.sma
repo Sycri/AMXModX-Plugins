@@ -69,7 +69,7 @@ public sh_hero_init(id, heroID, mode)
 	static players[32], playerCount, player, i;
 	get_players_ex(players, playerCount, GetPlayers_ExcludeDead | GetPlayers_ExcludeHLTV);
 
-	for (i = 0; i < playerCount; i++) {
+	for (i = 0; i < playerCount; ++i) {
 		player = players[i];
 
 		if (gHasCaptainAmerica[player] && !get_user_godmode(player)) {

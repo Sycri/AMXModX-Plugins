@@ -15,6 +15,7 @@
 new gPlayerStartXP[MAX_PLAYERS + 1];
 new bool:gBlockMercyXP[MAX_PLAYERS + 1];
 new bool:gGiveMercyXP = true;
+new gActivePlayerCount;
 
 new CvarMercyXPMode, CvarMercyXP;
 new CvarFreeForAll, CvarMinPlayersXP;
@@ -51,7 +52,7 @@ public client_kill(id)
 public sh_client_spawn(id)
 {
 	if (gGiveMercyXP && sh_user_is_loaded(id) && !gBlockMercyXP[id]) {
-		if (CvarMercyXPMode != 0 && gPlayerStartXP[id] >= sh_get_user_xp(id) && get_playersnum() > CvarMinPlayersXP) {
+		if (CvarMercyXPMode != 0 && gPlayerStartXP[id] >= sh_get_user_xp(id)) {
 			new XPtoGive = 0;
 
 			switch (CvarMercyXPMode) {
@@ -79,7 +80,7 @@ public sh_client_spawn(id)
 //----------------------------------------------------------------------------------------------
 public sh_client_death(victim, attacker)
 {
-	if (victim == attacker)
+	if (victim == attacker || !is_user_connected(attacker))
 		return;
 		
 	if (cs_get_user_team(attacker) == cs_get_user_team(victim) && !CvarFreeForAll)
@@ -104,8 +105,9 @@ public sh_client_death(victim, attacker)
 
 	static players[32], playerCount, player, CsTeams:playerTeam, i;
 	get_players_ex(players, playerCount, GetPlayers_ExcludeHLTV);
+	gActivePlayerCount = 0;
 
-	for (i = 0; i < playerCount; i++) {
+	for (i = 0; i < playerCount; ++i) {
 		player = players[i];
 
 		playerTeam = cs_get_user_team(player);
@@ -113,8 +115,13 @@ public sh_client_death(victim, attacker)
 		if (playerTeam == CS_TEAM_UNASSIGNED || playerTeam == CS_TEAM_SPECTATOR)
 			continue;
 
+		++gActivePlayerCount;
+
 		if (!gBlockMercyXP[player])
 			gGiveMercyXP = true;
 	}
+
+	if (gActivePlayerCount <= CvarMinPlayersXP)
+		gGiveMercyXP = false;
 }
 //----------------------------------------------------------------------------------------------

@@ -15,15 +15,11 @@ new gUsingCamera;
 #define IsUserUsingCamera(%0)       (gUsingCamera & 1 << (%0 & 31))
 #define ToggleUserCameraState(%0)   gUsingCamera ^= 1 << (%0 & 31)
 
-new gMaxPlayers;
-
 public plugin_init()
 {
 	register_plugin("Camera View", "1.0", "ConnorMcLeod");
 
 	register_clcmd("say /cam", "@ClientCommand_Camera");
-
-	gMaxPlayers = get_maxplayers();
 }
 
 public client_disconnected(id)
@@ -124,10 +120,10 @@ public client_putinserver(id)
 
 get_cam_owner(ent)
 {
-	static id;
-	for (id = 1; id <= gMaxPlayers; id++) {
-		if (gPlayerCamera[id] == ent)
-			return id;
+	static i;
+	for (i = 1; i <= MaxClients; ++i) {
+		if (gPlayerCamera[i] == ent)
+			return i;
 	}
 	return 0;
 }

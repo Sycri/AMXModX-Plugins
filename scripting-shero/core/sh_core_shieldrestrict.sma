@@ -67,8 +67,8 @@ public sh_hero_init(id, heroID, mode)
 		} else {
 			new heroIndex, bool:restricted = false;
 			new powerCount = sh_get_user_powers(id);
-			for (new x = 1; x <= powerCount; x++) {
-				heroIndex = sh_get_user_hero(id, x);
+			for (new i = 1; i <= powerCount; ++i) {
+				heroIndex = sh_get_user_hero(id, i);
 				// Test crash guard
 				if (heroIndex < 0 || heroIndex >= gSuperHeroCount)
 					continue;

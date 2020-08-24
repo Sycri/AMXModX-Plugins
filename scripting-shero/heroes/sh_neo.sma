@@ -11,6 +11,8 @@ neo_speed 900			//Def=900
 neo_flyspeed 1000		//Def=1000
 neo_flybeforeftime 1	//Def=1
 neo_flytoggle 0			//Def=0
+// Below only used if USE_PLAYER_MODEL is defined
+neo_teamglow 0			//Glow in a color based on player's team when hero in use (0=no 1=yes)
 
 */
 
@@ -59,6 +61,7 @@ new CvarFlySpeed, CvarFlyBeforeFTime, CvarFlyToggle;
 	new bool:gModelPlayerLoaded;
 	new const gModelPlayer[] = "models/player/Neo/Neo.mdl";
 	new const gModelPlayer_Name[] = "Neo";
+	new CvarTeamGlow;
 #endif
 //----------------------------------------------------------------------------------------------
 public plugin_init()
@@ -75,6 +78,10 @@ public plugin_init()
 	bind_pcvar_num(create_cvar("neo_flyspeed","1000", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 2000.0), CvarFlySpeed);
 	bind_pcvar_num(create_cvar("neo_flybeforeftime","1"), CvarFlyBeforeFTime);
 	bind_pcvar_num(create_cvar("neo_flytoggle","0"), CvarFlyToggle);
+
+#if defined USE_PLAYER_MODEL
+	bind_pcvar_num(create_cvar("neo_teamglow", "0"), CvarTeamGlow);
+#endif
 	
 	// FIRE THE EVENTS TO CREATE THIS SUPERHERO!
 	gHeroID = sh_create_hero(gHeroName, pcvarLevel);
@@ -91,6 +98,11 @@ public plugin_init()
 
 	register_forward(FM_CmdStart, "@Forward_CmdStart");
 
+	// GLOW LOOP
+#if defined USE_PLAYER_MODEL
+	set_task_ex(1.0, "@Task_GlowLoop", _, _, _, SetTask_Repeat);
+#endif
+
 	gmsgSync = CreateHudSyncObj();
 }
 //----------------------------------------------------------------------------------------------
@@ -106,7 +118,7 @@ public plugin_precache()
 	}
 }
 //----------------------------------------------------------------------------------------------
-public client_connect(id)
+public client_disconnected(id)
 {
 	gModelPlayerSet[id] = false;
 }
@@ -156,7 +168,7 @@ public sh_client_spawn(id)
 //----------------------------------------------------------------------------------------------
 public sh_client_death(id)
 {
-	if (!sh_is_active() || is_user_alive(id) || !gHasNeoPowers[id])
+	if (is_user_alive(id) || !gHasNeoPowers[id])
 		return;
 	
 	stop_flying(id);
@@ -192,6 +204,30 @@ neo_unmorph(index)
 		cs_reset_user_model(index);
 		
 		gModelPlayerSet[index] = false;
+
+		if (CvarTeamGlow)
+			sh_set_rendering(index);
+	}
+}
+//----------------------------------------------------------------------------------------------
+@Task_GlowLoop()
+{
+	if (!sh_is_active() || !CvarTeamGlow)
+		return;
+
+	static players[MAX_PLAYERS], playerCount, player, i;
+	get_players_ex(players, playerCount, GetPlayers_ExcludeDead | GetPlayers_ExcludeHLTV);
+
+	for (i = 0; i < playerCount; ++i) {
+		player = players[i];
+
+		if (gHasNeoPowers[player]) {
+			switch (cs_get_user_team(player)) {
+				case CS_TEAM_T: sh_set_rendering(player, 100, 0, 0, 16, kRenderFxGlowShell);
+				case CS_TEAM_CT: sh_set_rendering(player, 0, 0, 100, 16, kRenderFxGlowShell);
+				default: sh_set_rendering(player, 100, 100, 100, 16, kRenderFxGlowShell);
+			}
+		}
 	}
 }
 #endif
@@ -291,7 +327,7 @@ stop_flying(id)
 		static players[MAX_PLAYERS], playerCount, player, i;
 		get_players_ex(players, playerCount, GetPlayers_ExcludeBots | GetPlayers_ExcludeHLTV);
 		
-		for (i = 0; i < playerCount; i++) {
+		for (i = 0; i < playerCount; ++i) {
 			player = players[i];
 			
 			if (gHasNeoPowers[player])

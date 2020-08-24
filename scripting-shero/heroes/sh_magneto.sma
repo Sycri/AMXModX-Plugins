@@ -115,7 +115,7 @@ magneto_disarm(id, victim)
 	new weapons[32], num, i, weaponID;
 	get_user_weapons(victim, weapons, num);
 
-	for (i = 0; i < num; i++) {
+	for (i = 0; i < num; ++i) {
 		weaponID = weapons[i];
 		sh_drop_weapon(victim, weaponID, true);
 

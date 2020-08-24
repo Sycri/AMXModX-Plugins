@@ -159,7 +159,7 @@ release_energy(attacker)
 	static players[MAX_PLAYERS], playerCount, victim, i;
 	get_players_ex(players, playerCount, GetPlayers_ExcludeDead);
 	
-	for (i = 0; i < playerCount; i++) {
+	for (i = 0; i < playerCount; ++i) {
 		victim = players[i];
 		
 		if (victim == attacker || (cs_get_user_team(attacker) == cs_get_user_team(victim) && !sh_friendlyfire_on()))
@@ -227,7 +227,7 @@ beam_effects(index, userAim[3])
 	static players[MAX_PLAYERS], playerCount, player, i, message[128];
 	get_players_ex(players, playerCount, GetPlayers_ExcludeDead | GetPlayers_ExcludeBots | GetPlayers_ExcludeHLTV);
 	
-	for (i = 0; i < playerCount; i++) {
+	for (i = 0; i < playerCount; ++i) {
 		player = players[i];
 		
 		if (gHasBishop[player]) {

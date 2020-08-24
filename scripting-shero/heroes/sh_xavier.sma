@@ -110,7 +110,7 @@ public sh_client_death(victim)
 	static players[MAX_PLAYERS], playerCount, player, i;
 	get_players_ex(players, playerCount, GetPlayers_ExcludeDead | GetPlayers_ExcludeHLTV);
 
-	for (i = 0; i < playerCount; i++) {
+	for (i = 0; i < playerCount; ++i) {
 		player = players[i];
 
 		if (player == id)
@@ -156,7 +156,7 @@ remove_all_marks(id)
 		new players[MAX_PLAYERS], playerCount, player;
 		get_players_ex(players, playerCount, GetPlayers_ExcludeDead | GetPlayers_ExcludeHLTV);
 
-		for (new i = 0; i < playerCount; i++) {
+		for (new i = 0; i < playerCount; ++i) {
 			player = players[i];
 
 			if (player == id)

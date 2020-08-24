@@ -135,7 +135,7 @@ public sh_hero_key(id, heroID, key)
 	cooldown = CvarCooldown;
 	get_players_ex(players, playerCount, GetPlayers_ExcludeDead | GetPlayers_ExcludeHLTV);
 
-	for (i = 0; i < playerCount; i++) {
+	for (i = 0; i < playerCount; ++i) {
 		player = players[i];
 
 		if (gHasShadowcat[player]) {

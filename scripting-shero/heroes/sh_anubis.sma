@@ -124,7 +124,7 @@ public sh_hero_init(id, heroID, mode)
 	// Get all alive players but skip bots
 	get_players_ex(players, playerCount, GetPlayers_ExcludeDead | GetPlayers_ExcludeBots | GetPlayers_ExcludeHLTV);
 
-	for (new i = 0; i < playerCount; i++) {
+	for (new i = 0; i < playerCount; ++i) {
 		player = players[i];
 
 		if (!gHasAnubis[player])

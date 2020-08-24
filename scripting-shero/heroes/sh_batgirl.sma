@@ -100,7 +100,7 @@ public sh_client_spawn(id)
 //----------------------------------------------------------------------------------------------
 public sh_client_death(victim)
 {
-	if (!sh_is_active() || is_user_alive(victim) || !is_user_connected(victim))
+	if (is_user_alive(victim) || !is_user_connected(victim))
 		return;
 	
 	if (gHooked[victim])
