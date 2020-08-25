@@ -38,11 +38,6 @@ stock const SH_AUTHOR_STR[] =	"JTP10181/{HOJ}Batman/vittu/AssKicR/Sycri";
 #define SH_KEYUP		0	//Power Key is released
 #define SH_KEYDOWN		1	//Power Key is pressed
 
-// sh_extra_damage() damage types
-#define SH_DMG_MULT		0	// Multipiler damage, armor will not reduce damage hit points (armor is still reduced)
-#define SH_DMG_NORM		1	// Normal damage, armor will reduce damage hit points
-#define SH_DMG_KILL		2	// Kill damage, instantly kills if damage is possible (Note: godmode can block this)
-
 // From HLSDK for sh_screenfade
 #define SH_FFADE_IN		0x0000	// Just here so we don't pass 0 into the function
 #define SH_FFADE_OUT		0x0001	// Fade out (not in)
@@ -54,10 +49,6 @@ stock const SH_AUTHOR_STR[] =	"JTP10181/{HOJ}Batman/vittu/AssKicR/Sycri";
 #define SH_FLAG_NOAUTOMENU	(1 << 1)	/* flag "b" */	// Do not show menu automatically on spawn
 #define SH_FLAG_XPIMMUNE	(1 << 2)	/* flag "c" */	// Immue to xp reset from savedays. (Not available for nVault)
 #define SH_FLAG_BANNED		(1 << 3)	/* flag "d" */	// Flag user banned from having hereos (not used, if used would have to keep info stored and will not work with nVault)
-
-// From multiplayer/dlls/player.cpp (Note: Actual CS calculation is unknown)
-#define SH_ARMOR_RATIO		0.5	// Armor Takes 50% of the damage (0.2 in the HL SDK)
-#define SH_ARMOR_BONUS		0.5	// Each Point of Armor is worth 1/x points of health (0.5 in the HL SDK)
 
 // Common sound for denying power use, precached by core
 stock const gSoundDeny[] = 	"common/wpn_denyselect.wav";

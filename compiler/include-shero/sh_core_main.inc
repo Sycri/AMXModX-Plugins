@@ -26,7 +26,7 @@
 
 /**
  * Called when a hero is added or dropped.
- * See superheroconst.inc for mode types.
+ * See sh_core_main_const.inc for mode types.
  *
  * @param id			The index of the client.
  * @param heroID		The index of the hero.
@@ -37,7 +37,7 @@ forward sh_hero_init(id, heroID, mode);
 
 /**
  * Called when a +/-power is executed.
- * See superheroconst.inc for key types.
+ * See sh_core_main_const.inc for key types.
  *
  * @param id			The index of the client.
  * @param heroID		The index of the hero.
@@ -57,7 +57,6 @@ forward sh_client_spawn(id, bool:newRound);
 
 /**
  * Called whenever a client dies.
- * Death from sh_extra_damage will send correct info into this forward.
  *
  * @param victim		The index of the victim.
  * @param attacker		The index of the attacker.
@@ -246,27 +245,6 @@ native sh_set_hero_bind(heroID);
 //------------
 
 /**
- * Cause non-default extra damage.
- * Use this for non-default damage to correctly send damage messages and handle XP.
- *
- * @note		Set dmgFFmsg to false for looping extra damage, to avoid team attack chat spam.
- *				The default dmgOrigin of {0,0,0} will use attacker as the damage direction.
- *				Victim is unaffected if victim has godmode (this includes insta kill dmgMode).
- *
- * @param victim		The index of the victim.
- * @param attacker		The index of the attacker.
- * @param damage		Value of damage to cause, see dmgMode for effect on victim.
- * @param wpnDescription	Name of the weapon that causes the damage.
- * @param headshot		Set 1 if damage is a headshot else 0.
- * @param dmgMode		Type of damage, how victim is effected by damage value. See superheroconst.inc for types and explanations.
- * @param dmgStun		Set True to emulate damage stun on victim, otherwise False. (currently only sets horizontal velocity to 0)
- * @param dmgFFmsg		Set True to show friendly fire chat message "John Doe attacked a teammate", otherwise False.
- * @param dmgOrigin		Origin of damage bits direction (red flash indicators).
- * @noreturn
- */
-native sh_extra_damage(victim, attacker, damage, const wpnDescription[], headshot = 0, dmgMode = SH_DMG_MULT, bool:dmgStun = false, bool:dmgFFmsg = true, const Float:dmgOrigin[3] = {0.0,0.0,0.0});
-
-/**
  * Sets godmode on client for time specified.
  *
  * @note		Does not combine time, the highest time will override.
@@ -416,7 +394,7 @@ stock sh_sound_deny(id)
  * @param green		The green rgb color value of the fade. (0-255)
  * @param blue		The blue rgb color value of the fade. (0-255)
  * @param alpha		The alpha transparency value of the fade. (0-255)
- * @param type		The type of fade. (see superheroconst.inc)
+ * @param type		The type of fade. (see sh_core_main_const.inc)
  * @noreturn
  */
 stock sh_screen_fade(id, Float:fadeTime, Float:holdTime, red, green, blue, alpha, type = SH_FFADE_IN)

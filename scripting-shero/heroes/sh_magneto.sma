@@ -12,7 +12,6 @@ magneto_giveglock 1				//Give the poor victim a glock?
 
 #include <amxmodx>
 #include <fakemeta>
-#include <csx>
 #include <sh_core_main>
 #include <sh_core_weapons>
 #include <sh_core_shieldrestrict>

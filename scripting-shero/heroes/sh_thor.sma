@@ -20,8 +20,8 @@ thor_cooldown 45		//Amount of time before next available use (def 45)
 
 #include <amxmodx>
 #include <fun>
-#include <csx>
 #include <sh_core_main>
+#include <sh_core_extradamage>
 
 #pragma semicolon 1
 
@@ -74,11 +74,8 @@ public sh_client_spawn(id)
 	gPlayerInCooldown[id] = false;
 }
 //----------------------------------------------------------------------------------------------
-public client_damage(attacker, victim, damage)
+public sh_client_damage(victim, attacker, damage)
 {
-	if (!sh_is_active() || !is_user_connected(victim))
-		return;
-	
 	if (!gHasThor[victim] || gPlayerInCooldown[victim])
 		return;
 	

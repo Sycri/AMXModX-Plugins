@@ -26,6 +26,7 @@ bishop_blastradius 150		//Energy Blast damage radius [def=150]
 #include <cstrike>
 #include <hamsandwich>
 #include <sh_core_main>
+#include <sh_core_extradamage>
 
 #pragma semicolon 1
 

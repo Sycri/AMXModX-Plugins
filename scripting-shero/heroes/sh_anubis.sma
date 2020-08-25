@@ -19,7 +19,6 @@ anubis_showchat 1		//(0|1) - hide|show ghostchat messages..
 #include <amxmisc>
 #include <fakemeta>
 #include <cstrike>
-#include <csx>
 #include <sh_core_main>
 
 #pragma semicolon 1

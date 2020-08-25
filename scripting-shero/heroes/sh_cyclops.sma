@@ -16,6 +16,7 @@ cyclops_multishot 0.2			//Delay for multishots on holding key down
 #include <cstrike>
 #include <sh_core_main>
 #include <sh_core_weapons>
+#include <sh_core_extradamage>
 
 #pragma semicolon 1
 

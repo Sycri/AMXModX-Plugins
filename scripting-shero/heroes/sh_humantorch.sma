@@ -15,6 +15,7 @@ htorch_burndamage 10		//How much damage each burn does
 #include <fakemeta>
 #include <cstrike>
 #include <sh_core_main>
+#include <sh_core_extradamage>
 
 // GLOBAL VARIABLES
 new gHeroID;

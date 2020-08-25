@@ -12,7 +12,7 @@
 
 /****************************************************************************
 *
-*   Version 1.3.0 - Date: 08/24/2020
+*   Version 1.3.0 - Date: 08/25/2020
 *
 *   Original by {HOJ} Batman <johnbroderick@sbcglobal.net>
 *
@@ -53,8 +53,9 @@
 *
 *  Changelog:
 *
-*  v1.3.0 - Sycri (Kristaps08) - 08/24/20
+*  v1.3.0 - Sycri (Kristaps08) - 08/25/20
 *	- Added Ham_AddPlayerItem since Ham_CS_Item_GetMaxSpeed does not catch weapon pickups or purchases
+*	- Changed extradamage to use hamsandwhich Ham_TakeDamage.
 *	- Changed the function chatMessage so that it uses client_print_color
 *	- Changed most cvars from get_pcvar_num to bind_pcvar_num so variables could be used directly
 *	- Changed from RegisterHamFromEntity to RegisterHamPlayer for cleaner code
@@ -377,7 +378,6 @@
 *	- Save sh bans using flag into saved data instead of the ban file (possible issue with nvault, and that data must be saved then).
 *	- Make use of multilingual support for "core" messages only.
 *	- Remove all use of set_user_info, find a better method to tell when a power is in use (possibly native so hero can say it's in use).
-*	- Possibly change extradamage death to use hamsandwhich Ham_TakeDamage (Maybe have both options?).
 *	- Run a check to make sure no menu is open before opening powers menu.
 *	- Add chosen hero child page to menu to verify hero choice, but mainly to add hero info there instead of using hud messages for powerHelp info.
 *	- Clean up any issues with the say commands.
@@ -452,16 +452,12 @@ new bool:gPlayerPutInServer[MAX_PLAYERS + 1];
 
 // Other miscellaneous global variables
 new gHelpHudMsg[340];
-new gmsgStatusText, gmsgScoreInfo, gmsgDeathMsg, gmsgDamage;
+new gmsgStatusText;
 new bool:gRoundStarted;
 new bool:gBetweenRounds;
 new gNumLevels = 0;
 new gMenuID = 0;
 new gHelpHudSync, gHeroHudSync;
-new bool:gXrtaDmgClientKill;
-new gXrtaDmgWpnName[32];
-new gXrtaDmgAttacker;
-new gXrtaDmgHeadshot;
 new bool:gMonsterModRunning;
 
 //Memory Table Variables
@@ -480,7 +476,7 @@ new CvarSuperHeros, CvarAliveDrop, CvarAutoBalance, CvarCmdProjector;
 new CvarDebugMessages, CvarEndRoundSave, Float:CvarHSMult, CvarLoadImmediate, CvarLvlLimit;
 new CvarMaxBinds, CvarMaxPowers, CvarMenuMode, CvarSaveXP;
 new CvarSaveBy, CvarXPSaveDays, CvarFreeForAll;
-new CvarFriendlyFire, CvarLan;
+new CvarFriendlyFire, CvarLan, CvarServerFreeForAll;
 
 //PCVARs
 new sh_minlevel;
@@ -549,12 +545,14 @@ public plugin_init()
 	bind_pcvar_num(get_cvar_pointer("mp_friendlyfire"), CvarFriendlyFire);
 	bind_pcvar_num(get_cvar_pointer("sv_lan"), CvarLan);
 
+	if (cvar_exists("mp_freeforall")) // Support for ReGameDLL_CS
+		bind_pcvar_num(get_cvar_pointer("mp_freeforall"), CvarServerFreeForAll);
 
 	// API - Register a bunch of forwards that heroes can use
 	fwd_HeroInit = CreateMultiForward("sh_hero_init", ET_IGNORE, FP_CELL, FP_CELL, FP_CELL); // id, heroID, mode
 	fwd_HeroKey = CreateMultiForward("sh_hero_key", ET_IGNORE, FP_CELL, FP_CELL, FP_CELL); // id, heroID, key
 	fwd_Spawn = CreateMultiForward("sh_client_spawn", ET_IGNORE, FP_CELL, FP_CELL); // id, newSpawn
-	fwd_Death = CreateMultiForward("sh_client_death", ET_IGNORE, FP_CELL, FP_CELL, FP_CELL, FP_STRING); //killer, victim, wpnindex, hitplace, TK
+	fwd_Death = CreateMultiForward("sh_client_death", ET_IGNORE, FP_CELL, FP_CELL, FP_CELL, FP_STRING); //victim, attacker, wpnindex, hitplace, TK
 	fwd_NewRound = CreateMultiForward("sh_round_new", ET_IGNORE);
 	fwd_RoundStart = CreateMultiForward("sh_round_start", ET_IGNORE);
 	fwd_RoundEnd = CreateMultiForward("sh_round_end", ET_IGNORE);
@@ -603,16 +601,9 @@ public plugin_init()
 
 	// Global Variables...
 	gmsgStatusText = get_user_msgid("StatusText");
-	gmsgScoreInfo = get_user_msgid("ScoreInfo");
-	gmsgDeathMsg = get_user_msgid("DeathMsg");
-	gmsgDamage = get_user_msgid("Damage");
 
 	// Set the game description
 	register_forward(FM_GetGameDescription, "@Forward_GetGameDescription");
-
-	// Block committed suicide hl log messages caused by extradamage
-	register_forward(FM_AlertMessage, "fm_AlertMessage");
-	register_message(gmsgDeathMsg, "msg_DeathMsg");
 
 	// Block player names from overwriting StatusText sent by core
 	register_message(gmsgStatusText, "msg_StatusText");
@@ -656,7 +647,6 @@ public plugin_natives()
 	register_native("sh_user_is_loaded", "@Native_UserIsLoaded");
 	register_native("sh_chat_message", "@Native_ChatMessage");
 	register_native("sh_debug_message", "@Native_DebugMessage");
-	register_native("sh_extra_damage", "@Native_ExtraDamage");
 	register_native("sh_set_godmode", "@Native_SetGodmode");
 	register_native("sh_is_freezetime", "@Native_IsFreezeTime");
 	register_native("sh_is_inround", "@Native_IsInRound");
@@ -1869,286 +1859,30 @@ localAddXP(id, xp)
 	localAddXP(id, floatround(get_param_f(3) * gXPGiven[gPlayerLevel[victim]]));
 	displayPowers(id, false);
 }
-//----------------------------------------------------------------------------------------------
-//native sh_extra_damage(victim, attacker, damage, const wpnDescription[], headshot = 0, dmgMode = SH_DMG_MULT, bool:dmgStun = false, bool:dmgFFmsg = true, const dmgOrigin[3] = {0,0,0});
-@Native_ExtraDamage()
-{
-	new victim = get_param(1);
-
-	if (!is_user_alive(victim) || get_user_godmode(victim))
-		return;
-
-	new attacker = get_param(2);
-
-	if (!is_user_connected(attacker))
-		return;
-
-	if (attacker == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_EXTRADMG)
-		return;
-
-	new damage = get_param(3);
-
-	new mode = get_param(6);
-
-	new health = get_user_health(victim);
-	new CsArmorType:armorType;
-	new plrArmor = cs_get_user_armor(victim, armorType);
-
-	if (mode == SH_DMG_KILL) {
-		damage = health;
-	} else {
-		if (damage <= 0)
-			return;
-
-		// *** Damage calculation due to armor from: multiplayer/dlls/player.cpp ***
-		// *** Note: this is not exactly CS damage method because we do not have that sdk ***
-		new Float:flDamage = float(damage);
-		new Float:flNewDamage = flDamage * SH_ARMOR_RATIO;
-		new Float:flArmor = (flDamage - flNewDamage) * SH_ARMOR_BONUS;
-
-		// Does this use more armor than we have figured for?
-		if (flArmor > float(plrArmor)) {
-			flArmor = float(plrArmor) * (1 / SH_ARMOR_BONUS);
-			flNewDamage = flDamage - flArmor;
-			plrArmor = 0;
-		} else {
-			plrArmor = floatround(plrArmor - flArmor);
-		}
-
-		if (mode == SH_DMG_NORM)
-			damage = floatround(flNewDamage);
-		// *** End of damage-armor calculations ***
-	}
-
-	new newHealth = health - damage;
-	new friendlyFire = CvarFriendlyFire;
-	new freeForAll = CvarFreeForAll;
-	new CsTeams:victimTeam = cs_get_user_team(victim);
-	new CsTeams:attackerTeam = cs_get_user_team(attacker);
-
-	if (newHealth < 1) {
-		new bool:kill;
-		new headshot = get_param(5);
-		new attackerFrags = get_user_frags(attacker);
-		new attackerMoney = cs_get_user_money(attacker);
-
-		if (victim == attacker) {
-			kill = true;
-		} else if (victimTeam != attackerTeam || (friendlyFire && freeForAll)) {
-			kill = true;
-
-			if (headshot)
-				localAddXP(attacker, floatround(gXPGiven[gPlayerLevel[victim]] * CvarHSMult));
-			else
-				localAddXP(attacker, gXPGiven[gPlayerLevel[victim]]);
-
-			set_user_frags(attacker, ++attackerFrags);
-
-			// Frag gives $300, make sure not to go over max
-			if (attackerMoney < 16000) {
-				new money = min((attackerMoney + 300), 16000);
-				cs_set_user_money(attacker, money, 1);
-			}
-		} else if (friendlyFire) {
-			kill = true;
-
-			localAddXP(attacker, -gXPGiven[gPlayerLevel[attacker]]);
-
-			set_user_frags(attacker, --attackerFrags);
-
-			client_print(attacker, print_center, "You killed a teammate");
-
-			// Teamkill removes $3300, make sure not to go under min
-			if (attackerMoney > 0) {
-				new money = max((attackerMoney - 3300), 0);
-				cs_set_user_money(attacker, money, 1);
-			}
-		}
-
-		if (!kill)
-			return;
-
-		new wpnDescription[32];
-		get_string(4, wpnDescription, charsmax(wpnDescription));
-
-		// Kill the victim and block the message
-		set_msg_block(gmsgScoreInfo, BLOCK_ONCE);
-
-		gXrtaDmgClientKill = true;
-		// Save info to change HUD death message and send forward with correct info
-		copy(gXrtaDmgWpnName, charsmax(gXrtaDmgWpnName), wpnDescription);
-		gXrtaDmgAttacker = attacker;
-		gXrtaDmgHeadshot = headshot;
-		// Kill the victim
-		// pev_dmg_inflictor not set becase this will be self even if we did set it
-		dllfunc(DLLFunc_ClientKill, victim);
-		gXrtaDmgClientKill = false;
-
-		// Log the Kill
-		logKill(attacker, victim, wpnDescription);
-
-		// Make camera turn toward attacker on death, thx Emp`
-		set_pev(victim, pev_iuser3, attacker);
-
-		// ClientKill removes a frag, give it back if not self inflicted
-		new victimFrags = get_user_frags(victim);
-		if (victim != attacker) {
-			set_user_frags(victim, ++victimFrags);
-
-			// Update attacker's statustext since his xp changed
-			displayPowers(attacker, false);
-
-			// Update victims scoreboard with correct info
-			message_begin(MSG_ALL, gmsgScoreInfo);
-			write_byte(victim);
-			write_short(victimFrags);
-			write_short(cs_get_user_deaths(victim));
-			write_short(0);
-			write_short(_:victimTeam);
-			message_end();
-		}
-
-		// Update killers scoreboard with new info
-		message_begin(MSG_ALL, gmsgScoreInfo);
-		write_byte(attacker);
-		write_short(attackerFrags);
-		write_short(cs_get_user_deaths(attacker));
-		write_short(0);
-		write_short(_:attackerTeam);
-		message_end();
-	} else {
-		new bool:hurt = false;
-		if (victimTeam != attackerTeam || victim == attacker || (friendlyFire && freeForAll)) {
-			hurt = true;
-		} else if (friendlyFire) {
-			hurt = true;
-			//new bool:dmgFFmsg = get_param(6) ? true : false;
-			if (get_param(8)) {
-				new name[32];
-				get_user_name(attacker, name, charsmax(name));
-				client_print(0, print_chat, "%s attacked a teammate", name);
-			}
-		}
-
-		if (!hurt)
-			return;
-
-		// External plugins might use this
-		// This should be set to the entity that caused the
-		// damage, but lets just set it to attacker for now
-		set_pev(victim, pev_dmg_inflictor, attacker);
-
-		set_user_health(victim, newHealth);
-
-		cs_set_user_armor(victim, plrArmor, armorType);
-
-		// Slow down from damage, does not effect z vector
-		// new bool:dmgStun = get_param(7) ? true : false
-		if (get_param(7) && pev(victim, pev_movetype) & MOVETYPE_WALK) {
-			// Fake a slowdown from damage
-			// Method needs improvement can not find how cs does it
-			// possibly use a sh_get_velocity type of method adding to current velocity
-			new Float:velocity[3];
-			pev(victim, pev_velocity, velocity);
-			velocity[0] = 0.0;
-			velocity[1] = 0.0;
-			// Keep [2] the same as current velocity
-			set_pev(victim, pev_velocity, velocity);
-		}
-
-		if (is_user_bot(victim))
-			return;
-
-		new Float:dmgOrigin[3];
-		get_array_f(9, dmgOrigin, 3);
-
-		if (dmgOrigin[0] == 0.0 && dmgOrigin[1] == 0.0 && dmgOrigin[2] == 0.0)
-			// Damage origin is attacker
-			pev(attacker, pev_origin, dmgOrigin);
-
-		// Damage message for showing damage bits only
-		message_begin(MSG_ONE_UNRELIABLE, gmsgDamage, _, victim);
-		write_byte(0); // dmg_save
-		write_byte(damage); // dmg_take
-		write_long(DMG_GENERIC); // visibleDamageBits
-		write_coord_f(dmgOrigin[0]); // damageOrigin.x
-		write_coord_f(dmgOrigin[1]); // damageOrigin.y
-		write_coord_f(dmgOrigin[2]); // damageOrigin.z
-		message_end();
-	}
-}
-//---------------------------------------------------------------------------------------------
-public fm_AlertMessage(atype, const msg[])
-{
-	// Keeps hl logs clean of commited suicide with world, caused by sh_extra_damage
-	return gXrtaDmgClientKill ? FMRES_SUPERCEDE : FMRES_IGNORED;
-}
-//---------------------------------------------------------------------------------------------
-logKill(id, victim, const weaponDescription[32])
-{
-	new namea[32], namev[32], authida[32], authidv[32], teama[16], teamv[16];
-
-	// Info On Attacker
-	get_user_name(id, namea, charsmax(namea));
-	get_user_team(id, teama, charsmax(teama));
-	get_user_authid(id, authida, charsmax(authida));
-	new auserid = get_user_userid(id);
-
-	// Info On Victim
-	get_user_name(victim, namev, charsmax(namev));
-	get_user_team(victim, teamv, charsmax(teamv));
-	get_user_authid(victim, authidv, charsmax(authidv));
-
-	// Log This Kill
-	if (id != victim)
-		log_message("^"%s<%d><%s><%s>^" killed ^"%s<%d><%s><%s>^" with ^"%s^"", namea, auserid, authida, teama, namev, get_user_userid(victim), authidv, teamv, weaponDescription);
-	else
-		log_message("^"%s<%d><%s><%s>^" committed suicide with ^"%s^"", namea, auserid, authida, teama, weaponDescription);
-}
-//----------------------------------------------------------------------------------------------
-public msg_DeathMsg()
-{
-	// Send out the sh death forwards and change the hud death message for sh_extra_damage kill
-	// Run this even with sh off so forward can still run and clean up what it needs to
-	new attacker, headshot;
-	static wpnDescription[32];
-
-	if (!gXrtaDmgClientKill) {
-		attacker = get_msg_arg_int(1);
-		headshot = get_msg_arg_int(3);
-		get_msg_arg_string(4, wpnDescription, charsmax(wpnDescription));
-	} else {
-		attacker = gXrtaDmgAttacker;
-		headshot = gXrtaDmgHeadshot;
-		copy(wpnDescription, charsmax(wpnDescription), gXrtaDmgWpnName);
-
-		// Change HUD death message to show extradamage kill correctly
-		set_msg_arg_int(1, ARG_BYTE, attacker);
-		set_msg_arg_int(3, ARG_BYTE, headshot);
-		set_msg_arg_string(4, wpnDescription);
-	}
-
-	// Send the sh_client_death forward
-	ExecuteForward(fwd_Death, _, get_msg_arg_int(2), attacker, headshot, wpnDescription);
-}
 //---------------------------------------------------------------------------------------------
 // Must use death event since csx client_death does not catch worldspawn or suicides
 public event_DeathMsg()
 {
+	new killer = read_data(1);
+	new victim = read_data(2);
+	new headshot = read_data(3);
+
+	static wpnDescription[32];
+	read_data(4, wpnDescription, charsmax(wpnDescription));
+
+	// Run this even with sh off so forward can still run and clean up what it needs to
+	ExecuteForward(fwd_Death, _, victim, killer, headshot, wpnDescription);
+
 	if (!CvarSuperHeros)
 		return;
 
-	new killer = read_data(1);
-	new victim = read_data(2);
-
 	// Kill by extra damage will be skipped here since killer is self
 	if (killer && killer != victim && victim) {
-		if (cs_get_user_team(killer) == cs_get_user_team(victim) && !CvarFreeForAll) {
+		if (cs_get_user_team(killer) == cs_get_user_team(victim) && !CvarFreeForAll && !CvarServerFreeForAll) {
 			// Killed teammate
 			localAddXP(killer, -gXPGiven[gPlayerLevel[killer]]);
 		} else {
-			//new headshot = read_data(3);
-			if (read_data(3))
+			if (headshot)
 				localAddXP(killer, floatround(gXPGiven[gPlayerLevel[victim]] * CvarHSMult));
 			else
 				localAddXP(killer, gXPGiven[gPlayerLevel[victim]]);

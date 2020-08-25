@@ -36,6 +36,7 @@ phoenix_maxdamage 90	//Maximum damage dealt spread over radius (Default 90)
 #include <hamsandwich>
 #include <sh_core_main>
 #include <sh_core_hpap>
+#include <sh_core_extradamage>
 
 #pragma semicolon 1
 

@@ -38,6 +38,7 @@ bass_multishot 0.1			//Delay for multishots on holding key down, set to -1 for o
 #include <sh_core_hpap>
 #include <sh_core_speed>
 #include <sh_core_gravity>
+#include <sh_core_extradamage>
 
 #pragma semicolon 1
 

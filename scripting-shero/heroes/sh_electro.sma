@@ -25,6 +25,7 @@ electro_jumpradius 500		//Radius to search for a lightning jump (Default 500)
 #include <fakemeta>
 #include <cstrike>
 #include <sh_core_main>
+#include <sh_core_extradamage>
 
 #pragma semicolon 1
 

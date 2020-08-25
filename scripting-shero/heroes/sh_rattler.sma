@@ -22,8 +22,8 @@ Version History:
 
 #include <amxmodx>
 #include <fun>
-#include <csx>
 #include <sh_core_main>
+#include <sh_core_extradamage>
 
 #pragma semicolon 1
 
@@ -66,11 +66,8 @@ public sh_hero_init(id, heroID, mode)
 	sh_debug_message(id, 1, "%s %s", gHeroName, mode ? "ADDED" : "DROPPED");
 }
 //----------------------------------------------------------------------------------------------
-public client_damage(attacker, victim, damage)
+public sh_client_damage(victim, attacker, damage)
 {
-	if (!sh_is_active() || !is_user_connected(victim))
-		return;
-	
 	if (!gHasRattler[victim])
 		return;
 	
