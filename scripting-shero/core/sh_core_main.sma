@@ -53,7 +53,7 @@
 *
 *  Changelog:
 *
-*  v1.3.0 - Sycri (Kristaps08) - 08/25/20
+*  v1.3.0 - Sycri (Kristaps08) - 08/29/20
 *	- Added Ham_AddPlayerItem since Ham_CS_Item_GetMaxSpeed does not catch weapon pickups or purchases
 *	- Changed extradamage to use hamsandwhich Ham_TakeDamage.
 *	- Changed the function chatMessage so that it uses client_print_color
@@ -68,6 +68,7 @@
 *	- Removed repetitive checks in natives
 *	- Removed variables which cache cvars since AMX Mod X 1.9.0 does it now itself
 *	- Renamed nearly all functions for a unified style
+*	- Replaced arrays with bit-fields to improve performance and reduce memory footprint
 *	- Replaced checking team joining by commands with event TextMsg (&#Game_join_) in the MercyXP system
 *	- Replaced client command buy blocking with forward CS_OnBuy
 *	- Replaced deprecated function client_disconnect with client_disconnected
@@ -391,7 +392,7 @@
 
 //By default, plugins have 4KB of stack space.
 //This gives the plugin a little more memory to work with (6144 or 24KB is sh default)
-#pragma dynamic 6144
+// #pragma dynamic 6144
 
 //Sets the size of the memory table to hold data until the next save
 #define gMemoryTableSize 64
@@ -424,11 +425,26 @@ enum enumHeros { hero[25], superpower[50], help[128], requiresKeys, availableLev
 new gSuperHeros[SH_MAXHEROS][enumHeros];
 new gSuperHeroCount = 0;
 
-// Changed these from CVARS to straight numbers...
-new gHeroLevelCVAR[SH_MAXHEROS];
+// Hero level that is binded to a CVAR
+new gHeroLevel[SH_MAXHEROS];
 
-// Player Variables Used by Various Functions
-// Player IDS are base 1 (i.e. 1-32 so we have to diminsion for 33)
+// Player bool variables (using bit-fields for lower memory footprint and better CPU performance)
+#define flag_get(%1,%2)			(%1 & (1 << (%2 & 31)))
+#define flag_get_boolean(%1,%2)	(flag_get(%1,%2) ? true : false)
+#define flag_set(%1,%2)			%1 |= (1 << (%2 & 31))
+#define flag_clear(%1,%2)		%1 &= ~(1 << (%2 & 31))
+
+new gNewRoundSpawn;
+new gIsPowerBanned;
+new gInMenu;
+new gReadXPNextRound;
+new gFirstRound;
+new gInPowerDown[SH_MAXBINDPOWERS + 1];
+new gChangedHeroes;
+new gPlayerPutInServer;
+
+// Player variables used by various functions
+// Player IDs start at 1 which means we have to use MAX_PLAYERS + 1
 new gPlayerPowers[MAX_PLAYERS + 1][SH_MAXLEVELS + 1];     // List of all Powers - Slot 0 is the superpower count
 new gPlayerBinds[MAX_PLAYERS + 1][SH_MAXBINDPOWERS + 1];  // What superpowers are the bind keys bound
 new gPlayerFlags[MAX_PLAYERS + 1];
@@ -438,17 +454,11 @@ new gMaxPowersLeft[MAX_PLAYERS + 1][SH_MAXLEVELS + 1];
 new gPlayerGodTimer[MAX_PLAYERS + 1];
 new gPlayerLevel[MAX_PLAYERS + 1];
 new gPlayerXP[MAX_PLAYERS + 1];
-new gXPLevel[SH_MAXLEVELS + 1];
-new gXPGiven[SH_MAXLEVELS + 1];
-new bool:gNewRoundSpawn[MAX_PLAYERS + 1];
-new bool:gIsPowerBanned[MAX_PLAYERS + 1];
-new bool:gInMenu[MAX_PLAYERS + 1];
-new bool:gReadXPNextRound[MAX_PLAYERS + 1];
-new bool:gFirstRound[MAX_PLAYERS + 1];
-new gInPowerDown[MAX_PLAYERS + 1][SH_MAXBINDPOWERS + 1];
-new bool:gChangedHeroes[MAX_PLAYERS + 1];
-new bool:gPlayerPutInServer[MAX_PLAYERS + 1];
 //new Float:gLastKeydown[MAX_PLAYERS + 1]
+
+// XP variables
+new gXPLevel[SH_MAXLEVELS + 1]; // Required to reach a level
+new gXPGiven[SH_MAXLEVELS + 1]; // Given per kill of a player of that level
 
 // Other miscellaneous global variables
 new gHelpHudMsg[340];
@@ -460,7 +470,7 @@ new gMenuID = 0;
 new gHelpHudSync, gHeroHudSync;
 new bool:gMonsterModRunning;
 
-//Memory Table Variables
+// Memory Table Variables
 new gMemoryTableCount = 33;
 new gMemoryTableKeys[gMemoryTableSize][32];					// Table for storing xp lines that need to be flushed to file...
 new gMemoryTableNames[gMemoryTableSize][32];				// Stores players name for a key
@@ -468,24 +478,24 @@ new gMemoryTableXP[gMemoryTableSize];						// How much XP does a player have?
 new gMemoryTableFlags[gMemoryTableSize];					// User flags for other settings (see below)
 new gMemoryTablePowers[gMemoryTableSize][SH_MAXLEVELS + 1];	// 0=# of powers, 1=hero index, etc...
 
-//Config Files
+// Config Files
 new gSHConfigDir[128], gBanFile[128], gSHConfig[128], gHelpMotd[128];
 
-//CVARs Bound To Variables
+// CVARs Bound To Variables
 new CvarSuperHeros, CvarAliveDrop, CvarAutoBalance, CvarCmdProjector;
 new CvarDebugMessages, CvarEndRoundSave, Float:CvarHSMult, CvarLoadImmediate, CvarLvlLimit;
 new CvarMaxBinds, CvarMaxPowers, CvarMenuMode, CvarSaveXP;
 new CvarSaveBy, CvarXPSaveDays, CvarFreeForAll;
 new CvarFriendlyFire, CvarLan, CvarServerFreeForAll;
 
-//PCVARs
+// PCVARs
 new sh_minlevel;
 
-//Forwards
+// Forwards
 new fwd_HeroInit, fwd_HeroKey, fwd_Spawn, fwd_Death;
 new fwd_RoundStart, fwd_RoundEnd, fwd_NewRound;
 
-//Level up sound
+// Level up sound
 new const gSoundLevel[] = "plats/elevbell1.wav";
 
 //==============================================================================================
@@ -771,8 +781,8 @@ public setHeroLevels()
 {
 	debugMsg(0, 1, "Reloading Levels for %d Heroes", gSuperHeroCount);
 
-	for ( new x = 0; x < gSuperHeroCount && x <= SH_MAXHEROS; ++x)
-		gSuperHeros[x][availableLevel] = get_pcvar_num(gHeroLevelCVAR[x]);
+	for (new i = 0; i < gSuperHeroCount && i <= SH_MAXHEROS; ++i)
+		gSuperHeros[i][availableLevel] = gHeroLevel[i];
 }
 //----------------------------------------------------------------------------------------------
 //native sh_is_inround()
@@ -850,7 +860,7 @@ bool:@Native_IsFreezeTime()
 		return -1;
 
 	//Check if data has loaded yet
-	// if (gReadXPNextRound[id])
+	// if (flag_get_boolean(gReadXPNextRound, id))
 		// return -1;
 
 	return gPlayerLevel[id];
@@ -1088,7 +1098,7 @@ bool:@Native_UserIsLoaded()
 	if (id < 1 || id > MaxClients)
 		return false;
 
-	return gReadXPNextRound[id] ? false : true;
+	return flag_get_boolean(gReadXPNextRound, id) ? false : true;
 }
 //---------------------------------------------------------------------------------------------
 //native sh_create_hero(const heroName[], pcvarMinLevel)
@@ -1112,7 +1122,7 @@ bool:@Native_UserIsLoaded()
 	debugMsg(0, 3, "Create Hero-> HeroID: %d - %s - %d", gSuperHeroCount, pHero, heroLevel);
 
 	copy(gSuperHeros[idx][hero], 24, pHero);
-	gHeroLevelCVAR[idx] = pcvarMinLevel;
+	bind_pcvar_num(pcvarMinLevel, gHeroLevel[idx]);
 	gSuperHeros[idx][availableLevel] = heroLevel;
 
 	++gSuperHeroCount;
@@ -1159,7 +1169,7 @@ initHero(id, heroIndex, mode)
 	//Init the hero
 	ExecuteForward(fwd_HeroInit, _, id, heroIndex, mode);
 
-	gChangedHeroes[id] = true;
+	flag_set(gChangedHeroes, id);
 }
 //----------------------------------------------------------------------------------------------
 getPowerCount(id)
@@ -1181,15 +1191,15 @@ getBindNumber(id, heroIndex)
 menuSuperPowers(id, menuOffset)
 {
 	// Don't show menu if mod off or they're not connected
-	if (!CvarSuperHeros || !is_user_connected(id) || gReadXPNextRound[id])
+	if (!CvarSuperHeros || !is_user_connected(id) || flag_get_boolean(gReadXPNextRound, id))
 		return PLUGIN_HANDLED;
 
-	gInMenu[id] = false;
+	flag_clear(gInMenu, id);
 	gPlayerMenuOffset[id] = 0;
 
 	new bool:isBot = is_user_bot(id) ? true : false;
 
-	if (gIsPowerBanned[id]) {
+	if (flag_get_boolean(gIsPowerBanned, id)) {
 		if (!isBot)
 			client_print(id, print_center, "You are not allowed to have powers");
 
@@ -1330,9 +1340,9 @@ menuSuperPowers(id, menuOffset)
 	add(message, charsmax(message), "\w^n0. Cancel");
 	keys |= MENU_KEY_0;
 
-	if ((count > 0 && enabled > 0) || gInMenu[id]) {
+	if ((count > 0 && enabled > 0) || flag_get_boolean(gInMenu, id)) {
 		debugMsg(id, 8, "Displaying Menu - offset: %d - count: %d - enabled: %d", menuOffset, count, enabled);
-		gInMenu[id] = true;
+		flag_set(gInMenu, id);
 		show_menu(id, keys, message);
 	}
 
@@ -1341,12 +1351,12 @@ menuSuperPowers(id, menuOffset)
 //----------------------------------------------------------------------------------------------
 public selectedSuperPower(id, key)
 {
-	if (!gInMenu[id] || !CvarSuperHeros)
+	if (!flag_get_boolean(gInMenu, id) || !CvarSuperHeros)
 		return PLUGIN_HANDLED;
 
-	gInMenu[id] = false;
+	flag_clear(gInMenu, id);
 
-	if (gIsPowerBanned[id]) {
+	if (flag_get_boolean(gIsPowerBanned, id)) {
 		client_print(id, print_center, "You are not allowed to have powers");
 		return PLUGIN_HANDLED;
 	}
@@ -1507,7 +1517,7 @@ public ham_PlayerSpawn_Post(id)
 
 	//Prevents non-saved XP servers from having loading issues
 	if (!CvarSaveXP)
-		gReadXPNextRound[id] = false;
+		flag_clear(gReadXPNextRound, id);
 
 	//Cancel the ultimate timer task on any new spawn
 	//It is up to the hero to set the variable back to false
@@ -1518,7 +1528,7 @@ public ham_PlayerSpawn_Post(id)
 	set_user_godmode(id, 0);
 
 	//Prevents this whole function from being called if its not a new round
-	if (!gNewRoundSpawn[id]) {
+	if (!flag_get_boolean(gNewRoundSpawn, id)) {
 		displayPowers(id, true);
 
 		//Let heroes know someone just spawned mid-round
@@ -1528,20 +1538,20 @@ public ham_PlayerSpawn_Post(id)
 	}
 
 	// Read the XP!
-	if (gFirstRound[id])
-		gFirstRound[id] = false;
-	else if (gReadXPNextRound[id])
+	if (flag_get_boolean(gFirstRound, id))
+		flag_clear(gFirstRound, id);
+	else if (flag_get_boolean(gReadXPNextRound, id))
 		readXP(id);
 
 	//Display the XP and bind powers to their screen
 	displayPowers(id, true);
 
 	//Shows menu if the person is not in it already, always show for bots to choose powers
-	if (!gInMenu[id] && (is_user_bot(id) || !(gPlayerFlags[id] & SH_FLAG_NOAUTOMENU)))
+	if (!flag_get_boolean(gInMenu, id) && (is_user_bot(id) || !(gPlayerFlags[id] & SH_FLAG_NOAUTOMENU)))
 		menuSuperPowers(id, gPlayerMenuOffset[id]);
 
 	//Prevents resetHUD from getting called twice in a round
-	gNewRoundSpawn[id] = false;
+	flag_clear(gNewRoundSpawn, id);
 
 	//Prevents People from going invisible randomly
 	set_user_rendering(id);
@@ -1607,7 +1617,7 @@ public round_End()
 	gBetweenRounds = true;
 
 	for (new id = 1; id <= MaxClients; id++) {
-		gNewRoundSpawn[id] = true;
+		flag_set(gNewRoundSpawn, id);
 
 		if (!is_user_connected(id))
 			continue;
@@ -1615,7 +1625,7 @@ public round_End()
 		if (cs_get_user_team(id) == CS_TEAM_UNASSIGNED)
 			continue;
 
-		gFirstRound[id] = false;
+		flag_clear(gFirstRound, id);
 	}
 
 	//Save XP Data
@@ -1641,9 +1651,10 @@ public powerKeyDown(id)
 		return PLUGIN_HANDLED;
 
 	// re-entrency check to prevent aliasing muliple powerkeys - currently untested
-	//new Float:gametime = get_gametime()
-	//if ( gametime - gLastKeydown[id] < 0.2 ) return PLUGIN_HANDLED
-	//gLastKeydown[id] = gametime
+	//new Float:gametime = get_gametime();
+	//if (gametime - gLastKeydown[id] < 0.2)
+	//	return PLUGIN_HANDLED;
+	//gLastKeydown[id] = gametime;
 
 	new cmd[12], whichKey;
 	read_argv(0, cmd, charsmax(cmd));
@@ -1678,9 +1689,10 @@ public powerKeyDown(id)
 		return PLUGIN_HANDLED;
 
 	//Make sure they are not already using this keydown
-	if (gInPowerDown[id][whichKey])
+	if (flag_get_boolean(gInPowerDown[whichKey], id))
 		return PLUGIN_HANDLED;
-	gInPowerDown[id][whichKey] = true;
+
+	flag_set(gInPowerDown[whichKey], id);
 
 	if (playerHasPower(id, heroIndex))
 		ExecuteForward(fwd_HeroKey, _, id, heroIndex, SH_KEYDOWN);
@@ -1704,11 +1716,11 @@ public powerKeyUp(id)
 		return PLUGIN_HANDLED;
 
 	// Make sure player isn't stunned (unless they were in keydown when stunned)
-	if (sh_get_stun(id) && !gInPowerDown[id][whichKey])
+	if (sh_get_stun(id) && !flag_get_boolean(gInPowerDown[whichKey], id))
 		return PLUGIN_HANDLED;
 
 	//Set this key as NOT in use anymore
-	gInPowerDown[id][whichKey] = false;
+	flag_clear(gInPowerDown[whichKey], id);
 
 	debugMsg(id, 5, "power%d Released", whichKey);
 
@@ -1757,11 +1769,11 @@ displayPowers(id, bool:setThePowers)
 		return;
 
 	// To avoid recursion - displayPowers will call clearPowers<->Display Power Loop if we don't check for player powers
-	if (gIsPowerBanned[id]) {
+	if (flag_get_boolean(gIsPowerBanned, id)) {
 		clearAllPowers(id, false); // Avoids Recursion with false
 		writeStatusMessage(id, "[SH] You are banned from using powers");
 		return;
-	} else if (gReadXPNextRound[id]) {
+	} else if (flag_get_boolean(gReadXPNextRound, id)) {
 		debugMsg(id, 5, "XP will load next round");
 		writeStatusMessage(id, "[SH] Your XP will be loaded next round");
 		return;
@@ -1823,7 +1835,7 @@ displayPowers(id, bool:setThePowers)
 	// or user is no longer in menu
 	get_user_menu(id, menuid, mkeys);
 	if (menuid != gMenuID)
-		gInMenu[id] = false;
+		flag_clear(gInMenu, id);
 	else
 		menuSuperPowers(id, gPlayerMenuOffset[id]);
 }
@@ -2230,7 +2242,7 @@ showPlayerSkills(id, say, said[])
 				tn += copy(temp[tn], charsmax(temp)-tn, "   ");
 			}
 			playerPowerCount = getPowerCount(pid);
-			for (idx = 1; idx <= playerPowerCount; idx++) {
+			for (idx = 1; idx <= playerPowerCount; ++idx) {
 				heroIndex = gPlayerPowers[pid][idx];
 				tn += formatex(temp[tn], charsmax(temp) - tn, "| %s ", gSuperHeros[heroIndex][hero]);
 				if (idx % 6 == 0) {
@@ -2541,7 +2553,7 @@ public adminBanXP(id, level, cid)
 	get_user_name(player, name, charsmax(name));
 	get_user_authid(player, authid, charsmax(authid));
 
-	if (gIsPowerBanned[player]) {
+	if (flag_get_boolean(gIsPowerBanned, player)) {
 		console_print(id, "[SH] Client is already SuperHero banned: ^"%s<%d><%s>^"", name, userid, authid);
 		return PLUGIN_HANDLED;
 	}
@@ -2572,7 +2584,7 @@ public adminBanXP(id, level, cid)
 	get_user_name(id, name2, charsmax(name2));
 	get_user_authid(id, authid2, charsmax(authid2));
 
-	gIsPowerBanned[player] = true;
+	flag_set(gIsPowerBanned, player);
 	clearAllPowers(player, false); // Avoids Recursion with false
 	writeStatusMessage(player, "You are banned from using powers");
 
@@ -2618,7 +2630,7 @@ public adminUnbanXP(id, level, cid)
 		get_user_authid(player, authid, charsmax(authid));
 		new userid = get_user_userid(player);
 
-		if (!gIsPowerBanned[player]) {
+		if (!flag_get_boolean(gIsPowerBanned, player)) {
 			console_print(id, "[SH] Client is not SuperHero banned: ^"%s<%d><%s><>^"", name, userid, authid);
 			return PLUGIN_HANDLED;
 		}
@@ -2631,7 +2643,7 @@ public adminUnbanXP(id, level, cid)
 		if (!removeBanFromFile(id, bankey))
 			return PLUGIN_HANDLED;
 
-		gIsPowerBanned[player] = false;
+		flag_clear(gIsPowerBanned, player);
 		displayPowers(player, false);
 
 		show_activity(id, name2, "unbanned %s from using superhero powers", name);
@@ -2991,7 +3003,7 @@ public client_disconnected(id)
 {
 	// Don't want any left over residuals
 	initPlayer(id);
-	gPlayerPutInServer[id] = false;
+	flag_clear(gPlayerPutInServer, id);
 }
 //----------------------------------------------------------------------------------------------
 public client_putinserver(id)
@@ -2999,10 +3011,10 @@ public client_putinserver(id)
 	if (id < 1 || id > MaxClients)
 		return;
 
-	gPlayerPutInServer[id] = true;
+	flag_set(gPlayerPutInServer, id);
 
 	// Don't want to mess up already loaded XP
-	if (!gReadXPNextRound[id] && CvarSaveXP)
+	if (!flag_get_boolean(gReadXPNextRound, id) && CvarSaveXP)
 		return;
 
 	// Load up XP if LongTerm is enabled
@@ -3011,7 +3023,7 @@ public client_putinserver(id)
 		if (CvarLoadImmediate)
 			readXP(id);
 		else
-			gReadXPNextRound[id] = true;
+			flag_set(gReadXPNextRound, id);
 	} else if (CvarAutoBalance) {
 		// If autobalance is on - promote this player by avg XP
 		gPlayerXP[id] = getAverageXP();
@@ -3047,10 +3059,13 @@ initPlayer(id)
 	gPlayerGodTimer[id] = -1;
 	setLevel(id, 0);
 	gPlayerFlags[id] = SH_FLAG_HUDHELP;
-	gFirstRound[id] = true;
-	gNewRoundSpawn[id] = true;
-	gIsPowerBanned[id] = false;
-	gReadXPNextRound[id] = bool:CvarSaveXP;
+	flag_set(gFirstRound, id);
+	flag_set(gNewRoundSpawn, id);
+	flag_clear(gIsPowerBanned, id);
+	if (CvarSaveXP)
+		flag_set(gReadXPNextRound, id);
+	else
+		flag_clear(gReadXPNextRound, id);
 
 	clearAllPowers(id, false);
 }
@@ -3064,7 +3079,7 @@ getPlayerLevel(id)
 {
 	new newLevel = 0;
 
-	for (new i = gNumLevels; i >= 0 ; i--) {
+	for (new i = gNumLevels; i >= 0 ; --i) {
 		if (gXPLevel[i] <= gPlayerXP[id]) {
 			newLevel = i;
 			break;
@@ -3074,7 +3089,7 @@ getPlayerLevel(id)
 	// Now make sure this level is between the ranges
 	new minLevel = clamp(get_pcvar_num(sh_minlevel), 0, gNumLevels);
 
-	if (newLevel < minLevel && !gReadXPNextRound[id]) {
+	if (newLevel < minLevel && !flag_get_boolean(gReadXPNextRound, id)) {
 		newLevel = minLevel;
 		gPlayerXP[id] = gXPLevel[newLevel];
 	}
@@ -3111,7 +3126,7 @@ testLevel(id)
 			if (-1 < heroIndex < gSuperHeroCount) {
 				if (getHeroLevel(heroIndex) > gPlayerLevel[id]) {
 					clearPower(id, x);
-					x--;
+					--x;
 				}
 			}
 		}
@@ -3136,7 +3151,7 @@ public readXP(id)
 		return;
 
 	// Players XP already loaded, no need to do this again
-	if (!gReadXPNextRound[id])
+	if (!flag_get_boolean(gReadXPNextRound, id))
 		return;
 
 	static savekey[32];
@@ -3161,7 +3176,7 @@ public readXP(id)
 	else // XP not able to load, will try again next round
 		return;
 
-	gReadXPNextRound[id] = false;
+	flag_clear(gReadXPNextRound, id);
 	memoryTableUpdate(id);
 	displayPowers(id, false);
 }
@@ -3185,7 +3200,7 @@ getSaveKey(id, savekey[32])
 		// Attempt to get rid of the skill tag so we save with bots true name
 		new lastchar = strlen(botName) - 1;
 		if (botName[lastchar] == ')') {
-			for (new x = lastchar - 1; x > 0; x--) {
+			for (new x = lastchar - 1; x > 0; --x) {
 				if (botName[x] == '(') {
 					botName[x - 1] = 0;
 					break;
@@ -3239,7 +3254,7 @@ getSaveKey(id, savekey[32])
 //----------------------------------------------------------------------------------------------
 checkBan(id, const bankey[32])
 {
-	if (!file_exists(gBanFile) || gIsPowerBanned[id])
+	if (!file_exists(gBanFile) || flag_get_boolean(gIsPowerBanned, id))
 		return;
 
 	new bool:idBanned, data[32];
@@ -3262,7 +3277,8 @@ checkBan(id, const bankey[32])
 		}
 
 		if (equali(data, bankey) ) {
-			gIsPowerBanned[id] = idBanned = true;
+			idBanned = true;
+			flag_set(gIsPowerBanned, id);
 			debugMsg(id, 1, "Ban loaded from banlist for this player");
 		}
 	}
@@ -3275,7 +3291,7 @@ memoryTableUpdate(id)
 	if (!CvarSuperHeros || !CvarSaveXP)
 		return;
 	
-	if (gIsPowerBanned[id] || gReadXPNextRound[id])
+	if (flag_get_boolean(gIsPowerBanned, id) || flag_get_boolean(gReadXPNextRound, id))
 		return;
 
 	// Update this XP line in Memory Table

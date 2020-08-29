@@ -18,7 +18,7 @@
 new gSuperHeroCount;
 
 new Float:gHeroMinGravity[SH_MAXHEROS];
-new gHeroGravityWeapons[SH_MAXHEROS][31]; // array weapons of weapon's i.e. {4,30} Note:{0}=all
+new gHeroGravityWeapons[SH_MAXHEROS]; // bit-field of weapons
 
 new gIsFreezeTime;
 
@@ -76,31 +76,12 @@ public sh_client_spawn(id)
 	if (heroIndex < 0 || heroIndex >= sh_get_num_heroes())
 		return;
 
-	new pcvarGravity = get_param(2);
-	new numWpns = get_param(4);
+	new weapons = get_param(3);
 
-	new weaponList[40];
-	get_array(3, weaponList, numWpns);
+	bind_pcvar_float(get_param(2), gHeroMinGravity[heroIndex]); // pCVAR expected!
+	gHeroGravityWeapons[heroIndex] = weapons; // Bit-field expected!
 
-	//Avoid running this unless debug is high enough
-	if (CvarDebugMessages > 2) {
-		//Set up the weapon string for the debug message
-		new weapons[32], number[3];
-		for (new i = 0; i < numWpns; ++i) {
-			formatex(number, charsmax(number), "%d", weaponList[i]);
-			add(weapons, charsmax(weapons), number);
-
-			if (weaponList[i + 1] != '^0')
-				add(weapons, charsmax(weapons), ",");
-			else
-				break;
-		}
-
-		sh_debug_message(0, 3, "Set Min Gravity -> HeroID: %d - Gravity: %.3f - Weapon(s): %s", heroIndex, get_pcvar_float(pcvarGravity), weapons);
-	}
-
-	bind_pcvar_float(pcvarGravity, gHeroMinGravity[heroIndex]); // pCVAR expected!
-	copy(gHeroGravityWeapons[heroIndex], charsmax(gHeroGravityWeapons[]), weaponList); // Array expected!
+	sh_debug_message(0, 3, "Set Min Gravity -> HeroID: %d - Gravity: %.3f - Weapon(s): %d", heroIndex, gHeroMinGravity[heroIndex], weapons);
 }
 //----------------------------------------------------------------------------------------------
 //native sh_reset_min_gravity(id)
@@ -206,35 +187,24 @@ Float:getMinGravity(id, weapon)
 		return 1.0;
 		
 	static heroName[25];
-	static Float:returnGravity, Float:heroMinGravity, x, i;
-	static playerPowerCount, heroIndex, heroWeapon;
+	static Float:returnGravity, Float:heroMinGravity, i;
+	static playerPowerCount, heroIndex;
 	returnGravity = 1.0;
 	playerPowerCount = sh_get_user_powers(id);
 	
-	for (x = 1; x <= playerPowerCount; ++x) {
-		heroIndex = sh_get_user_hero(id, x);
+	for (i = 1; i <= playerPowerCount; ++i) {
+		heroIndex = sh_get_user_hero(id, i);
 		
 		if (-1 < heroIndex < gSuperHeroCount) {
 			heroMinGravity = gHeroMinGravity[heroIndex];
 			if (heroMinGravity <= 0.0)
 				continue;
-				
-			for (i = CSW_NONE; i <= CSW_LAST_WEAPON; ++i) {
-				heroWeapon = gHeroGravityWeapons[heroIndex][i];
 
-				//Stop checking, end of list
-				if (i != CSW_NONE && heroWeapon == CSW_NONE)
-					break;
+			sh_get_hero_name(heroIndex, heroName, charsmax(heroName));
+			sh_debug_message(id, 5, "Looking for Gravity Functions - %s, %d, %d", heroName, gHeroGravityWeapons[heroIndex], weapon);
 
-				sh_get_hero_name(heroIndex, heroName, charsmax(heroName));
-				sh_debug_message(id, 5, "Looking for Gravity Functions - %s, %d, %d", heroName, heroWeapon, weapon);
-
-				//If 0 or current weapon check max
-				if (heroWeapon == CSW_NONE || heroWeapon == weapon) {
-					returnGravity = floatmin(returnGravity, heroMinGravity);
-					break;
-				}
-			}
+			if (gHeroGravityWeapons[heroIndex] & (1 << weapon))
+				returnGravity = floatmin(returnGravity, heroMinGravity);
 		}
 	}
 	

@@ -156,7 +156,7 @@ public plugin_natives()
 	if (!is_user_alive(victim) || !is_user_connected(attacker))
 		return HAM_IGNORED;
 
-	new Float:trueDamage;
+	static Float:trueDamage;
 	pev(victim, pev_dmg_take, trueDamage);
 
 	ExecuteForward(fwd_Damage, _, victim, attacker, floatround(trueDamage), damagebits);

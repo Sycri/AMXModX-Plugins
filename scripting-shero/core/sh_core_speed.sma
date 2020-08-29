@@ -19,7 +19,7 @@
 new gSuperHeroCount;
 
 new Float:gHeroMaxSpeed[SH_MAXHEROS];
-new gHeroSpeedWeapons[SH_MAXHEROS][31]; // array weapons of weapon's i.e. {4,30} Note:{0}=all
+new gHeroSpeedWeapons[SH_MAXHEROS]; // bit-field of weapons
 
 new gPlayerStunTimer[MAX_PLAYERS + 1];
 new Float:gPlayerStunSpeed[MAX_PLAYERS + 1];
@@ -92,31 +92,12 @@ public sh_client_spawn(id)
 	if (heroIndex < 0 || heroIndex >= sh_get_num_heroes())
 		return;
 
-	new pcvarSpeed = get_param(2);
-	new numWpns = get_param(4);
+	new weapons = get_param(3);
 
-	new weaponList[31];
-	get_array(3, weaponList, numWpns);
+	bind_pcvar_float(get_param(2), gHeroMaxSpeed[heroIndex]); // pCVAR expected!
+	gHeroSpeedWeapons[heroIndex] = weapons; // Bit-field expected!
 
-	//Avoid running this unless debug is high enough
-	if (CvarDebugMessages > 2) {
-		//Set up the weapon string for the debug message
-		new weapons[32], number[3];
-		for (new i = 0; i < numWpns; ++i) {
-			formatex(number, charsmax(number), "%d", weaponList[i]);
-			add(weapons, charsmax(weapons), number);
-			
-			if (weaponList[i + 1] != '^0')
-				add(weapons, charsmax(weapons), ",");
-			else
-				break;
-		}
-
-		sh_debug_message(0, 3, "Set Max Speed -> HeroID: %d - Speed: %f - Weapon(s): %s", heroIndex, get_pcvar_float(pcvarSpeed), weapons);
-	}
-
-	bind_pcvar_float(pcvarSpeed, gHeroMaxSpeed[heroIndex]); // pCVAR expected!
-	copy(gHeroSpeedWeapons[heroIndex], charsmax(gHeroSpeedWeapons[]), weaponList); // Array expected!
+	sh_debug_message(0, 3, "Set Max Speed -> HeroID: %d - Speed: %.3f - Weapon(s): %s", heroIndex, gHeroMaxSpeed[heroIndex], weapons);
 }
 //----------------------------------------------------------------------------------------------
 //native sh_set_stun(id, Float:howLong, Float:speed = 0.0)
@@ -292,35 +273,24 @@ setSpeedPowers(id, bool:checkDefault)
 Float:getMaxSpeed(id, weapon)
 {
 	static heroName[25];
-	static Float:returnSpeed, Float:heroSpeed, x, i;
-	static playerPowerCount, heroIndex, heroWeapon;
+	static Float:returnSpeed, Float:heroSpeed, i;
+	static playerPowerCount, heroIndex;
 	returnSpeed = -1.0;
 	playerPowerCount = sh_get_user_powers(id);
 
-	for (x = 1; x <= playerPowerCount; ++x) {
-		heroIndex = sh_get_user_hero(id, x);
+	for (i = 1; i <= playerPowerCount; ++i) {
+		heroIndex = sh_get_user_hero(id, i);
 		
 		if (-1 < heroIndex < gSuperHeroCount) {
 			heroSpeed = gHeroMaxSpeed[heroIndex];
 			if (heroSpeed <= 0.0)
 				continue;
-			
-			for (i = CSW_NONE; i <= CSW_LAST_WEAPON; ++i) {
-				heroWeapon = gHeroSpeedWeapons[heroIndex][i];
 
-				//Stop checking, end of list
-				if (i != CSW_NONE && heroWeapon == CSW_NONE)
-					break;
+			sh_get_hero_name(heroIndex, heroName, charsmax(heroName));
+			sh_debug_message(id, 5, "Looking for Speed Functions - %s, %d, %d", heroName, gHeroSpeedWeapons[heroIndex], weapon);
 
-				sh_get_hero_name(heroIndex, heroName, charsmax(heroName));
-				sh_debug_message(id, 5, "Looking for Speed Functions - %s, %d, %d", heroName, heroWeapon, weapon);
-
-				//If 0 or current weapon check max
-				if (heroWeapon == CSW_NONE || heroWeapon == weapon) {
-					returnSpeed = floatmax(returnSpeed, heroSpeed);
-					break;
-				}
-			}
+			if (gHeroSpeedWeapons[heroIndex] & (1 << weapon))
+				returnSpeed = floatmax(returnSpeed, heroSpeed);
 		}
 	}
 

@@ -72,7 +72,7 @@ writeData(id)
 	nvault_set(gVaultHandle, gMemoryTableKeys[id], data);
 
 	if (0 < id <= MAX_PLAYERS)
-		gChangedHeroes[id] = false;
+		flag_clear(gChangedHeroes, id);
 }
 //----------------------------------------------------------------------------------------------
 loadXP(id, const savekey[32])

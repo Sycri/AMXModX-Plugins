@@ -19,6 +19,7 @@
  * Called whenever a client receives damage from another client.
  *
  * @note		Use this instead of client_damage() to avoid problems with recursion when using sh_extra_damage().
+ * 				Extra damage from sh_extra_damage() will not be catched with this unlike client_damage().
  *
  * @param victim		The index of the victim.
  * @param attacker		The index of the attacker.
@@ -38,8 +39,8 @@ forward sh_client_damage(victim, attacker, damage, damagebits);
  * Use this for non-default damage to correctly send damage messages and handle XP.
  *
  * @note		Set dmgFFmsg to false for looping extra damage, to avoid team attack chat spam.
- *				The default dmgOrigin of {0,0,0} will use attacker as the damage direction.
- *				Victim is unaffected if victim has godmode (this includes insta kill dmgMode).
+ * 				The default dmgOrigin of {0,0,0} will use attacker as the damage direction.
+ * 				Victim is unaffected if victim has godmode (this includes insta kill dmgMode).
  *
  * @param victim		The index of the victim.
  * @param attacker		The index of the attacker.

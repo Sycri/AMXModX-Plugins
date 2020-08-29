@@ -62,7 +62,7 @@ public plugin_init()
 	// FIRE THE EVENT TO CREATE THIS SUPERHERO!
 	gHeroID = sh_create_hero(gHeroName, pcvarLevel);
 	sh_set_hero_info(gHeroID, "Auto-Heal & Claws", "Auto-Heal, Extra Knife Damage and Speed Boost");
-	sh_set_hero_speed(gHeroID, pcvarSpeed, {CSW_KNIFE});
+	sh_set_hero_speed(gHeroID, pcvarSpeed, 1 << CSW_KNIFE);
 	sh_set_hero_dmgmult(gHeroID, pcvarKnifeMult, CSW_KNIFE);
 
 #if defined USE_WEAPON_MODEL

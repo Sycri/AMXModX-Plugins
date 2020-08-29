@@ -24,8 +24,8 @@
 /**
  * Sets hero's max speed dependent on currently held weapon. (Optional)
  * Speeds do not stack, values from heroes are compared and greatest is applied.
- * weapons[] is an array of weapons this speed is good for, check CSW_ constants for weapon values.
- * {29, 30} would equal the CSW_ weapon constants corresponding to {CSW_KNIFE, CSW_P90}, etc... (see cstrike_const.inc)
+ * weapons is a bit-field of weapons this speed is good for, check CSW_ constants for weapon values.
+ * (1 << 29) | (1 << 30) would equal the CSW_ weapon constants corresponding to (1 << CSW_KNIFE) | (1 << CSW_P90), etc... (see cstrike_const.inc)
  *
  * @note		This setting does not effect speed of sniper rifles when scoped.
  *				Max possible running speed is 2000, limited by half-life.
@@ -34,11 +34,10 @@
  *
  * @param heroID	The index of the hero.
  * @param pcvarSpeed	The pcvar value for maximum Speed CVAR for the hero.
- * @param weapons	Array of weapon CSW_ constant values to set speed for, 0 is for all weapons.
- * @param numofwpns	The size of the weapons array, this MUST be passed in CORRECTLY!
+ * @param weapons	Bit-field of weapon CSW_ constant values to set speed for, CSW_ALL_WEAPONS is for all weapons.
  * @noreturn
  */
-native sh_set_hero_speed(heroID, pcvarSpeed, const weapons[] = {0}, numofwpns = 1);
+native sh_set_hero_speed(heroID, pcvarSpeed, weapons = CSW_ALL_WEAPONS);
 
 //------------
 

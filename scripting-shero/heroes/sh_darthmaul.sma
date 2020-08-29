@@ -82,7 +82,7 @@ public plugin_init()
 	// FIRE THE EVENT TO CREATE THIS SUPERHERO!
 	gHeroID = sh_create_hero("Darth Maul", pcvarLevel);
 	sh_set_hero_info(gHeroID, "Sith Lightsaber & Regen", "Get a Sith Double Bladed Lightsaber with more Damage and Speed, also regenerate HP");
-	sh_set_hero_speed(gHeroID, pcvarKnifeSpeed, {CSW_KNIFE});
+	sh_set_hero_speed(gHeroID, pcvarKnifeSpeed, 1 << CSW_KNIFE);
 	sh_set_hero_dmgmult(gHeroID, pcvarKnifeMult, CSW_KNIFE);
 
 #if defined USE_WEAPON_MODEL

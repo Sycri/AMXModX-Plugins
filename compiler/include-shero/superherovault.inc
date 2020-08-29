@@ -111,7 +111,7 @@ writeData(id)
 	set_vaultdata(vaultSaveKey, data);
 
 	if (0 < id <= MAX_PLAYERS)
-		gChangedHeroes[id] = false;
+		flag_clear(gChangedHeroes, id);
 }
 //----------------------------------------------------------------------------------------------
 loadXP(id, const savekey[32])
@@ -139,7 +139,7 @@ cleanXP(bool:clearAll)
 	if (!file_exists(gVaultFile))
 		return;
 
-	new xpSaveDays = CvarXPSaveDays
+	new xpSaveDays = CvarXPSaveDays;
 
 	if (!clearAll && CvarSaveXP || xpSaveDays < 0)
 		return;
@@ -215,8 +215,8 @@ cleanXP(bool:clearAll)
 		}
 	}
 
-	fclose(tempFile)
-	delete_file(temp)
+	fclose(tempFile);
+	delete_file(temp);
 }
 //----------------------------------------------------------------------------------------------
 saving_end() {/*Don't need to clean up vault saving, but keep this here*/}
