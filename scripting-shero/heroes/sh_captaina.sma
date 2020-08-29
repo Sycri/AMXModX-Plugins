@@ -13,6 +13,7 @@ captaina_godsecs 1.0		//# of seconds of god mode
 #include <amxmisc>
 #include <fun>
 #include <sh_core_main>
+#include <sh_core_godmode>
 
 #pragma semicolon 1
 

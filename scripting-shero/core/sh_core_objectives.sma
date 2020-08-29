@@ -152,7 +152,7 @@ public bomb_explode(planter, defuser)
 	if (activePlayerCount <= CvarMinPlayersXP)
 		return PLUGIN_CONTINUE;
 
-	new players[32], playerCount, player;
+	new players[MAX_PLAYERS], playerCount, player;
 	new XPtoGive = CvarObjectiveXP;
 
 	get_players_ex(players, playerCount, GetPlayers_ExcludeDead | GetPlayers_ExcludeHLTV);
@@ -221,7 +221,7 @@ public bomb_explode(planter, defuser)
 	if (activePlayerCount <= CvarMinPlayersXP)
 		return;
 
-	new players[32], playerCount, player;
+	new players[MAX_PLAYERS], playerCount, player;
 	new XPtoGive = CvarObjectiveXP;
 
 	get_players_ex(players, playerCount, GetPlayers_ExcludeDead | GetPlayers_ExcludeHLTV);
@@ -271,7 +271,7 @@ public bomb_explode(planter, defuser)
 	if (activePlayerCount <= CvarMinPlayersXP)
 		return;
 
-	new players[32], playerCount, player;
+	new players[MAX_PLAYERS], playerCount, player;
 	new XPtoGive = CvarObjectiveXP;
 
 	get_players_ex(players, playerCount, GetPlayers_ExcludeHLTV);

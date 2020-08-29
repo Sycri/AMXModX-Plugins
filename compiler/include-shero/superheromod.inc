@@ -22,4 +22,5 @@
 #include <sh_core_gravity>
 #include <sh_core_weapons>
 #include <sh_core_extradamage>
+#include <sh_core_godmode>
 #include <sh_core_shieldrestrict>

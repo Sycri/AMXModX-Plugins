@@ -12,7 +12,7 @@
 
 /****************************************************************************
 *
-*   Version 1.3.0 - Date: 08/25/2020
+*   Version 1.3.0 - Date: 08/29/2020
 *
 *   Original by {HOJ} Batman <johnbroderick@sbcglobal.net>
 *
@@ -441,7 +441,6 @@ new gReadXPNextRound;
 new gFirstRound;
 new gInPowerDown[SH_MAXBINDPOWERS + 1];
 new gChangedHeroes;
-new gPlayerPutInServer;
 
 // Player variables used by various functions
 // Player IDs start at 1 which means we have to use MAX_PLAYERS + 1
@@ -451,7 +450,6 @@ new gPlayerFlags[MAX_PLAYERS + 1];
 new gPlayerMenuOffset[MAX_PLAYERS + 1];
 new gPlayerMenuChoices[MAX_PLAYERS + 1][SH_MAXHEROS + 1]; // This will be filled in with # of heroes available
 new gMaxPowersLeft[MAX_PLAYERS + 1][SH_MAXLEVELS + 1];
-new gPlayerGodTimer[MAX_PLAYERS + 1];
 new gPlayerLevel[MAX_PLAYERS + 1];
 new gPlayerXP[MAX_PLAYERS + 1];
 //new Float:gLastKeydown[MAX_PLAYERS + 1]
@@ -657,7 +655,6 @@ public plugin_natives()
 	register_native("sh_user_is_loaded", "@Native_UserIsLoaded");
 	register_native("sh_chat_message", "@Native_ChatMessage");
 	register_native("sh_debug_message", "@Native_DebugMessage");
-	register_native("sh_set_godmode", "@Native_SetGodmode");
 	register_native("sh_is_freezetime", "@Native_IsFreezeTime");
 	register_native("sh_is_inround", "@Native_IsInRound");
 }
@@ -769,9 +766,6 @@ public loopMain()
 	//Might be better to create an ent think loop
 	if (!CvarSuperHeros)
 		return;
-
-	//GodMode Timer
-	timerAll();
 
 	//Show the CMD Projector
 	showHelpHud();
@@ -1523,10 +1517,6 @@ public ham_PlayerSpawn_Post(id)
 	//It is up to the hero to set the variable back to false
 	remove_task(id + SH_COOLDOWN_TASKID, 1); // 1 = look outside this plugin
 
-	//Sets the god timer back to normal
-	gPlayerGodTimer[id] = -1;
-	set_user_godmode(id, 0);
-
 	//Prevents this whole function from being called if its not a new round
 	if (!flag_get_boolean(gNewRoundSpawn, id)) {
 		displayPowers(id, true);
@@ -1904,50 +1894,6 @@ public event_DeathMsg()
 	}
 
 	displayPowers(victim, false);
-}
-//----------------------------------------------------------------------------------------------
-timerAll()
-{
-	static id;
-	for (id = 1; id <= MaxClients; id++) {
-		if (is_user_alive(id)) {
-			// Switches are faster but we don't want to do anything with -1
-			switch (gPlayerGodTimer[id]) {
-				case -1: { /*Do nothing*/ }
-				case 0: {
-					gPlayerGodTimer[id] = -1;
-					set_user_godmode(id, 0);
-					sh_set_rendering(id);
-				}
-				default: {
-					gPlayerGodTimer[id]--;
-				}
-			}
-		} else {
-			gPlayerGodTimer[id] = -1;
-		}
-	}
-}
-//----------------------------------------------------------------------------------------------
-//native sh_set_godmode(id, Float:howLong)
-@Native_SetGodmode()
-{
-	if (!CvarSuperHeros)
-		return;
-
-	new id = get_param(1);
-
-	if (!is_user_alive(id))
-		return;
-
-	new Float:howLong = get_param_f(2);
-
-	if (howLong > gPlayerGodTimer[id]) {
-		debugMsg(id, 5, "Has God Mode for %f seconds", howLong);
-		sh_set_rendering(id, 0, 0, 128, 16, kRenderFxGlowShell); // Remove the godmode glow, make heroes set it??
-		set_user_godmode(id, 1);
-		gPlayerGodTimer[id] = floatround(howLong);
-	}
 }
 //----------------------------------------------------------------------------------------------
 public cl_say(id)
@@ -2474,7 +2420,7 @@ public adminSetXP(id, level, cid)
 	get_user_authid(id, authid2, charsmax(authid2));
 
 	if (arg[0] == '@') {
-		new players[32], playerCount;
+		new players[MAX_PLAYERS], playerCount;
 		if (equali("T", arg[1]))
 			copy(arg[1], charsmax(arg)-1, "TERRORIST");
 
@@ -3003,15 +2949,12 @@ public client_disconnected(id)
 {
 	// Don't want any left over residuals
 	initPlayer(id);
-	flag_clear(gPlayerPutInServer, id);
 }
 //----------------------------------------------------------------------------------------------
 public client_putinserver(id)
 {
 	if (id < 1 || id > MaxClients)
 		return;
-
-	flag_set(gPlayerPutInServer, id);
 
 	// Don't want to mess up already loaded XP
 	if (!flag_get_boolean(gReadXPNextRound, id) && CvarSaveXP)
@@ -3056,7 +2999,6 @@ initPlayer(id)
 	gPlayerXP[id] = 0;
 	gPlayerPowers[id][0] = 0;
 	gPlayerBinds[id][0] = 0;
-	gPlayerGodTimer[id] = -1;
 	setLevel(id, 0);
 	gPlayerFlags[id] = SH_FLAG_HUDHELP;
 	flag_set(gFirstRound, id);

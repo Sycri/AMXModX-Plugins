@@ -245,18 +245,6 @@ native sh_set_hero_bind(heroID);
 //------------
 
 /**
- * Sets godmode on client for time specified.
- *
- * @note		Does not combine time, the highest time will override.
- *				Client will sh glow blue {0,0,128} to indicate godmode. (This may be removed in a future version)
- *
- * @param id		The index of the client.
- * @param howLong	The length of time in seconds godmode lasts.
- * @noreturn
- */
-native sh_set_godmode(id, Float:howLong);
-
-/**
  * Gets hero's index.
  *
  * @param heroName	The name of the hero. (name must be exact spelling and case tense)
@@ -358,18 +346,13 @@ stock bool:sh_friendlyfire_on()
 }
 
 /**
- * Checks max players setting of server, better then using SH_MAXSLOTS most times.
+ * Checks max players setting of server, better than using SH_MAXSLOTS most times.
  *
  * @return		Max players of server.
  */
 stock sh_maxplayers()
 {
-	static maxPlayers;
-
-	if (!maxPlayers)
-		maxPlayers = get_maxplayers();
-
-	return maxPlayers;
+	return MaxClients;
 }
 
 /**

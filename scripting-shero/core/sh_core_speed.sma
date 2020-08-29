@@ -24,7 +24,6 @@ new gHeroSpeedWeapons[SH_MAXHEROS]; // bit-field of weapons
 new gPlayerStunTimer[MAX_PLAYERS + 1];
 new Float:gPlayerStunSpeed[MAX_PLAYERS + 1];
 
-new CvarDebugMessages;
 new sv_maxspeed;
 
 //----------------------------------------------------------------------------------------------
@@ -40,7 +39,6 @@ public plugin_init()
 			RegisterHam(Ham_CS_Item_GetMaxSpeed, weaponName, "@Forward_CS_Item_GetMaxSpeed_Pre", 0);
 	}
 
-	bind_pcvar_num(get_cvar_pointer("sh_debug_messages"), CvarDebugMessages);
 	sv_maxspeed = get_cvar_pointer("sv_maxspeed");
 }
 //----------------------------------------------------------------------------------------------
@@ -62,7 +60,7 @@ public plugin_cfg()
 	set_task(5.0, "@Task_SetServerMaxSpeed");
 }
 //----------------------------------------------------------------------------------------------
-public client_connect(id)
+public client_putinserver(id)
 {
 	gPlayerStunTimer[id] = -1;
 }
@@ -299,7 +297,7 @@ Float:getMaxSpeed(id, weapon)
 //----------------------------------------------------------------------------------------------
 @Task_StunCheck()
 {
-	static players[32], playerCount, player, i;
+	static players[MAX_PLAYERS], playerCount, player, i;
 	get_players_ex(players, playerCount, GetPlayers_ExcludeDead | GetPlayers_ExcludeHLTV);
 
 	for (i = 0; i < playerCount; ++i) {
@@ -313,8 +311,7 @@ Float:getMaxSpeed(id, weapon)
 				setSpeedPowers(player, true);
 			}
 			default: {
-				gPlayerStunTimer[player]--;
-				gPlayerStunSpeed[player] = get_user_maxspeed(player); //is this really needed?
+				--gPlayerStunTimer[player];
 			}
 		}
 	}

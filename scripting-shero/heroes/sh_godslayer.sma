@@ -58,7 +58,7 @@ public sh_hero_init(id, heroID, mode)
 	if (!(damagebits & DMG_BULLET) && !(damagebits & DMG_SLASH))
 		return HAM_IGNORED;
 	
-	if(get_user_godmode(victim) && (cs_get_user_team(victim) != cs_get_user_team(attacker) || sh_friendlyfire_on()))
+	if (get_user_godmode(victim) && (cs_get_user_team(victim) != cs_get_user_team(attacker) || sh_friendlyfire_on()))
 		set_user_godmode(victim, 0);
 	
 	return HAM_IGNORED;
