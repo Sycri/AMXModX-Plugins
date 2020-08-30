@@ -38,7 +38,14 @@ madness_rldmode 0		//Endless ammo mode: 0-server default, 1-no reload, 2-reload,
 #include <sh_core_main>
 #include <sh_core_hpap>
 #include <sh_core_weapons>
-#include <sh_core_shieldrestrict>
+
+#if defined USE_WEAPON_MODEL
+	#include <cstrike>
+#endif
+
+#if defined GIVE_WEAPON
+	#include <sh_core_shieldrestrict>
+#endif
 
 #pragma semicolon 1
 
@@ -72,7 +79,6 @@ public plugin_init()
 	sh_set_hero_info(gHeroID, "Dual M3's", "Dual M3's/Extra Damage/Unlimited Ammo. Extra HP and AP");
 	sh_set_hero_hpap(gHeroID, pcvarHealth, pcvarArmor);
 	sh_set_hero_dmgmult(gHeroID, pcvarM3Mult, CSW_M3);
-	
 #if defined GIVE_WEAPON
 	sh_set_hero_shield(gHeroID, true);
 #endif
@@ -120,6 +126,10 @@ public sh_hero_init(id, heroID, mode)
 #if defined GIVE_WEAPON
 			sh_drop_weapon(id, CSW_M3, true);
 #endif
+#if !defined GIVE_WEAPON && defined USE_WEAPON_MODEL
+			if (gModelLoaded && get_user_weapon(id) == CSW_M3)
+				reset_model(id);
+#endif
 		}
 	}
 	
@@ -148,24 +158,35 @@ public sh_client_spawn(id)
 @Forward_M3_Deploy_Post(weapon_ent)
 {
 	if (!sh_is_active())
-		return;
+		return HAM_IGNORED;
 
 	// Get weapon's owner
 	new owner = fm_cs_get_weapon_ent_owner(weapon_ent);
 	
 	switch_model(owner);
+	return HAM_IGNORED;
 }
 //----------------------------------------------------------------------------------------------
 switch_model(index)
 {
 	if (!is_user_alive(index) || !gHasMadness[index])
 		return;
-
-	if (cs_get_user_shield(index))
-		return;
 	
 	set_pev(index, pev_viewmodel2, gModel_V_M3);
 }
+//----------------------------------------------------------------------------------------------
+#if !defined GIVE_WEAPON
+reset_model(index)
+{
+	if (!is_user_alive(index))
+		return;
+	
+	new weaponEnt = cs_get_user_weapon_entity(index);
+	
+	// Let CS update weapon models
+	ExecuteHamB(Ham_Item_Deploy, weaponEnt);
+}
+#endif
 //----------------------------------------------------------------------------------------------
 stock fm_cs_get_weapon_ent_owner(ent)
 {

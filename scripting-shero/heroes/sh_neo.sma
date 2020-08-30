@@ -33,11 +33,14 @@ neo_teamglow 0			//Glow in a color based on player's team when hero in use (0=no
 #include <amxmisc>
 #include <fakemeta>
 #include <fun>
-#include <cstrike>
 #include <sh_core_main>
 #include <sh_core_hpap>
 #include <sh_core_speed>
 #include <sh_core_gravity>
+
+#if defined USE_PLAYER_MODEL
+	#include <cstrike>
+#endif
 
 #pragma semicolon 1
 
@@ -47,7 +50,6 @@ new const gHeroName[] = "Neo";
 
 new bool:gHasNeoPowers[MAX_PLAYERS + 1];
 new bool:gIsFlying[MAX_PLAYERS + 1];
-new gmsgSync;
 
 #if defined SHOW_BULLETS
 	new gLastWeapon[MAX_PLAYERS + 1];
@@ -59,6 +61,7 @@ new CvarFlySpeed, CvarFlyBeforeFTime, CvarFlyToggle;
 #if defined USE_PLAYER_MODEL
 	new bool:gModelPlayerSet[MAX_PLAYERS + 1];
 	new bool:gModelPlayerLoaded;
+	new gmsgSync;
 	new const gModelPlayer[] = "models/player/Neo/Neo.mdl";
 	new const gModelPlayer_Name[] = "Neo";
 	new CvarTeamGlow;
@@ -78,7 +81,6 @@ public plugin_init()
 	bind_pcvar_num(create_cvar("neo_flyspeed","1000", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 2000.0), CvarFlySpeed);
 	bind_pcvar_num(create_cvar("neo_flybeforeftime","1"), CvarFlyBeforeFTime);
 	bind_pcvar_num(create_cvar("neo_flytoggle","0"), CvarFlyToggle);
-
 #if defined USE_PLAYER_MODEL
 	bind_pcvar_num(create_cvar("neo_teamglow", "0"), CvarTeamGlow);
 #endif
@@ -101,9 +103,9 @@ public plugin_init()
 	// GLOW LOOP
 #if defined USE_PLAYER_MODEL
 	set_task_ex(1.0, "@Task_GlowLoop", _, _, _, SetTask_Repeat);
-#endif
 
 	gmsgSync = CreateHudSyncObj();
+#endif
 }
 //----------------------------------------------------------------------------------------------
 #if defined USE_PLAYER_MODEL
@@ -142,7 +144,6 @@ public sh_hero_init(id, heroID, mode)
 		}
 		case SH_HERO_DROP: {
 			gHasNeoPowers[id] = false;
-
 #if defined USE_PLAYER_MODEL
 			if (gModelPlayerLoaded)
 				neo_unmorph(id);

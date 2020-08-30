@@ -76,14 +76,20 @@ masterchief_teamglow 0		//Glow in a color based on player's team when hero in us
 #include <amxmodx>
 #include <amxmisc>
 #include <fakemeta>
-#include <cstrike>
 #include <hamsandwich>
 #include <sh_core_main>
 #include <sh_core_hpap>
 #include <sh_core_speed>
 #include <sh_core_gravity>
 #include <sh_core_weapons>
-#include <sh_core_shieldrestrict>
+
+#if PLAYER_MODEL > 0 || defined USE_WEAPON_MODEL
+	#include <cstrike>
+#endif
+
+#if defined GIVE_WEAPON
+	#include <sh_core_shieldrestrict>
+#endif
 
 #pragma semicolon 1
 
@@ -92,13 +98,13 @@ new gHeroID;
 new const gHeroName[] = "Master Chief";
 
 new bool:gHasMasterChief[MAX_PLAYERS + 1];
-new gmsgSync;
 
 new CvarReloadMode;
 
 #if PLAYER_MODEL > 0
 	new bool:gModelPlayerSet[MAX_PLAYERS + 1];
 	new bool:gModelPlayerLoaded;
+	new gmsgSync;
 	new const gMasterChiefSound[] = "items/suitchargeno1.wav";
 
 	#if PLAYER_MODEL == 1
@@ -134,7 +140,6 @@ public plugin_init()
 	new pcvarSpeed = create_cvar("masterchief_speed", "-1");
 	new pcvarP90Mult = create_cvar("masterchief_p90mult", "1.3");
 	bind_pcvar_num(create_cvar("masterchief_rldmode", "0"), CvarReloadMode);
-	
 #if PLAYER_MODEL == 1
 	bind_pcvar_num(create_cvar("masterchief_teamglow", "0"), CvarTeamGlow);
 #endif
@@ -146,7 +151,6 @@ public plugin_init()
 	sh_set_hero_speed(gHeroID, pcvarSpeed);
 	sh_set_hero_grav(gHeroID, pcvarGravity);
 	sh_set_hero_dmgmult(gHeroID, pcvarP90Mult, CSW_P90);
-
 #if defined GIVE_WEAPON
 	sh_set_hero_shield(gHeroID, true);
 #endif
@@ -164,7 +168,9 @@ public plugin_init()
 	set_task_ex(1.0, "@Task_GlowLoop", _, _, _, SetTask_Repeat);
 #endif
 
+#if PLAYER_MODEL > 0
 	gmsgSync = CreateHudSyncObj();
+#endif
 }
 //----------------------------------------------------------------------------------------------
 #if PLAYER_MODEL > 0 || defined USE_WEAPON_MODEL
@@ -227,12 +233,10 @@ public sh_hero_init(id, heroID, mode)
 #if defined GIVE_WEAPON
 			sh_give_weapon(id, CSW_P90);
 #endif
-
 #if defined USE_WEAPON_MODEL
 			if (gModelWeaponLoaded && get_user_weapon(id) == CSW_P90)
 				switch_model(id);
 #endif
-				
 #if PLAYER_MODEL > 0
 			if (gModelPlayerLoaded)
 				set_task(1.1, "@Task_Morph", id);
@@ -243,7 +247,10 @@ public sh_hero_init(id, heroID, mode)
 #if defined GIVE_WEAPON
 			sh_drop_weapon(id, CSW_P90, true);
 #endif
-
+#if !defined GIVE_WEAPON && defined USE_WEAPON_MODEL
+			if (gModelWeaponLoaded && get_user_weapon(id) == CSW_P90)
+				reset_model(id);
+#endif
 #if PLAYER_MODEL > 0
 			if (gModelPlayerLoaded)
 				masterchief_unmorph(id);
@@ -262,7 +269,6 @@ public sh_client_spawn(id) {
 #if defined GIVE_WEAPON
 	sh_give_weapon(id, CSW_P90);
 #endif
-	
 #if PLAYER_MODEL > 0
 	if (gModelPlayerLoaded)
 		set_task(1.1, "@Task_Morph", id);
@@ -282,12 +288,13 @@ public sh_client_spawn(id) {
 @Forward_P90_Deploy_Post(weapon_ent)
 {
 	if (!sh_is_active())
-		return;
+		return HAM_IGNORED;
 
 	// Get weapon's owner
 	new owner = fm_cs_get_weapon_ent_owner(weapon_ent);
 	
 	switch_model(owner);
+	return HAM_IGNORED;
 }
 //----------------------------------------------------------------------------------------------
 switch_model(index)
@@ -298,6 +305,19 @@ switch_model(index)
 	set_pev(index, pev_viewmodel2, gModel_V_P90);
 	set_pev(index, pev_weaponmodel2, gModel_P_P90);
 }
+//----------------------------------------------------------------------------------------------
+#if !defined GIVE_WEAPON
+reset_model(index)
+{
+	if (!is_user_alive(index))
+		return;
+	
+	new weaponEnt = cs_get_user_weapon_entity(index);
+	
+	// Let CS update weapon models
+	ExecuteHamB(Ham_Item_Deploy, weaponEnt);
+}
+#endif
 //----------------------------------------------------------------------------------------------
 stock fm_cs_get_weapon_ent_owner(ent)
 {

@@ -30,6 +30,10 @@ morpheus_rldmode 0		//Endless ammo mode: 0-server default, 1-no reload, 2-reload
 #include <sh_core_gravity>
 #include <sh_core_weapons>
 
+#if defined USE_WEAPON_MODEL
+	#include <cstrike>
+#endif
+
 #if defined GIVE_WEAPON
 	#include <sh_core_shieldrestrict>
 #endif
@@ -65,7 +69,6 @@ public plugin_init()
 	sh_set_hero_info(gHeroID, "Dual MP5's", "Lower Gravity/Dual MP5's/Unlimited Ammo");
 	sh_set_hero_grav(gHeroID, pcvarGravity);
 	sh_set_hero_dmgmult(gHeroID, pcvarMP5Mult, CSW_MP5NAVY);
-
 #if defined GIVE_WEAPON
 	sh_set_hero_shield(gHeroID, true);
 #endif
@@ -101,7 +104,6 @@ public sh_hero_init(id, heroID, mode)
 	switch (mode) {
 		case SH_HERO_ADD: {
 			gHasMorpheus[id] = true;
-
 #if defined GIVE_WEAPON
 			sh_give_weapon(id, CSW_MP5NAVY);
 #endif
@@ -113,9 +115,12 @@ public sh_hero_init(id, heroID, mode)
 
 		case SH_HERO_DROP: {
 			gHasMorpheus[id] = false;
-
 #if defined GIVE_WEAPON
 			sh_drop_weapon(id, CSW_MP5NAVY, true);
+#endif
+#if !defined GIVE_WEAPON && defined USE_WEAPON_MODEL
+			if (gModelLoaded && get_user_weapon(id) == CSW_MP5NAVY)
+				reset_model(id);
 #endif
 		}
 	}
@@ -145,12 +150,13 @@ public sh_client_spawn(id)
 @Forward_MP5Navy_Deploy_Post(weapon_ent)
 {
 	if (!sh_is_active())
-		return;
+		return HAM_IGNORED;
 
 	// Get weapon's owner
 	new owner = fm_cs_get_weapon_ent_owner(weapon_ent);
 	
 	switch_model(owner);
+	return HAM_IGNORED;
 }
 //----------------------------------------------------------------------------------------------
 switch_model(index)
@@ -160,6 +166,19 @@ switch_model(index)
 	
 	set_pev(index, pev_viewmodel2, gModel_V_MP5);
 }
+//----------------------------------------------------------------------------------------------
+#if !defined GIVE_WEAPON
+reset_model(index)
+{
+	if (!is_user_alive(index))
+		return;
+	
+	new weaponEnt = cs_get_user_weapon_entity(index);
+	
+	// Let CS update weapon models
+	ExecuteHamB(Ham_Item_Deploy, weaponEnt);
+}
+#endif
 //----------------------------------------------------------------------------------------------
 stock fm_cs_get_weapon_ent_owner(ent)
 {

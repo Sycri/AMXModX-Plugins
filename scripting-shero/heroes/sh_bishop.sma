@@ -151,19 +151,21 @@ release_energy(attacker)
 	new userAim[3], victimOrigin[3];
 	new blastDamage = floatround(CvarBlastMult * gAbsorbedDamage[attacker]);
 	new blastRadius = CvarBlastRadius;
+	new FFOn = sh_friendlyfire_on();
+	new CsTeams:attackerTeam = cs_get_user_team(attacker);
 	new bool:hit = false;
 	
 	get_user_origin(attacker, userAim, Origin_AimEndEyes);
 	
 	beam_effects(attacker, userAim);
 
-	static players[MAX_PLAYERS], playerCount, victim, i;
+	new players[MAX_PLAYERS], playerCount, victim, i;
 	get_players_ex(players, playerCount, GetPlayers_ExcludeDead);
 	
 	for (i = 0; i < playerCount; ++i) {
 		victim = players[i];
 		
-		if (victim == attacker || (cs_get_user_team(attacker) == cs_get_user_team(victim) && !sh_friendlyfire_on()))
+		if (victim == attacker || (attackerTeam == cs_get_user_team(victim) && !FFOn))
 			continue;
 		
 		get_user_origin(victim, victimOrigin);

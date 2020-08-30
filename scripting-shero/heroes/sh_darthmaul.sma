@@ -45,12 +45,15 @@ darth_knifemult 2.70		//multiplier for knife damage...
 #include <amxmodx>
 #include <amxmisc>
 #include <fakemeta>
-#include <cstrike>
 #include <hamsandwich>
 #include <sh_core_main>
 #include <sh_core_hpap>
 #include <sh_core_speed>
 #include <sh_core_weapons>
+
+#if defined USE_WEAPON_MODEL
+	#include <cstrike>
+#endif
 
 #pragma semicolon 1
 
@@ -146,12 +149,13 @@ public sh_hero_init(id, heroID, mode)
 @Forward_Knife_Deploy_Post(weapon_ent)
 {
 	if (!sh_is_active())
-		return;
+		return HAM_IGNORED;
 
 	// Get weapon's owner
 	new owner = fm_cs_get_weapon_ent_owner(weapon_ent);
 	
 	switch_model(owner);
+	return HAM_IGNORED;
 }
 //----------------------------------------------------------------------------------------------
 switch_model(index)

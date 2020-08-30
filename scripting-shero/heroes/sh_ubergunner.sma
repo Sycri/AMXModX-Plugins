@@ -33,13 +33,16 @@ UberGunner_teamglow 1		//Glow in a color based on player's team when hero in use
 #include <amxmodx>
 #include <amxmisc>
 #include <fakemeta>
-#include <cstrike>
 #include <hamsandwich>
 #include <sh_core_main>
 #include <sh_core_hpap>
 #include <sh_core_speed>
 #include <sh_core_gravity>
 #include <sh_core_weapons>
+
+#if defined USE_PLAYER_MODEL || defined USE_WEAPON_MODEL
+	#include <cstrike>
+#endif
 
 #if defined GIVE_WEAPON
 	#include <sh_core_shieldrestrict>
@@ -52,13 +55,13 @@ new gHeroID;
 new const gHeroName[] = "UberGunner";
 
 new bool:gHasUberGunner[MAX_PLAYERS + 1];
-new gmsgSync;
 
 new CvarReloadMode;
 
 #if defined USE_PLAYER_MODEL
 	new bool:gModelPlayerSet[MAX_PLAYERS + 1];
 	new bool:gModelPlayerLoaded;
+	new gmsgSync;
 	new const gUberGunnerSound[] = "items/suitchargeno1.wav";
 	new const gModelPlayer[] = "models/player/UberGunner/UberGunner.mdl";
 	new const gModelPlayer_Name[] = "UberGunner";
@@ -83,7 +86,6 @@ public plugin_init()
 	new pcvarSpeed = create_cvar("UberGunner_speed", "600");
 	new pcvarM4A1Mult = create_cvar("UberGunner_m4a1mult", "2.0");
 	bind_pcvar_num(create_cvar("UberGunner_rldmode", "0"), CvarReloadMode);
-
 #if defined USE_PLAYER_MODEL
 	bind_pcvar_num(create_cvar("UberGunner_teamglow", "1"), CvarTeamGlow);
 #endif
@@ -95,7 +97,6 @@ public plugin_init()
 	sh_set_hero_speed(gHeroID, pcvarSpeed);
 	sh_set_hero_grav(gHeroID, pcvarGravity);
 	sh_set_hero_dmgmult(gHeroID, pcvarM4A1Mult, CSW_M4A1);
-
 #if defined GIVE_WEAPON
 	sh_set_hero_shield(gHeroID, true);
 #endif
@@ -111,9 +112,9 @@ public plugin_init()
 	// GLOW LOOP
 #if defined USE_PLAYER_MODEL
 	set_task_ex(1.0, "@Task_GlowLoop", _, _, _, SetTask_Repeat);
-#endif
 
 	gmsgSync = CreateHudSyncObj();
+#endif
 }
 //----------------------------------------------------------------------------------------------
 #if defined USE_PLAYER_MODEL || defined USE_WEAPON_MODEL
@@ -130,7 +131,6 @@ public plugin_precache()
 		gModelPlayerLoaded = false;
 	}
 #endif
-
 #if defined USE_WEAPON_MODEL
 	gModelWeaponLoaded = true;
 	if(file_exists(gModel_V_M4A1)) {
@@ -154,12 +154,10 @@ public sh_hero_init(id, heroID, mode)
 #if defined GIVE_WEAPON
 			sh_give_weapon(id, CSW_M4A1);
 #endif
-
 #if defined USE_WEAPON_MODEL
 			if (gModelWeaponLoaded && get_user_weapon(id) == CSW_M4A1)
 				switch_model(id);
 #endif
-			
 #if defined USE_PLAYER_MODEL
 			if (gModelPlayerLoaded)
 				set_task(1.0, "@Task_Morph", id);
@@ -167,11 +165,13 @@ public sh_hero_init(id, heroID, mode)
 		}
 		case SH_HERO_DROP: {
 			gHasUberGunner[id] = false;
-
 #if defined GIVE_WEAPON
 			sh_drop_weapon(id, CSW_M4A1, true);
 #endif
-
+#if !defined GIVE_WEAPON && defined USE_WEAPON_MODEL
+			if (gModelWeaponLoaded && get_user_weapon(id) == CSW_M4A1)
+				reset_model(id);
+#endif
 #if defined USE_PLAYER_MODEL
 			if (gModelPlayerLoaded)
 				ubergunner_unmorph(id);
@@ -211,12 +211,13 @@ public sh_client_spawn(id)
 @Forward_M4A1_Deploy_Post(weapon_ent)
 {
 	if (!sh_is_active())
-		return;
+		return HAM_IGNORED;
 
 	// Get weapon's owner
 	new owner = fm_cs_get_weapon_ent_owner(weapon_ent);
 	
 	switch_model(owner);
+	return HAM_IGNORED;
 }
 //----------------------------------------------------------------------------------------------
 switch_model(index)
@@ -226,6 +227,19 @@ switch_model(index)
 	
 	set_pev(index, pev_viewmodel2, gModel_V_M4A1);
 }
+//----------------------------------------------------------------------------------------------
+#if !defined GIVE_WEAPON
+reset_model(index)
+{
+	if (!is_user_alive(index))
+		return;
+	
+	new weaponEnt = cs_get_user_weapon_entity(index);
+	
+	// Let CS update weapon models
+	ExecuteHamB(Ham_Item_Deploy, weaponEnt);
+}
+#endif
 //----------------------------------------------------------------------------------------------
 stock fm_cs_get_weapon_ent_owner(ent)
 {

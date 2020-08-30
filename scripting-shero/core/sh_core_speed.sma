@@ -36,7 +36,7 @@ public plugin_init()
 	new weaponName[32];
 	for (new i = CSW_P228; i <= CSW_P90; ++i) {
 		if (get_weaponname(i, weaponName, charsmax(weaponName)))
-			RegisterHam(Ham_CS_Item_GetMaxSpeed, weaponName, "@Forward_CS_Item_GetMaxSpeed_Pre", 0);
+			RegisterHam(Ham_CS_Item_GetMaxSpeed, weaponName, "@Forward_CS_Item_GetMaxSpeed_Pre");
 	}
 
 	sv_maxspeed = get_cvar_pointer("sv_maxspeed");

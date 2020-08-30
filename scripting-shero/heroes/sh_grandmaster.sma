@@ -76,18 +76,24 @@ public sh_client_death(victim)
 	if (!is_user_connected(victim) || is_user_alive(victim))
 		return;
 
-	new CsTeams:idTeam = cs_get_user_team(victim);
+	static victimTeam[10];
+	switch (cs_get_user_team(victim)) {
+		case CS_TEAM_CT: copy(victimTeam, charsmax(victimTeam), "CT");
+		case CS_TEAM_T: copy(victimTeam, charsmax(victimTeam), "TERRORIST");
+		case CS_TEAM_SPECTATOR: copy(victimTeam, charsmax(victimTeam), "SPECTATOR");
+		default: return;
+	}
 
 	static players[MAX_PLAYERS], playerCount, player, i;
-	get_players_ex(players, playerCount, GetPlayers_ExcludeDead | GetPlayers_ExcludeHLTV);
+	// Look for alive players with unused Grandmaster powers on the same team
+	get_players_ex(players, playerCount, GetPlayers_ExcludeDead | GetPlayers_MatchTeam | GetPlayers_ExcludeHLTV, victimTeam);
 
 	static parm[2];
 
-	// Look for alive players with unused Grandmaster Powers on the same team
 	for (i = 0; i < playerCount; ++i) {
 		player = players[i];
 
-		if (player != victim && gHasGrandmaster[player] && !gPlayerInCooldown[player] && idTeam == cs_get_user_team(player)) {
+		if (player != victim && gHasGrandmaster[player] && !gPlayerInCooldown[player]) {
 			// We got a Grandmaster willing to raise the dead!
 			parm[0] = victim;
 			parm[1] = player;

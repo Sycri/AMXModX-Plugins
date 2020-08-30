@@ -35,7 +35,10 @@ vash_rldmode 2			//Endless ammo mode: 0-server default, 1-no reload, 2-reload, 3
 
 // Comment out to force not using the Deagle model, will result in a very small reduction in code/checks
 // Note: If you change anything here from default setting you must recompile the plugin
-// #define USE_WEAPON_MODEL
+#define USE_WEAPON_MODEL
+
+// Comment out to not give a free Deagle
+#define GIVE_WEAPON
 
 
 //------- Do not edit below this point ------//
@@ -43,11 +46,14 @@ vash_rldmode 2			//Endless ammo mode: 0-server default, 1-no reload, 2-reload, 3
 #include <amxmodx>
 #include <amxmisc>
 #include <fakemeta>
-#include <cstrike>
 #include <hamsandwich>
 #include <sh_core_main>
 #include <sh_core_gravity>
 #include <sh_core_weapons>
+
+#if defined USE_WEAPON_MODEL
+	#include <cstrike>
+#endif
 
 #pragma semicolon 1
 
@@ -120,20 +126,25 @@ public sh_hero_init(id, heroID, mode)
 	switch(mode) {
 		case SH_HERO_ADD: {
 			gHasVashPower[id] = true;
-
-			if (is_user_alive(id))
-				vash_weapons(id);
-			
+#if defined GIVE_WEAPON
+			sh_give_weapon(id, CSW_DEAGLE);
+#endif
 #if defined USE_WEAPON_MODEL
-			if (get_user_weapon(id) == CSW_DEAGLE)
+			if (gModelLoaded && get_user_weapon(id) == CSW_DEAGLE)
 				switch_model(id);
 #endif
+			if (is_user_alive(id))
+				vash_turnon(id);
 		}
 		case SH_HERO_DROP: {
 			gHasVashPower[id] = false;
-
+#if defined GIVE_WEAPON
 			sh_drop_weapon(id, CSW_DEAGLE, true);
-
+#endif
+#if !defined GIVE_WEAPON && defined USE_WEAPON_MODEL
+			if (gModelLoaded && get_user_weapon(id) == CSW_DEAGLE)
+				reset_model(id);
+#endif
 			if (is_user_alive(id))
 				vash_shutdown(id);
 		}
@@ -149,7 +160,10 @@ public sh_client_spawn(id)
 	if (!gHasVashPower[id])
 		return;
 	
-	vash_weapons(id);
+#if defined GIVE_WEAPON
+	sh_give_weapon(id, CSW_DEAGLE);
+#endif
+	vash_turnon(id);
 }
 //----------------------------------------------------------------------------------------------
 public sh_client_death(id)
@@ -160,12 +174,10 @@ public sh_client_death(id)
 	vash_shutdown(id);
 }
 //----------------------------------------------------------------------------------------------
-vash_weapons(index)
+vash_turnon(index)
 {
 	set_hudmessage(200, 0, 0, -1.0, 0.28, 2, 0.02, 4.0, 0.01, 0.1, -1);
 	ShowSyncHudMsg(index, gmsgSync, "Vash - EVASION ON - Removing a random hitzone every second");
-	
-	sh_give_weapon(index, CSW_DEAGLE);
 }
 //----------------------------------------------------------------------------------------------
 vash_shutdown(index)
@@ -203,12 +215,13 @@ vash_shutdown(index)
 @Forward_Deagle_Deploy_Post(weapon_ent)
 {
 	if (!sh_is_active())
-		return;
+		return HAM_IGNORED;
 
 	// Get weapon's owner
 	new owner = fm_cs_get_weapon_ent_owner(weapon_ent);
 	
 	switch_model(owner);
+	return HAM_IGNORED;
 }
 //----------------------------------------------------------------------------------------------
 switch_model(index)
@@ -221,6 +234,22 @@ switch_model(index)
 	
 	set_pev(index, pev_viewmodel2, gModel_V_Deagle);
 }
+//----------------------------------------------------------------------------------------------
+#if !defined GIVE_WEAPON
+reset_model(index)
+{
+	if (!is_user_alive(index))
+		return;
+
+	if (cs_get_user_shield(index))
+		return;
+	
+	new weaponEnt = cs_get_user_weapon_entity(index);
+	
+	// Let CS update weapon models
+	ExecuteHamB(Ham_Item_Deploy, weaponEnt);
+}
+#endif
 //----------------------------------------------------------------------------------------------
 stock fm_cs_get_weapon_ent_owner(ent)
 {
