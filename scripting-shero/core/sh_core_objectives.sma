@@ -6,7 +6,7 @@
 
 #include <amxmodx>
 #include <amxmisc>
-#include <fakemeta>
+#include <engine>
 #include <csx>
 #include <cstrike>
 #include <sh_core_main>
@@ -97,10 +97,10 @@ public bomb_planted(planter)
 	if (!sh_is_active() || !CvarObjectiveXP)
 		return;
 	
-	if (!is_user_connected(planter) || !pev_valid(gXpBonusC4ID))
+	if (!is_user_connected(planter) || !is_valid_ent(gXpBonusC4ID))
 		return;
 
-	if (planter != pev(gXpBonusC4ID, pev_owner))
+	if (planter != entity_get_edict2(gXpBonusC4ID, EV_ENT_owner))
 		return;
 
 	if (cs_get_user_team(planter) != CS_TEAM_T)

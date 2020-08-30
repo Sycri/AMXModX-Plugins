@@ -153,7 +153,7 @@ public sh_client_spawn(id)
 		return HAM_IGNORED;
 
 	// Get weapon's owner
-	new owner = fm_cs_get_weapon_ent_owner(weapon_ent);
+	new owner = get_ent_data_entity(weapon_ent, "CBasePlayerItem", "m_pPlayer");
 	
 	switch_model(owner);
 	return HAM_IGNORED;
@@ -179,14 +179,5 @@ reset_model(index)
 	ExecuteHamB(Ham_Item_Deploy, weaponEnt);
 }
 #endif
-//----------------------------------------------------------------------------------------------
-stock fm_cs_get_weapon_ent_owner(ent)
-{
-	// Prevent server crash if entity's private data not initalized
-	if (pev_valid(ent) != 2)
-		return -1;
-	
-	return get_ent_data_entity(ent, "CBasePlayerItem", "m_pPlayer");
-}
 #endif
 //----------------------------------------------------------------------------------------------

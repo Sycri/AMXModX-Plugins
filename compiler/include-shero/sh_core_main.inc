@@ -12,7 +12,7 @@
 #endif
 
 #include <amxmodx>
-#include <fakemeta>
+#include <engine>
 #include <sh_core_main_const>
 
 //----------------------------------------------------------------------------------------------
@@ -350,10 +350,7 @@ stock bool:sh_friendlyfire_on()
  *
  * @return		Max players of server.
  */
-stock sh_maxplayers()
-{
-	return MaxClients;
-}
+#define sh_maxplayers() MaxClients
 
 /**
  * Plays sound to inform the client they can not comply with the current action.
@@ -421,9 +418,9 @@ stock sh_screen_shake(id, Float:amplitude, Float:duration, Float:frequency)
 
 	// Check unsigned short range
 	new amp, dura, freq;
-	amp = clamp(floatround(amplitude * float(1<<12)), 0, 0xFFFF);
-	dura = clamp(floatround(duration * float(1<<12)), 0, 0xFFFF);
-	freq = clamp(floatround(frequency * float(1<<8)), 0, 0xFFFF);
+	amp = clamp(floatround(amplitude * float(1 << 12)), 0, 0xFFFF);
+	dura = clamp(floatround(duration * float(1 << 12)), 0, 0xFFFF);
+	freq = clamp(floatround(frequency * float(1 << 8)), 0, 0xFFFF);
 
 	message_begin(MSG_ONE_UNRELIABLE, msgScreenShake, _, id);
 	write_short(amp);	// amplitude
@@ -450,16 +447,15 @@ stock sh_screen_shake(id, Float:amplitude, Float:duration, Float:frequency)
  */
 stock sh_set_rendering(entity, r = 255, g = 255, b = 255, amount = 16, fx = kRenderFxNone, render = kRenderNormal)
 {
-	if (!pev_valid(entity))
+	if (!is_valid_ent(entity))
 		return 0;
 
 	new Float:alpha = float(amount);
 
 	// This check is only to favor invisibility of a player over any other render expect a reset
-	if (entity <= sh_maxplayers()) {
-
+	if (entity <= MaxClients) {
 		// If client is in an alpha render do we need to block this render setting.
-		if (pev(entity, pev_rendermode) == kRenderTransAlpha) {
+		if (entity_get_int(entity, EV_INT_rendermode) == kRenderTransAlpha) {
 
 			// If just resetting render allow it to reset
 			if (r != 255 || g != 255 || b != 255 || amount != 16 || fx != kRenderFxNone || render != kRenderNormal) {
@@ -468,11 +464,8 @@ stock sh_set_rendering(entity, r = 255, g = 255, b = 255, amount = 16, fx = kRen
 				if (render != kRenderTransAlpha)
 					return 0;
 
-				new Float:currentAlpha;
-				pev(entity, pev_renderamt, currentAlpha);
-
 				// Only set alpha render if equal or less visible (equal to allow color changes etc.)
-				if (alpha > currentAlpha)
+				if (alpha > entity_get_float(entity, EV_FL_renderamt))
 					return 0;
 			}
 		}
@@ -483,10 +476,10 @@ stock sh_set_rendering(entity, r = 255, g = 255, b = 255, amount = 16, fx = kRen
 	renderColor[1] = float(g);
 	renderColor[2] = float(b);
 
-	set_pev(entity, pev_renderfx, fx);
-	set_pev(entity, pev_rendercolor, renderColor);
-	set_pev(entity, pev_rendermode, render);
-	set_pev(entity, pev_renderamt, alpha);
+	entity_set_int(entity, EV_INT_renderfx, fx);
+	entity_set_vector(entity, EV_VEC_rendercolor, renderColor);
+	entity_set_int(entity, EV_INT_rendermode, render);
+	entity_set_float(entity, EV_FL_renderamt, alpha);
 
 	return 1;
 }
@@ -508,13 +501,13 @@ stock bool:sh_hull_vacant(id, const Float:origin[3], hullType = HULL_HEAD, &hite
 	// Thanks to VEN for his is_hull_vacant stock which this is based on
 
 	// Find an open space and ignore id in that space
-	engfunc(EngFunc_TraceHull, origin, origin, 0, hullType, id, 0);
+	trace_hull(origin, hullType, id, DONT_IGNORE_MONSTERS);
 
 	// byref index of what was hit, multiple things may be in hull so may not return what you expect
-	hitent = get_tr2(0, TraceResult:TR_pHit);
+	hitent = traceresult(TR_Hit);
 
 	// Is the origin's hull empty for the hull type
-	if (!get_tr2(0, TraceResult:TR_StartSolid) && !get_tr2(0, TraceResult:TR_AllSolid) && get_tr2(0, TraceResult:TR_InOpen))
+	if (!traceresult(TR_StartSolid) && !traceresult(TR_AllSolid) && traceresult(TR_InOpen))
 		return true;
 
 	return false;
@@ -545,12 +538,12 @@ stock sh_get_velocity(const Float:initial[3], const Float:final[3], Float:speed,
 	new Float:maxSpeed = get_pcvar_float(sv_maxvelocity);
 
 	// Time = Distance / Speed
-	new Float:fTime = vector_distance(initial, final) / floatclamp(speed, -maxSpeed, maxSpeed);
+	new Float:time = vector_distance(initial, final) / floatclamp(speed, -maxSpeed, maxSpeed);
 
 	// Velocity = Distance / Time
-	velocity[0] += (final[0] - initial[0]) / fTime;
-	velocity[1] += (final[1] - initial[1]) / fTime;
-	velocity[2] += (final[2] - initial[2]) / fTime;
+	velocity[0] += (final[0] - initial[0]) / time;
+	velocity[1] += (final[1] - initial[1]) / time;
+	velocity[2] += (final[2] - initial[2]) / time;
 }
 
 //------------

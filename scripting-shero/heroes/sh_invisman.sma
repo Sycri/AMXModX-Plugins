@@ -13,7 +13,7 @@ invisman_checkonground 0	//Must player be on ground to be invisible (Default 0 =
 
 #include <amxmodx>
 #include <amxmisc>
-#include <fakemeta>
+#include <engine>
 #include <sh_core_main>
 
 #pragma semicolon 1
@@ -104,10 +104,10 @@ public sh_client_spawn(id)
 
 		setVisible = false;
 
-		if (CvarCheckOnGround && !(pev(player, pev_flags) & FL_ONGROUND))
+		if (CvarCheckOnGround && !(entity_get_int(player, EV_INT_flags) & FL_ONGROUND))
 			setVisible = true;
 
-		buttons = pev(player, pev_button);
+		buttons = entity_get_int(player, EV_INT_button);
 
 		// Always check these
 		if (buttons & WEAPON_BUTTONS)
@@ -122,7 +122,7 @@ public sh_client_spawn(id)
 			}
 			default: {
 				//Check speed of player against the checkmove cvar
-				pev(player, pev_velocity, velocity);
+				entity_get_vector(player, EV_VEC_velocity, velocity);
 				if (vector_length(velocity) >= CvarCheckMove)
 					setVisible = true;
 			}
@@ -132,7 +132,7 @@ public sh_client_spawn(id)
 			remove_invisibility(player);
 		} else {
 			// sysTime = get_systime();
-			global_get(glb_time, sysTime);
+			sysTime = get_global_float(GL_time);
 			
 			if (gStillTime[player] < 0.0)
 				gStillTime[player] = sysTime;

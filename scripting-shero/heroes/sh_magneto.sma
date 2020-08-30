@@ -11,7 +11,7 @@ magneto_giveglock 1				//Give the poor victim a glock?
 */
 
 #include <amxmodx>
-#include <fakemeta>
+#include <engine>
 #include <sh_core_main>
 #include <sh_core_weapons>
 #include <sh_core_shieldrestrict>
@@ -105,11 +105,11 @@ magneto_disarm(id, victim)
 {
 	new Float:velocity[3];
 
-	pev(victim, pev_velocity, velocity);
+	entity_get_vector(victim, EV_VEC_velocity, velocity);
 	velocity[2] += CvarBoost;
 
 	// Give em an upwards Jolt
-	set_pev(victim, pev_velocity, velocity);
+	entity_set_vector(victim, EV_VEC_velocity, velocity);
 
 	new weapons[32], num, i, weaponID;
 	get_user_weapons(victim, weapons, num);

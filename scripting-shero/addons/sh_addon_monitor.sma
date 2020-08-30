@@ -61,11 +61,11 @@
 *          at 800x600 to 1280x1024.
 *
 *  Changelog:
-*   v1.7 - Sycri - 08/22/20
+*   v1.7 - Sycri - 08/30/20
 *	    - Added a check to verify user's xp has loaded to show level spec info
 *	    - Readded HUD removement as it is now possible
 *	    - Replaced FM_Think with Ham_Think
-*	    - Revamped the code
+*	    - Rewrote the code using Engine instead of Fakemeta
 *	    (Update requires use of SuperHero Mod 1.3.0 or above.)
 *
 *   v1.6 - Jelle - 07/15/13
@@ -126,9 +126,8 @@
 
 #include <amxmodx>
 #include <amxmisc>
-#include <fakemeta>
+#include <engine>
 #include <fun>
-#include <cstrike>
 #include <hamsandwich>
 #include <sh_core_main>
 
@@ -172,9 +171,9 @@ public plugin_init()
 
 	gMonitorHudSync = CreateHudSyncObj();
 
-	new monitor = cs_create_entity("info_target");
+	new monitor = create_entity("info_target");
 	if (monitor) {
-		set_pev(monitor, pev_nextthink, get_gametime() + 0.1);
+		entity_set_float(monitor, EV_FL_nextthink, get_gametime() + 0.1);
 		RegisterHamFromEntity(Ham_Think, monitor, "@Forward_Monitor_Think");
 	}
 }
@@ -295,7 +294,7 @@ public sh_client_spawn(id)
 #if defined MONITOR_HP || defined MONITOR_AP
 				len += formatex(tmp[len], charsmax(tmp) - len, "  |  ");
 #endif
-				pev(player, pev_gravity, gravity);
+				gravity = entity_get_float(player, EV_FL_gravity);
 				len += formatex(tmp[len], charsmax(tmp) - len, "G %d%%", floatround(gravity * 100.0));
 #endif
 
@@ -303,12 +302,12 @@ public sh_client_spawn(id)
 #if defined MONITOR_HP || defined MONITOR_AP || defined MONITOR_GRAVITY
 				len += formatex(tmp[len], charsmax(tmp) - len, "  |  ");
 #endif
-				pev(player, pev_velocity, velocity);
+				entity_get_vector(player, EV_VEC_velocity, velocity);
 				len += formatex(tmp[len], charsmax(tmp) - len, "SPD %d", floatround(vector_length(velocity)));
 #endif
 
 #if defined MONITOR_GODMODE
-				pev(player, pev_takedamage, takeDamage);
+				takeDamage = entity_get_float(player, EV_FL_takedamage);
 							
 				// GODMODE will only show if godmode is on
 				if (takeDamage == DAMAGE_NO) {
@@ -330,13 +329,13 @@ public sh_client_spawn(id)
 #if defined MONITOR_SPEC
 			else {
 				// Who is the id specing
-				specPlayer = pev(player, pev_iuser2);
+				specPlayer = entity_get_int(player, EV_INT_iuser2);
 
 				if (!specPlayer || player == specPlayer)
 					continue;
 
-				pev(specPlayer, pev_velocity, velocity);
-				pev(specPlayer, pev_gravity, gravity);
+				entity_get_vector(specPlayer, EV_VEC_velocity, velocity);
+				gravity = entity_get_float(specPlayer, EV_FL_gravity);
 
 				if (sh_user_is_loaded(specPlayer)) {
 					specPlayerLevel = sh_get_user_lvl(specPlayer);
@@ -355,7 +354,7 @@ public sh_client_spawn(id)
 	}
 
 	// Keep monitorloop active even if shmod is not, incase sh is turned back on
-	set_pev(ent, pev_nextthink, get_gametime() + 0.1);
+	entity_set_float(ent, EV_FL_nextthink, get_gametime() + 0.1);
 
 	return HAM_IGNORED;
 }

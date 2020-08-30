@@ -5,7 +5,7 @@
 *****************************************************************************/
 
 #include <amxmodx>
-#include <fakemeta>
+#include <engine>
 #include <fun>
 #include <cstrike>
 #include <sh_core_main>
@@ -211,7 +211,7 @@ getMaxHealth(id)
 	}
 	
 	// Other plugins might use this, even maps
-	set_pev(id, pev_max_health, returnHealth);
+	entity_set_float(id, EV_FL_max_health, float(returnHealth));
 	
 	return gMaxHealth[id] = returnHealth;
 }

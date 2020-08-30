@@ -23,7 +23,7 @@ savitar_forceknife 0			//When running, is Savitar forced to use his knife?
 
 #include <amxmodx>
 #include <amxmisc>
-#include <fakemeta>
+#include <engine>
 #include <cstrike>
 #include <sh_core_main>
 #include <sh_core_speed>
@@ -120,12 +120,12 @@ public sh_client_death(id)
 		if (!gHasSavitar[player])
 			continue;
 
-		if (!(pev(player, pev_button) & MOVEMENT_BUTTONS)) {
+		if (!(entity_get_int(player, EV_INT_button) & MOVEMENT_BUTTONS)) {
 			clear_savitar(player);
 			continue;
 		}
 
-		pev(player, pev_velocity, velocity);
+		entity_get_vector(player, EV_VEC_velocity, velocity);
 		if (vector_length(velocity) < CvarMinSpeed) {
 			clear_savitar(player);
 			continue;

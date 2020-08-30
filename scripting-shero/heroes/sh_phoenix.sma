@@ -30,7 +30,7 @@ phoenix_maxdamage 90	//Maximum damage dealt spread over radius (Default 90)
 
 #include <amxmodx>
 #include <amxmisc>
-#include <fakemeta>
+#include <engine>
 #include <fun>
 #include <cstrike>
 #include <hamsandwich>
@@ -117,8 +117,8 @@ public sh_client_death(victim, attacker)
 	
 	gUserTeam[victim] = cs_get_user_team(victim);
 	
-	pev(victim, pev_origin, gVecOrigin[victim]);
-	pev(victim, pev_v_angle, gVecAngles[victim]);
+	entity_get_vector(victim, EV_VEC_origin, gVecOrigin[victim]);
+	entity_get_vector(victim, EV_VEC_v_angle, gVecAngles[victim]);
 	
 	// Respawn it faster then Grandmaster, let this power be used before Grandmaster's
 	// Never set higher than 1.9 or lower than 0.5
@@ -156,9 +156,9 @@ public sh_client_death(victim, attacker)
 	phoenix_teleport(id);
 	rebirth_explosion(id);
 
-	new hulltype = (pev(id, pev_flags) & FL_DUCKING) ? HULL_HEAD : HULL_HUMAN;
-	if (!sh_hull_vacant(id, gVecOrigin[id], hulltype))
-		user_unstuck(id, gVecOrigin[id], hulltype);
+	new hullType = (entity_get_int(id, EV_INT_flags) & FL_DUCKING) ? HULL_HEAD : HULL_HUMAN;
+	if (!sh_hull_vacant(id, gVecOrigin[id], hullType))
+		user_unstuck(id, gVecOrigin[id], hullType);
 }
 //----------------------------------------------------------------------------------------------
 @Task_Unglow(id)
@@ -188,14 +188,14 @@ phoenix_teleport(id)
 {
 	// Thanks to Connor for duck and angles part
 	if (is_user_alive(id) && gVecOrigin[id][0]) {
-		set_pev(id, pev_flags, pev(id, pev_flags) | FL_DUCKING);
-		engfunc(EngFunc_SetSize, id, VEC_DUCK_HULL_MIN, VEC_DUCK_HULL_MAX);
-		engfunc(EngFunc_SetOrigin, id, gVecOrigin[id]);
-		set_pev(id, pev_view_ofs, VEC_DUCK_VIEW);
+		entity_set_int(id, EV_INT_flags, entity_get_int(id, EV_INT_flags) | FL_DUCKING);
+		entity_set_size(id, VEC_DUCK_HULL_MIN, VEC_DUCK_HULL_MAX);
+		entity_set_origin(id, gVecOrigin[id]);
+		entity_set_vector(id, EV_VEC_view_ofs, VEC_DUCK_VIEW);
 
-		set_pev(id, pev_angles, gVecAngles[id]);
-		set_pev(id, pev_v_angle, VEC_NULL);
-		set_pev(id, pev_fixangle, 1);
+		entity_set_vector(id, EV_VEC_angles, gVecAngles[id]);
+		entity_set_vector(id, EV_VEC_v_angle, VEC_NULL);
+		entity_set_int(id, EV_INT_fixangle, 1);
 	}
 
 	// Teleport Effects
@@ -229,7 +229,7 @@ rebirth_explosion(id)
 		if ((cs_get_user_team(id) == cs_get_user_team(player) && !FFOn) || player == id)
 			continue;
 		
-		pev(player, pev_origin, playerOrigin);
+		entity_get_vector(player, EV_VEC_origin, playerOrigin);
 		distanceBetween = vector_distance(gVecOrigin[id], playerOrigin);
 			
 		if (distanceBetween < dmgRadius) {
@@ -302,7 +302,7 @@ explosion_effect(Float:vec1[3], Float:dmgRadius)
 	message_end();
 }
 //----------------------------------------------------------------------------------------------
-user_unstuck(index, Float:origin[3], hulltype)
+user_unstuck(index, Float:origin[3], hullType)
 {	
 	new Float:newOrigin[3];
 	new attempts, dist;
@@ -317,10 +317,8 @@ user_unstuck(index, Float:origin[3], hulltype)
 			newOrigin[1] = random_float(origin[1] - dist, origin[1] + dist);
 			newOrigin[2] = random_float(origin[2] - dist, origin[2] + dist);
 			
-			engfunc(EngFunc_TraceHull, newOrigin, newOrigin, 0, hulltype, index, 0);
-			
-			if (get_tr2(0, TR_InOpen) && !get_tr2(0, TR_AllSolid) && !get_tr2 (0, TR_StartSolid)) {
-				engfunc(EngFunc_SetOrigin, index, newOrigin);
+			if (sh_hull_vacant(index, newOrigin, hullType)) {
+				entity_set_origin(index, newOrigin);
 				return;
 			}
 		}

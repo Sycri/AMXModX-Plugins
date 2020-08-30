@@ -6,7 +6,7 @@
 
 #include <amxmodx>
 #include <amxmisc>
-#include <fakemeta>
+#include <engine>
 #include <fun>
 #include <cstrike>
 #include <hamsandwich>
@@ -180,7 +180,7 @@ bool:@Native_GetStun()
 		return HAM_IGNORED;
 
 	static owner;
-	owner = pev(weapon, pev_owner);
+	owner = entity_get_edict2(weapon, EV_ENT_owner);
 
 	if (!is_user_alive(owner) || !sh_user_is_loaded(owner))
 		return HAM_IGNORED;

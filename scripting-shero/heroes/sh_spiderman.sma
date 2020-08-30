@@ -14,7 +14,7 @@ spiderman_maxhooks 60		//Max ammout of hooks allowed (-1 is an unlimited ammount
 
 #include <amxmodx>
 #include <amxmisc>
-#include <fakemeta>
+#include <engine>
 #include <fun>
 #include <cstrike>
 #include <sh_core_main>
@@ -183,9 +183,9 @@ spiderman_physics(index, bool:autoReel)
 	new Float:vTowards_A, Float:DvTowards_A, Float:velocity[3];
 
 	get_user_origin(index, userOrigin);
-	pev(index, pev_velocity, velocity);
+	entity_get_vector(index, EV_VEC_velocity, velocity);
 
-	buttonPress = pev(index, pev_button);
+	buttonPress = entity_get_int(index, EV_INT_button);
 
 	if (buttonPress & IN_FORWARD)
 		++buttonAdjust[0];
@@ -254,7 +254,7 @@ spiderman_physics(index, bool:autoReel)
 	velocity[1] += (difference * A[1]) / distA;
 	velocity[2] += (difference * A[2]) / distA;
 
-	set_pev(index, pev_velocity, velocity);
+	entity_set_vector(index, EV_VEC_velocity, velocity);
 }
 //----------------------------------------------------------------------------------------------
 spiderman_cheapReel(index)
@@ -279,7 +279,7 @@ spiderman_cheapReel(index)
 		velocity[2] = (gHookLocation[index][2] - userOrigin[2]) * inverseTime;
 	}
 
-	set_pev(index, pev_velocity, velocity);
+	entity_set_vector(index, EV_VEC_velocity, velocity);
 }
 //----------------------------------------------------------------------------------------------
 spiderman_hook_off(index)

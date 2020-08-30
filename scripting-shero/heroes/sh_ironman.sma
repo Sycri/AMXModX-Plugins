@@ -15,6 +15,7 @@ ironman_fuelcost 1		//How much armor does it cost per firing, set 0 to not use a
 
 #include <amxmodx>
 #include <amxmisc>
+#include <engine>
 #include <cstrike>
 #include <sh_core_main>
 #include <sh_core_hpap>
@@ -201,12 +202,12 @@ public sh_hero_key(id, heroID, key)
 
 			static Float:velocity[3], Float:origin[3];
 
-			pev(id, pev_velocity, velocity);
+			entity_get_vector(id, EV_VEC_velocity, velocity);
 
 			// Remove the need to jump to use, give them a small upward lift
-			if (pev(id, pev_flags) & FL_ONGROUND) {
+			if (entity_get_int(id, EV_INT_flags) & FL_ONGROUND) {
 				velocity[2] += 100.0;
-				set_pev(id, pev_velocity, velocity);
+				entity_set_vector(id, EV_VEC_velocity, velocity);
 			}
 
 			static Float:xyMultiplier, Float:thrust, Float:maxSpeed;
@@ -231,9 +232,9 @@ public sh_hero_key(id, heroID, key)
 			if (velocity[2] > thrust * 2.0)
 				velocity[2] = thrust * 2.0;
 
-			set_pev(id, pev_velocity, velocity);
+			entity_set_vector(id, EV_VEC_velocity, velocity);
 
-			pev(id, pev_origin, origin);
+			entity_get_vector(id, EV_VEC_origin, origin);
 
 			jetpack_fire_effect(origin);
 

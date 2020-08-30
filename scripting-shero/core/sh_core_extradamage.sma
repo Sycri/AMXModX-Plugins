@@ -82,10 +82,9 @@ public plugin_natives()
 		// *** End of damage-armor calculations ***
 	}
 
-	// No need to create more
-	static ent;
+	new ent = cs_create_entity("info_target");
 	if (!ent)
-		ent = cs_create_entity("info_target");
+		return;
 
 	new wpnDescription[32];
 	get_string(4, wpnDescription, charsmax(wpnDescription));
@@ -146,6 +145,8 @@ public plugin_natives()
 		if (!get_param(7))
 			set_ent_data_float(victim, "CBasePlayer", "m_flVelocityModifier", 1.0); // No painshock/slowdown
 	}
+
+	engfunc(EngFunc_RemoveEntity, ent);
 }
 //----------------------------------------------------------------------------------------------
 @Forward_Player_TakeDamage_Post(victim, inflictor, attacker, Float:damage, damagebits)

@@ -6,7 +6,7 @@
 
 #include <amxmodx>
 #include <amxmisc>
-#include <fakemeta>
+#include <engine>
 #include <fun>
 #include <cstrike>
 #include <hamsandwich>
@@ -134,7 +134,7 @@ public sh_client_spawn(id)
 		return HAM_IGNORED;
 
 	static owner;
-	owner = pev(weapon, pev_owner);
+	owner = entity_get_edict2(weapon, EV_ENT_owner);
 
 	if (!is_user_alive(owner) || gIsFreezeTime || !sh_user_is_loaded(owner))
 		return HAM_IGNORED;

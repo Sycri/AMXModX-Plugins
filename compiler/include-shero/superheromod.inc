@@ -24,3 +24,5 @@
 #include <sh_core_extradamage>
 #include <sh_core_godmode>
 #include <sh_core_shieldrestrict>
+
+#define SH_MAXSLOTS MAX_PLAYERS

@@ -18,7 +18,7 @@ blink_delay 0.1			//Delay time before the teleport occurs
 //------- Do not edit below this point ------//
 
 #include <amxmodx>
-#include <fakemeta>
+#include <engine>
 #include <fun>
 #include <sh_core_main>
 
@@ -77,7 +77,7 @@ public sh_hero_key(id, heroID, key)
 			return;
 		}
 		
-		if (get_user_weapon(id) == CSW_C4 && pev(id, pev_button) & IN_ATTACK) {
+		if (get_user_weapon(id) == CSW_C4 && entity_get_int(id, EV_INT_button) & IN_ATTACK) {
 			sh_sound_deny(id);
 			return;
 		}
@@ -102,7 +102,7 @@ public sh_hero_key(id, heroID, key)
 	if (!is_user_alive(id))
 		return;
 
-	if (get_user_weapon(id) == CSW_C4 && pev(id, pev_button) & IN_ATTACK) {
+	if (get_user_weapon(id) == CSW_C4 && entity_get_int(id, EV_INT_button) & IN_ATTACK) {
 		sh_sound_deny(id);
 		return;
 	}
@@ -113,11 +113,11 @@ public sh_hero_key(id, heroID, key)
 	set_user_origin(id, gBlinkSpot[id]);
 
 	new Float:origin[3];
-	pev(id, pev_origin, origin);
+	entity_get_vector(id, EV_VEC_origin, origin);
 
-	new hulltype = (pev(id, pev_flags) & FL_DUCKING) ? HULL_HEAD : HULL_HUMAN;
-	if (!sh_hull_vacant(id, origin, hulltype))
-		user_unstuck(id, origin, hulltype);
+	new hullType = (entity_get_int(id, EV_INT_flags) & FL_DUCKING) ? HULL_HEAD : HULL_HUMAN;
+	if (!sh_hull_vacant(id, origin, hullType))
+		user_unstuck(id, origin, hullType);
 	
 	set_task(1.0, "@Task_Unglow", id);
 }
@@ -127,7 +127,7 @@ public sh_hero_key(id, heroID, key)
 	sh_set_rendering(id);
 }
 //----------------------------------------------------------------------------------------------
-user_unstuck(index, Float:origin[3], hulltype)
+user_unstuck(index, Float:origin[3], hullType)
 {	
 	new Float:newOrigin[3];
 	new attempts, dist;
@@ -142,10 +142,8 @@ user_unstuck(index, Float:origin[3], hulltype)
 			newOrigin[1] = random_float(origin[1] - dist, origin[1] + dist);
 			newOrigin[2] = random_float(origin[2] - dist, origin[2] + dist);
 			
-			engfunc(EngFunc_TraceHull, newOrigin, newOrigin, 0, hulltype, index, 0);
-			
-			if (get_tr2(0, TR_InOpen) && !get_tr2(0, TR_AllSolid) && !get_tr2 (0, TR_StartSolid)) {
-				engfunc(EngFunc_SetOrigin, index, newOrigin);
+			if (sh_hull_vacant(index, newOrigin, hullType)) {
+				entity_set_origin(index, newOrigin);
 				return;
 			}
 		}

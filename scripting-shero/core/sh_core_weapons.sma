@@ -6,7 +6,7 @@
 
 #include <amxmodx>
 #include <amxmisc>
-#include <fakemeta>
+#include <engine>
 #include <fun>
 #include <cstrike>
 #include <hamsandwich>
@@ -194,7 +194,7 @@ dropWeapon(id, weaponID, bool:remove)
 	new slot = sh_get_weapon_slot(weaponID);
 	if (slot == 1 || slot == 2 || slot == 5) {
 		//Don't drop/remove the main c4
-		if (weaponID == CSW_C4 && pev_valid(sh_get_c4_id()) && id == pev(sh_get_c4_id(), pev_owner))
+		if (weaponID == CSW_C4 && is_valid_ent(sh_get_c4_id()) && id == entity_get_edict2(sh_get_c4_id(), EV_ENT_owner))
 			return;
 
 		static weaponName[32];
@@ -210,16 +210,16 @@ dropWeapon(id, weaponID, bool:remove)
 
 		while ((weaponBox = cs_find_ent_by_owner(weaponBox, "weaponbox", id)) > 0) {
 			// Skip anything not owned by this client
-			if (!pev_valid(weaponBox))
+			if (!is_valid_ent(weaponBox))
 				continue;
 
 			// If Velocities are all zero its on the ground already and should stay there
-			pev(weaponBox, pev_velocity, weaponVel);
+			entity_get_vector(weaponBox, EV_VEC_velocity, weaponVel);
 			if (weaponVel[0] == 0.0 && weaponVel[1] == 0.0 && weaponVel[2] == 0.0)
 				continue;
 
 			// Forcing a think cleanly removes weaponbox and it's contents
-			dllfunc(DLLFunc_Think, weaponBox);
+			call_think(weaponBox);
 		}
 	}
 }
@@ -359,8 +359,8 @@ giveWeapon(id, weaponID, bool:switchTo)
 				new wpn[32];
 				get_weaponname(wpnID, wpn, charsmax(wpn));
 
-				while ((weaponEnt = engfunc(EngFunc_FindEntityByString, weaponEnt, "classname", wpn)) != 0) {
-					if (id == pev(weaponEnt, pev_owner)) {
+				while ((weaponEnt = find_ent_by_class(weaponEnt, wpn)) != 0) {
+					if (id == entity_get_edict2(weaponEnt, EV_ENT_owner)) {
 						idSilence = cs_get_weapon_silen(weaponEnt);
 						break;
 					}
@@ -370,8 +370,8 @@ giveWeapon(id, weaponID, bool:switchTo)
 				new wpn[32];
 				get_weaponname(wpnID, wpn, charsmax(wpn));
 
-				while ((weaponEnt = engfunc(EngFunc_FindEntityByString, weaponEnt, "classname", wpn)) != 0) {
-					if (id == pev(weaponEnt, pev_owner)) {
+				while ((weaponEnt = find_ent_by_class(weaponEnt, wpn)) != 0) {
+					if (id == entity_get_edict2(weaponEnt, EV_ENT_owner)) {
 						idBurst = cs_get_weapon_burst(weaponEnt);
 						break;
 					}

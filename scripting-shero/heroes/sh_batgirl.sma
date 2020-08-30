@@ -15,7 +15,7 @@ batgirl_teamcolored 1		//1=teamcolored zip lines 0=white zip lines
 
 #include <amxmodx>
 #include <amxmisc>
-#include <fakemeta>
+#include <engine>
 #include <fun>
 #include <cstrike>
 #include <sh_core_main>
@@ -169,7 +169,7 @@ bool:pass_aim_test(index)
 	get_user_origin(index, origin, Origin_AimEndEyes);
 	IVecFVec(origin, fOrigin);
 	
-	if (engfunc(EngFunc_PointContents, fOrigin) == CONTENTS_SKY)
+	if (point_contents(fOrigin) == CONTENTS_SKY)
 		return false;
 	
 	return true;
@@ -203,9 +203,9 @@ batgirl_physics(index, bool:autoReel)
 	new Float:vTowards_A, Float:DvTowards_A, Float:velocity[3];
 	
 	get_user_origin(index, userOrigin);
-	pev(index, pev_velocity, velocity);
+	entity_get_vector(index, EV_VEC_velocity, velocity);
 	
-	buttonPress = pev(index, pev_button);
+	buttonPress = entity_get_int(index, EV_INT_button);
 	
 	if (buttonPress & IN_FORWARD)
 		++buttonAdjust[0];
@@ -274,7 +274,7 @@ batgirl_physics(index, bool:autoReel)
 	velocity[1] += (difference * A[1]) / distA;
 	velocity[2] += (difference * A[2]) / distA;
 
-	set_pev(index, pev_velocity, velocity);
+	entity_set_vector(index, EV_VEC_velocity, velocity);
 }
 //----------------------------------------------------------------------------------------------
 batgirl_cheapReel(index)
@@ -299,7 +299,7 @@ batgirl_cheapReel(index)
 		velocity[2] = (gHookLocation[index][2] - userOrigin[2]) * inverseTime;
 	}
 	
-	set_pev(index, pev_velocity, velocity);
+	entity_set_vector(index, EV_VEC_velocity, velocity);
 }
 //----------------------------------------------------------------------------------------------
 batgirl_hook_off(index)

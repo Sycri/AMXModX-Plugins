@@ -12,7 +12,7 @@ shadowcat_cliptime 6		//# of seconds Shadowcat has in noclip mode.
 
 #include <amxmodx>
 #include <amxmisc>
-#include <fakemeta>
+#include <engine>
 #include <fun>
 #include <sh_core_main>
 
@@ -177,8 +177,8 @@ shadowcat_endnoclip(id)
 
 		// If player is stuck kill them
 		new Float:origin[3], hulltype;
-		pev(id, pev_origin, origin);
-		hulltype = (pev(id, pev_flags) & FL_DUCKING) ? HULL_HEAD : HULL_HUMAN;
+		entity_get_vector(id, EV_VEC_origin, origin);
+		hulltype = (entity_get_int(id, EV_INT_flags) & FL_DUCKING) ? HULL_HEAD : HULL_HUMAN;
 		if (!sh_hull_vacant(id, origin, hulltype))
 			user_kill(id);
 	}

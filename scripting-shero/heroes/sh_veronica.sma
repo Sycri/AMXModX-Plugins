@@ -30,6 +30,7 @@ veronica_rldmode 0			//Endless ammo mode: 0-server default, 1-no reload, 2-reloa
 
 #include <amxmodx>
 #include <amxmisc>
+#include <engine>
 #include <fakemeta>
 #include <cstrike>
 #include <hamsandwich>
@@ -47,6 +48,9 @@ new const gHeroName[] = "Veronica";
 new bool:gHasVeronica[MAX_PLAYERS + 1];
 new gAmmo[MAX_PLAYERS + 1];
 new gmsgStatusIcon;
+
+new const Float:NADE_SIZE_MIN[3] = { -1.0, -1.0, -1.0 };
+new const Float:NADE_SIZE_MAX[3] = { 1.0, 1.0, 1.0 };
 
 new CvarGrenades, CvarMaxDamage, CvarReloadMode;
 new Float:CvarRadius, Float:CvarConc, Float:CvarCooldown;
@@ -88,7 +92,7 @@ public plugin_init()
 	// read_data(2) == CSW_AK47 = 2=28
 	register_event_ex("CurWeapon", "@Event_CurWeapon", RegisterEvent_Single | RegisterEvent_OnlyAlive, "1=1", "2=28", "3=0");
 	register_forward(FM_CmdStart, "@Forward_CmdStart");
-	register_forward(FM_Touch, "@Forward_Touch");
+	register_touch("*", gPowerClass, "@Forward_Touch");
 
 	RegisterHamPlayer(Ham_AddPlayerItem, "@Forward_AddPlayerItem_Post", 1);
 
@@ -191,7 +195,7 @@ public sh_client_death(id)
 	if (!sh_is_active() || !gHasVeronica[id] || !is_user_alive(id) || sh_is_freezetime())
 		return FMRES_IGNORED;
 
-	if ((get_uc(uc_handle, UC_Buttons) & IN_ATTACK2) && !(pev(id, pev_oldbuttons) & IN_ATTACK2)) {
+	if ((get_uc(uc_handle, UC_Buttons) & IN_ATTACK2) && !(entity_get_int(id, EV_INT_oldbuttons) & IN_ATTACK2)) {
 		if (get_user_weapon(id) == CSW_AK47)
 			launch_nade(id);
 	}
@@ -219,34 +223,34 @@ launch_nade(id)
 		return;
 
 	cs_set_ent_class(ent, gPowerClass);
-	engfunc(EngFunc_SetModel, ent, gModelGrenade);
+	entity_set_model(ent, gModelGrenade);
 
-	engfunc(EngFunc_SetSize, ent, {-1.0, -1.0, -1.0}, {1.0, 1.0, 1.0});
+	entity_set_size(ent, NADE_SIZE_MIN, NADE_SIZE_MAX);
 
 	new Float:origin[3], Float:angles[3], Float:vAngle[3];
 	// Get users postion and angles
-	pev(id, pev_origin, origin);
-	pev(id, pev_angles, angles);
-	pev(id, pev_v_angle, vAngle);
+	entity_get_vector(id, EV_VEC_origin, origin);
+	entity_get_vector(id, EV_VEC_angles, angles);
+	entity_get_vector(id, EV_VEC_v_angle, vAngle);
 
 	// Change height of entity origin
 	origin[2] += 10.0;
 
 	// Set entity postion and angles
-	engfunc(EngFunc_SetOrigin, ent, origin);
-	set_pev(ent, pev_angles, angles);
-	set_pev(ent, pev_v_angle, vAngle);
+	entity_set_origin(ent, origin);
+	entity_set_vector(ent, EV_VEC_angles, angles);
+	entity_set_vector(ent, EV_VEC_v_angle, vAngle);
 
 	// Set properties of the entity
-	set_pev(ent, pev_effects, EF_MUZZLEFLASH);
-	set_pev(ent, pev_solid, SOLID_BBOX);
-	set_pev(ent, pev_movetype, MOVETYPE_TOSS);
-	set_pev(ent, pev_owner, id);
+	entity_set_int(ent, EV_INT_effects, EF_MUZZLEFLASH);
+	entity_set_int(ent, EV_INT_solid, SOLID_BBOX);
+	entity_set_int(ent, EV_INT_movetype, MOVETYPE_TOSS);
+	entity_set_edict(ent, EV_ENT_owner, id);
 
 	new Float:velocity[3];
 	velocity_by_aim(id, 2000, velocity);
 
-	set_pev(ent, pev_velocity, velocity);
+	entity_set_vector(ent, EV_VEC_velocity, velocity);
 
 	emit_sound(id, CHAN_WEAPON, gSoundLaunch, VOL_NORM, ATTN_NORM, 0, PITCH_NORM);
 
@@ -266,30 +270,20 @@ launch_nade(id)
 //----------------------------------------------------------------------------------------------
 send_weapon_anim(id, animation)
 {
-	set_pev(id, pev_weaponanim, animation);
+	entity_set_int(id, EV_INT_weaponanim, animation);
 
 	message_begin(MSG_ONE_UNRELIABLE, SVC_WEAPONANIM, _, id);
 	write_byte(animation);
-	write_byte(pev(id, pev_body));
+	write_byte(entity_get_int(id, EV_INT_body));
 	message_end();
 }
 //----------------------------------------------------------------------------------------------
-@Forward_Touch(ptr, ptd)
+@Forward_Touch(ptd, ptr)
 {
 	if (!sh_is_active())
-		return FMRES_IGNORED;
+		return PLUGIN_CONTINUE;
 
-	if (!pev_valid(ptr))
-		return FMRES_IGNORED;
-
-	static classname[32];
-	classname[0] = '^0';
-	pev(ptr, pev_classname, classname, charsmax(classname));
-
-	if (!equal(classname, gPowerClass))
-		return FMRES_IGNORED;
-
-	new attacker = pev(ptr, pev_owner);
+	new attacker = entity_get_edict2(ptr, EV_ENT_owner);
 
 	new Float:dRatio, Float:distanceBetween, damage;
 	new Float:dmgRadius = CvarRadius;
@@ -298,7 +292,7 @@ send_weapon_anim(id, animation)
 	new CsTeams:attackerTeam = cs_get_user_team(attacker);
 	new Float:vicOrigin[3], Float:explosionOrigin[3];
 
-	pev(ptr, pev_origin, explosionOrigin);
+	entity_get_vector(ptr, EV_VEC_origin, explosionOrigin);
 
 	new players[MAX_PLAYERS], playerCount, victim;
 	get_players_ex(players, playerCount, GetPlayers_ExcludeDead | GetPlayers_ExcludeHLTV);
@@ -306,7 +300,7 @@ send_weapon_anim(id, animation)
 	for (new i = 0; i < playerCount; i++) {
 		victim = players[i];
 
-		pev(victim, pev_origin, vicOrigin);
+		entity_get_vector(victim, EV_VEC_origin, vicOrigin);
 		distanceBetween = vector_distance(explosionOrigin, vicOrigin);
 
 		if (distanceBetween <= dmgRadius) {
@@ -334,15 +328,15 @@ send_weapon_anim(id, animation)
 
 	emit_sound(ptr, CHAN_WEAPON, gSoundExplode, VOL_NORM, ATTN_NORM, 0, PITCH_NORM);
 
-	engfunc(EngFunc_RemoveEntity, ptr);
+	remove_entity(ptr);
 
-	return HAM_IGNORED;
+	return PLUGIN_CONTINUE;
 }
 //----------------------------------------------------------------------------------------------
 stock get_velocity_from_origin(ent, Float:origin[3], Float:speed, Float:velocity[3])
 {
 	new Float:entOrigin[3];
-	pev(ent, pev_origin, entOrigin);
+	entity_get_vector(ent, EV_VEC_origin, entOrigin);
 
 	// Velocity = Distance / Time
 
@@ -365,7 +359,7 @@ stock set_velocity_from_origin(ent, Float:origin[3], Float:speed)
 	new Float:velocity[3];
 	get_velocity_from_origin(ent, origin, speed, velocity);
 
-	set_pev(ent, pev_velocity, velocity);
+	entity_set_vector(ent, EV_VEC_velocity, velocity);
 
 	return 1;
 }
@@ -392,7 +386,7 @@ stock set_velocity_from_origin(ent, Float:origin[3], Float:speed)
 		return HAM_IGNORED;
 
 	// Get weapon's owner
-	new owner = fm_cs_get_weapon_ent_owner(weapon_ent);
+	new owner = get_ent_data_entity(weapon_ent, "CBasePlayerItem", "m_pPlayer");
 	
 	if (!is_user_alive(owner) || !gHasVeronica[owner])
 		return HAM_IGNORED;
@@ -407,7 +401,7 @@ stock set_velocity_from_origin(ent, Float:origin[3], Float:speed)
 		return HAM_IGNORED;
 
 	// Get weapon's owner
-	new owner = fm_cs_get_weapon_ent_owner(weapon_ent);
+	new owner = get_ent_data_entity(weapon_ent, "CBasePlayerItem", "m_pPlayer");
 	
 	if (is_user_alive(owner) && gHasVeronica[owner]) {
 		ammo_hud(owner, 1);
@@ -443,15 +437,6 @@ reset_model(index)
 }
 #endif
 #endif
-//----------------------------------------------------------------------------------------------
-stock fm_cs_get_weapon_ent_owner(ent)
-{
-	// Prevent server crash if entity's private data not initalized
-	if (pev_valid(ent) != 2)
-		return -1;
-	
-	return get_ent_data_entity(ent, "CBasePlayerItem", "m_pPlayer");
-}
 //----------------------------------------------------------------------------------------------
 ammo_hud(id, show)
 {

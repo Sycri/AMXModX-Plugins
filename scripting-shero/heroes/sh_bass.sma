@@ -33,6 +33,7 @@ bass_multishot 0.1			//Delay for multishots on holding key down, set to -1 for o
 
 #include <amxmodx>
 #include <amxmisc>
+#include <engine>
 #include <cstrike>
 #include <sh_core_main>
 #include <sh_core_hpap>
@@ -118,7 +119,7 @@ public plugin_init()
 	sh_set_hero_grav(gHeroID, pcvarGravity);
 	sh_set_hero_bind(gHeroID);
 	
-	gBurnDecal = engfunc(EngFunc_DecalIndex, "{bigshot5");
+	gBurnDecal = get_decal_index("{bigshot5");
 }
 //----------------------------------------------------------------------------------------------
 public plugin_precache()

@@ -12,7 +12,7 @@ htorch_burndamage 10		//How much damage each burn does
 
 #include <amxmodx>
 #include <amxmisc>
-#include <fakemeta>
+#include <engine>
 #include <cstrike>
 #include <sh_core_main>
 #include <sh_core_extradamage>
@@ -76,7 +76,7 @@ public sh_hero_key(id, heroID, key)
 
 	if (key == SH_KEYDOWN) {
 		// Ludwigs flame thrower
-		if (pev(id, pev_waterlevel) == 3) {
+		if (entity_get_int(id, EV_INT_waterlevel) == 3) {
 			sh_chat_message(id, gHeroID, "You cannot use the Flame Blast while underwater");
 			sh_sound_deny(id);
 			return;
@@ -100,7 +100,7 @@ public sh_hero_key(id, heroID, key)
 		emit_sound(id, CHAN_WEAPON, gSoundFlameBlast, VOL_NORM, ATTN_NORM, 0, PITCH_NORM);
 
 		new Float:vec[3], aimVec[3], Float:fAimVec[3];
-		pev(id, pev_origin, vec);
+		entity_get_vector(id, EV_VEC_origin, vec);
 		get_user_origin(id, aimVec, Origin_AimEndClient);
 		IVecFVec(aimVec, fAimVec);
 
@@ -240,7 +240,7 @@ check_burnzone(id, Float:vec[], Float:vecDif[], Float:length, speed1, speed2, ra
 		player = players[i];
 
 		if (player != id && (idTeam != cs_get_user_team(player) || FFOn)) {
-			pev(player, pev_origin, origin);
+			entity_get_vector(player, EV_VEC_origin, origin);
 
 			if (get_distance_f(origin, burnVec1) < radius)
 				burn_victim(player, id);
@@ -252,7 +252,7 @@ check_burnzone(id, Float:vec[], Float:vecDif[], Float:length, speed1, speed2, ra
 //----------------------------------------------------------------------------------------------
 burn_victim(victim, attacker)
 {
-	if (pev(victim, pev_waterlevel) == 3 || gIsBurning[victim])
+	if (entity_get_int(victim, EV_INT_waterlevel) == 3 || gIsBurning[victim])
 		return;
 
 	gIsBurning[victim] = true;
@@ -272,7 +272,7 @@ burn_victim(victim, attacker)
 	new id = args[0];
 	new attacker = args[1];
 
-	if (!is_user_alive(id) || pev(id, pev_waterlevel) == 3) {
+	if (!is_user_alive(id) || entity_get_int(id, EV_INT_waterlevel) == 3) {
 		gIsBurning[id] = false;
 		return;
 	}
@@ -285,7 +285,7 @@ burn_victim(victim, attacker)
 	ry = random_num(-30, 30);
 	rz = random_num(-30, 30);
 
-	pev(id, pev_origin, origin);
+	entity_get_vector(id, EV_VEC_origin, origin);
 
 	// Additive sprite, plays 1 cycle
 	message_begin(MSG_BROADCAST, SVC_TEMPENTITY);

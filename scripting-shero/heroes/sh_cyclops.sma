@@ -13,6 +13,7 @@ cyclops_multishot 0.2			//Delay for multishots on holding key down
 
 #include <amxmodx>
 #include <amxmisc>
+#include <engine>
 #include <cstrike>
 #include <sh_core_main>
 #include <sh_core_weapons>
@@ -65,7 +66,7 @@ public plugin_init()
 	sh_set_hero_bind(gHeroID);
 
 	// Set to correct burn decals if mod is CZ or CS
-	gBurnDecal = engfunc(EngFunc_DecalIndex, "{bigshot5");
+	gBurnDecal = get_decal_index("{bigshot5");
 }
 //----------------------------------------------------------------------------------------------
 public plugin_precache()
