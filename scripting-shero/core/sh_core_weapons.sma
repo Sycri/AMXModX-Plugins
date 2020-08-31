@@ -1,6 +1,9 @@
 /* AMX Mod X script.
 *
-*   [SH] Core: Weapons (sh_core_weapons.sma)
+*	[SH] Core: Weapons (sh_core_weapons.sma)
+*
+*	This plugin is part of SuperHero Mod and is distributed under the
+*	terms of the GNU General Public License. Check sh_readme.txt for details.
 *
 *****************************************************************************/
 

@@ -1,7 +1,7 @@
 /* AMX Mod X script.
 *
-*   SuperHero Monitor (sh_monitor.sma)
-*   Copyright (C) 2006 vittu
+*   [SH] Addon: Monitor (sh_addon_monitor.sma)
+*   Copyright (C) 2020 Sycri
 *
 *   This program is free software; you can redistribute it and/or
 *   modify it under the terms of the GNU General Public License
@@ -29,81 +29,76 @@
 *
 ****************************************************************************
 *
-*               ******** AMX Mod X 1.80 and above Only ********
-*               ***** SuperHero Mod 1.2.0 and above Only ******
-*               *** Must be loaded after SuperHero Mod core ***
+*				******** AMX Mod X 1.90 and above Only ********
+*				***** SuperHero Mod 1.3.0 and above Only ******
+*				*** Must be loaded after SuperHero Mod core ***
 *
-*  Description:
-*     This plugin will display a hud message to the user showing their true
-*      current health and armor just above chat messages. Might possibly
-*      add other things into the message in the future, suggestions?
+*	Description:
+*		This plugin will display a hud message to the user showing their true
+*		 current health and armor just above chat messages. Might possibly
+*		 add other things into the message in the future, suggestions?
 *
-*  Why:
-*     When a users health is over 255 in the HUD it loops over again
-*      starting from 0. When a users armor is over 999 it does not show the
-*      correct number rather it shows a hud symbol and the last few digits.
+*	Why:
+*		When a users health is over 255 in the HUD it loops over again
+*		 starting from 0. When a users armor is over 999 it does not show the
+*		 correct number rather it shows a hud symbol and the last few digits.
 *
-*  Who:
-*     This plugin is intended for SuperHero Mod servers that have heroes that
-*      make it possible to have more then 255 hp or more then 999 armor.
+*	Who:
+*		This plugin is intended for SuperHero Mod servers that have heroes that
+*		 make it possible to have more then 255 hp or more then 999 armor.
 *
-*  Known Issues:
-*     If using the REPLACE_HUD option, clients radar is also removed from the
-*      hud. If lots of hud messages are being displayed at the same time the
-*      monitor may flash briefly, but does not happen enough to be concerned.
+*	Known Issues:
+*		If using the REPLACE_HUD option, clients radar is also removed from the
+*		 hud. If lots of hud messages are being displayed at the same time the
+*		 monitor may flash briefly, but does not happen enough to be concerned.
 *
 ****************************************************************************
 *
-*  http://shero.rocks-hideout.com/
+*	CVARs:
+*		None
 *
-*  Notes: Currently there are no cvars, message will not display when sh mod is off.
-*          However, loop will still run incase shmod is enabled again. Plugin tested
-*          at 800x600 to 1280x1024.
+*	Credits:
+*		- OneEyed for the basis of an entity as a task
 *
-*  Changelog:
-*   v1.7 - Sycri - 08/30/20
-*	    - Added a check to verify user's xp has loaded to show level spec info
-*	    - Readded HUD removement as it is now possible
-*	    - Replaced FM_Think with Ham_Think
-*	    - Rewrote the code using Engine instead of Fakemeta
-*	    (Update requires use of SuperHero Mod 1.3.0 or above.)
+*	Changelog:
+*	v1.7 - Sycri - 08/31/20
+*	 - Added a check to verify user's xp has loaded to show level spec info
+*	 - Readded HUD removement as it is now possible
+*	 - Replaced FM_Think with Ham_Think
+*	 - Rewrote the code using Engine instead of Fakemeta
+*	 (Update requires use of SuperHero Mod 1.3.0 or above.)
 *
-*   v1.6 - Jelle - 07/15/13
-*	    - Fixed problem where plugin would only show up to 255 health
-*	    - Replace HUD removed as that is no possible anymore
+*	v1.6 - Jelle - 07/15/13
+*	 - Fixed problem where plugin would only show up to 255 health
+*	 - Replace HUD removed as that is no possible anymore
 *
-*   v1.5 - vittu - 10/28/10
-*	    - Fixed possible issue with get_players array size.
+*	v1.5 - vittu - 10/28/10
+*	 - Fixed possible issue with get_players array size.
 *
-*   v1.4 - vittu - 10/19/09
-*	    - Changed to make each item optional
-*	    - Added option to show when godmode is on
-*	    - Added option to show information of player being spectated (similar to wc3ft)
-*	    (Update requires use of SuperHero Mod 1.2.0 or above, also made the code ugly.)
+*	v1.4 - vittu - 10/19/09
+*	 - Changed to make each item optional
+*	 - Added option to show when godmode is on
+*	 - Added option to show information of player being spectated (similar to wc3ft)
+*	 (Update requires use of SuperHero Mod 1.2.0 or above, also made the code ugly.)
 *
-*   v1.3 - vittu - 07/06/07
-*	    - Fixed bug forgot to make sure entity was valid in think forward
-*	    - Added requested option to show Gravity and Speed, set as disabled define because it
-*              gets checked constantly
+*	v1.3 - vittu - 07/06/07
+*	 - Fixed bug forgot to make sure entity was valid in think forward
+*	 - Added requested option to show Gravity and Speed, set as disabled define because it gets checked constantly
 *
-*   v1.2 - vittu - 06/13/07
-*	    - Conversion to Fakemeta
-*	    - Optimization of code all around, much improved
+*	v1.2 - vittu - 06/13/07
+*	 - Conversion to Fakemeta
+*	 - Optimization of code all around, much improved
 *
-*   v1.1 - vittu - 06/11/06
-*	    - Used a hud sync object instead of taking up a single hud channel (suggested by jtp10181)
-*	    - Added option to remove the hud's hp/ap and place message there (suggested by Freecode)
+*	v1.1 - vittu - 06/11/06
+*	 - Used a hud sync object instead of taking up a single hud channel (suggested by jtp10181)
+*	 - Added option to remove the hud's hp/ap and place message there (suggested by Freecode)
 *
-*   v1.0 - vittu - 06/05/06
-*	    - Initial Release
+*	v1.0 - vittu - 06/05/06
+*	 - Initial Release
 *
-*  Thanks:
-*	    - OneEyed for the basis of an entity as a task
-*
-*  To-Do:
-*	    - Possibly add other features instead of just HP/AP display,
-*              ie. secondary message showing info of user you aim at
-*	    - Maybe add a file to allow user to save location of message
+*	To-Do:
+*		- Possibly add other features instead of just HP/AP display, ie. secondary message showing info of user you aim at
+*		- Maybe add a file to allow user to save location of message
 *
 ****************************************************************************/
 
@@ -151,10 +146,11 @@
 #endif
 
 new gMonitorHudSync;
+
 //----------------------------------------------------------------------------------------------
 public plugin_init()
 {
-	register_plugin("SuperHero Monitor", "1.7", "vittu");
+	register_plugin("[SH] Addon: Monitor", "1.7", "Sycri");
 
 #if defined MONITOR_HP || defined MONITOR_SPEC
 	register_event_ex("Health", "@Event_Health", RegisterEvent_Single);
@@ -247,6 +243,17 @@ public sh_client_spawn(id)
 }
 #endif
 //----------------------------------------------------------------------------------------------
+#if defined REPLACE_HUD
+@Message_HideWeapon()
+{
+	if (!sh_is_active())
+		return;
+
+	// Block HP/AP/Radar if not being blocked, must block all 3 can not individually be done
+	set_msg_arg_int(1, ARG_BYTE, get_msg_arg_int(1) | HIDE_HUD_HEALTH);
+}
+#endif
+//----------------------------------------------------------------------------------------------
 @Forward_Monitor_Think(ent)
 {
 	if (sh_is_active()) {
@@ -264,12 +271,11 @@ public sh_client_spawn(id)
 		static specPlayer, specPlayerLevel;
 #endif
 
-#if defined MONITOR_HP || defined MONITOR_AP || defined MONITOR_GRAVITY || defined MONITOR_SPEED || defined MONITOR_GODMODE
-		static len;
+#if defined MONITOR_HP || defined MONITOR_AP || defined MONITOR_GRAVITY || defined MONITOR_SPEED || defined MONITOR_GODMODE || defined MONITOR_SPEC
+		static tmp[128], len;
 #endif
 
 		static players[MAX_PLAYERS], playerCount, player, i;
-		static tmp[128];
 		get_players_ex(players, playerCount, GetPlayers_ExcludeBots | GetPlayers_ExcludeHLTV);
 
 		for (i = 0; i < playerCount; ++i) {
@@ -358,15 +364,4 @@ public sh_client_spawn(id)
 
 	return HAM_IGNORED;
 }
-//----------------------------------------------------------------------------------------------
-#if defined REPLACE_HUD
-@Message_HideWeapon()
-{
-	if (!sh_is_active())
-		return;
-
-	// Block HP/AP/Radar if not being blocked, must block all 3 can not individually be done
-	set_msg_arg_int(1, ARG_BYTE, get_msg_arg_int(1) | HIDE_HUD_HEALTH);
-}
-#endif
 //----------------------------------------------------------------------------------------------

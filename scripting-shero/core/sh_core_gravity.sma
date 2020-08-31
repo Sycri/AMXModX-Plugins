@@ -1,6 +1,9 @@
 /* AMX Mod X script.
 *
-*   [SH] Core: Gravity (sh_core_gravity.sma)
+*	[SH] Core: Gravity (sh_core_gravity.sma)
+*
+*	This plugin is part of SuperHero Mod and is distributed under the
+*	terms of the GNU General Public License. Check sh_readme.txt for details.
 *
 *****************************************************************************/
 

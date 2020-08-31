@@ -1,6 +1,9 @@
 /* AMX Mod X script.
 *
-*   [SH] Core: Objectives (sh_core_objectives.sma)
+*	[SH] Core: Objectives (sh_core_objectives.sma)
+*
+*	This plugin is part of SuperHero Mod and is distributed under the
+*	terms of the GNU General Public License. Check sh_readme.txt for details.
 *
 *****************************************************************************/
 

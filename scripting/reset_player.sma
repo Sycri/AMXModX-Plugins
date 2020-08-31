@@ -1,69 +1,98 @@
-/*=================================================================================
-						Reset Player
-					by Sycri (Kristaps08)
-
-	Description:
-		With this plugin you can reset players items, money, health, armor, deaths, and/or frags
-
-	Cvars:
-		None
-
-	Admin Commands:
-		amx_reset_player <target> <money> <weapons> <health> <armor> <frags> <deaths> - Reset player's stats
-
-	Credits:
-		ConnorMcLeod: For his suggestions
-
-	Changelog:
-		- v1.0
-		* First public release
-
-		- v1.1
-		* Added reset_player_frags to reset frags for player
-		* Added reset_player_deaths to reset deaths for player
-		* Added reset_player_again to reset again the player in the same round
-
-		- v1.2
-		* Changed from set_user_armor to cs_set_user_armor
-		* Changed from give_item to cs_set_user_bpammo
-
-		- v1.3
-		* Code changes and cleanup
-		* Changed cvars from reset_player_ to rp_
-
-		- v1.4
-		* Added support for amx_show_activity
-		* Changed and cleaned up some code
-
-		- v1.5
-		* Optimized code
-		* Added get_cvar_pointer
-
-		- v1.6
-		* Added description
-		* Optimized a little bit of the code
-
-		- v1.7
-		* Removed rp_again so admins could reset player all the time
-		* Optimized code again
-
-		- v1.8 (8th May 2013)
-		* Added pev_max_health
-		* Removed all the cvars except rp_version
-		* Changed the command amx_reset_player so the player could reset different parts of the player's stats
-
-		- v1.9 (20th August 2020)
-		* Added multilingual support to the description of the command amx_reset_player
-		* Added FCVAR_SPONLY to cvar rp_version to make it unchangeable
-		* Changed the required admin level of the command amx_reset_player from ADMIN_BAN to ADMIN_SLAY
-		* Fixed the command amx_reset_player only checking the first toggle
-		* Forced usage of semicolons for better clarity
-		* Replaced amx_show_activity checking with show_activity_key
-		* Replaced read_argv with read_argv_int where appropriate
-		* Replaced register_cvar with create_cvar
-		* Revamped the entire plugin for better code style
-
-=================================================================================*/
+/* AMX Mod X script.
+*
+*   Reset Player (reset_player.sma)
+*   Copyright (C) 2020 Sycri (Kristaps08)
+*
+*   This program is free software; you can redistribute it and/or
+*   modify it under the terms of the GNU General Public License
+*   as published by the Free Software Foundation; either version 2
+*   of the License, or (at your option) any later version.
+*
+*   This program is distributed in the hope that it will be useful,
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*   GNU General Public License for more details.
+*
+*   You should have received a copy of the GNU General Public License
+*   along with this program; if not, write to the Free Software
+*   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+*
+*   In addition, as a special exception, the author gives permission to
+*   link the code of this program with the Half-Life Game Engine ("HL
+*   Engine") and Modified Game Libraries ("MODs") developed by Valve,
+*   L.L.C ("Valve"). You must obey the GNU General Public License in all
+*   respects for all of the code used other than the HL Engine and MODs
+*   from Valve. If you modify this file, you may extend this exception
+*   to your version of the file, but you are not obligated to do so. If
+*   you do not wish to do so, delete this exception statement from your
+*   version.
+*
+****************************************************************************
+*
+*				******** AMX Mod X 1.90 and above Only ********
+*
+*	Description:
+*		An admin can reset players items, money, health, armor, deaths, and/or frags
+*
+*	CVARs:
+*		None
+*
+*	Admin Commands:
+*		amx_reset_player <target> <money> <weapons> <health> <armor> <frags> <deaths> - Reset player's stats
+*
+*	Credits:
+*		- ConnorMcLeod: For his suggestions
+*
+*	Changelog:
+*	v1.9 - Sycri - 08/20/20
+*	 - Added multilingual support to the description of the command amx_reset_player
+*	 - Added FCVAR_SPONLY to cvar rp_version to make it unchangeable
+*	 - Changed the required admin level of the command amx_reset_player from ADMIN_BAN to ADMIN_SLAY
+*	 - Fixed the command amx_reset_player only checking the first toggle
+*	 - Forced usage of semicolons for better clarity
+*	 - Replaced amx_show_activity checking with show_activity_key
+*	 - Replaced read_argv with read_argv_int where appropriate
+*	 - Replaced register_cvar with create_cvar
+*	 - Revamped the entire plugin for better code style
+*
+*	v1.8 - Kristaps08 (Sycri) - 05/08/13
+*	 - Added pev_max_health
+*	 - Removed all the cvars except rp_version
+*	 - Changed the command amx_reset_player so the player could reset different parts of the player's stats
+*
+*	v1.7 - Kristaps08 (Sycri)
+*	 - Removed rp_again so admins could reset player all the time
+*	 - Optimized code again
+*
+*	v1.6 - Kristaps08 (Sycri)
+*	 - Added description
+*	 - Optimized a little bit of the code
+*
+*	v1.5 - Kristaps08 (Sycri)
+*	 - Optimized code
+*	 - Added get_cvar_pointer
+*
+*	v1.4 - Kristaps08 (Sycri)
+*	 - Added support for amx_show_activity
+*	 - Changed and cleaned up some code
+*
+*	v1.3 - Kristaps08 (Sycri)
+*	 - Code changes and cleanup
+*	 - Changed cvars from reset_player_ to rp_
+*
+*	v1.2 - Kristaps08 (Sycri)
+*	 - Changed from set_user_armor to cs_set_user_armor
+*	 - Changed from give_item to cs_set_user_bpammo
+*
+*	v1.1 - Kristaps08 (Sycri)
+*	 - Added reset_player_frags to reset frags for player
+*	 - Added reset_player_deaths to reset deaths for player
+*	 - Added reset_player_again to reset again the player in the same round
+*
+*	v1.0 - Kristaps08 (Sycri) - 05/16/12
+*	 - First public release
+*
+****************************************************************************/
 
 #include <amxmodx>
 #include <amxmisc>

@@ -1,70 +1,99 @@
-/*=================================================================================
-						Upgrade
-					by Sycri (Kristaps08)
-
-	Description:
-		With this plugin you can make a player have infinite money
-
-	Cvars:
-		upgrade_speed "300.0"	// The player's speed with an upgrade
-		upgrade_hp "150"		// The player's health with an upgrade
-		upgrade_ap "150"		// The player's armor with an upgrade
-		upgrade_gravity "0.75"	// The player's gravity with an upgrade
-		upgrade_cost "4000"		// The cost of an upgrade
-
-	Admin Commands:
-		amx_upgrade <target> [0|1] - 0=TAKE 1=GIVE
-
-	Credits:
-		None
-
-	Changelog:
-		- v1.0
-		* First public release
-
-		- v1.1
-		* Removed client_connect()
-		* Changed from CurWeapon event to Ham_Item_PreFrame
-		* Code changes and cleanup
-
-		- v1.2
-		* Removed cmd_upgradehelp() because it was not needed
-		* Added automatic message that will display after some time
-		* Combined amx_give_upgrade and amx_take_upgrade commands together into amx_upgrade
-		* Added support for amx_show_activity
-
-		- v1.3
-		* Changed and cleaned up some code
-		* Added fakemeta
-
-		- v1.4
-		* Optimized code
-
-		- v1.5
-		* Fixed freezetime bug
-		* Optimized a little bit of the code
-		* Added description
-
-		- v1.6 (29th August 2012)
-		* Optimized the code a little bit again
-
-		- v1.7 (21th August 2020)
-		* Added multilingual support to the description of the command amx_upgrade
-		* Added FCVAR_SPONLY to cvar upgrade_version to make it unchangeable
-		* Added Ham_AddPlayerItem since Ham_CS_Item_GetMaxSpeed does not catch weapon pickups or purchases
-		* Changed from fakemeta to fun because the functions of the latter are native
-		* Changed from get_pcvar_num to bind_pcvar_num so variables could be used directly
-		* Changed the required admin level of the command amx_upgrade from ADMIN_SLAY to ADMIN_LEVEL_A
-		* Forced usage of semicolons for better clarity
-		* Replaced amx_show_activity checking with show_activity_key
-		* Replaced FM_PlayerPreThink with Ham_CS_Item_GetMaxSpeed since the former gets called too frequently
-		* Replaced RegisterHam with RegisterHamPlayer to add special bot support
-		* Replaced read_argv with read_argv_int where appropriate
-		* Replaced register_cvar with create_cvar
-		* Replaced register_event with register_event_ex for better code readability
-		* Revamped the entire plugin for better code style
-
-=================================================================================*/
+/* AMX Mod X script.
+*
+*   Upgrade (upgrade.sma)
+*   Copyright (C) 2020 Sycri (Kristaps08)
+*
+*   This program is free software; you can redistribute it and/or
+*   modify it under the terms of the GNU General Public License
+*   as published by the Free Software Foundation; either version 2
+*   of the License, or (at your option) any later version.
+*
+*   This program is distributed in the hope that it will be useful,
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*   GNU General Public License for more details.
+*
+*   You should have received a copy of the GNU General Public License
+*   along with this program; if not, write to the Free Software
+*   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+*
+*   In addition, as a special exception, the author gives permission to
+*   link the code of this program with the Half-Life Game Engine ("HL
+*   Engine") and Modified Game Libraries ("MODs") developed by Valve,
+*   L.L.C ("Valve"). You must obey the GNU General Public License in all
+*   respects for all of the code used other than the HL Engine and MODs
+*   from Valve. If you modify this file, you may extend this exception
+*   to your version of the file, but you are not obligated to do so. If
+*   you do not wish to do so, delete this exception statement from your
+*   version.
+*
+****************************************************************************
+*
+*				******** AMX Mod X 1.90 and above Only ********
+*
+*	Description:
+*		The upgrade can be purchased or granted by an admin to gain additional health and armor, increased speed, and lowered gravity
+*
+*	CVARs:
+*		upgrade_speed "300.0"	// The player's speed with an upgrade
+*		upgrade_hp "150"		// The player's health with an upgrade
+*		upgrade_ap "150"		// The player's armor with an upgrade
+*		upgrade_gravity "0.75"	// The player's gravity with an upgrade
+*		upgrade_cost "4000"		// The cost of an upgrade
+*
+*	Admin Commands:
+*		amx_upgrade <target> [0|1] - 0=TAKE 1=GIVE
+*
+*	Credits:
+*		None
+*
+*	Changelog:
+*	v1.7 - Sycri - 08/21/2020
+*	 - Added multilingual support to the description of the command amx_upgrade
+*	 - Added FCVAR_SPONLY to cvar upgrade_version to make it unchangeable
+*	 - Added Ham_AddPlayerItem since Ham_CS_Item_GetMaxSpeed does not catch weapon pickups or purchases
+*	 - Changed from fakemeta to fun because the functions of the latter are native
+*	 - Changed from get_pcvar_num to bind_pcvar_num so variables could be used directly
+*	 - Changed the required admin level of the command amx_upgrade from ADMIN_SLAY to ADMIN_LEVEL_A
+*	 - Forced usage of semicolons for better clarity
+*	 - Replaced amx_show_activity checking with show_activity_key
+*	 - Replaced FM_PlayerPreThink with Ham_CS_Item_GetMaxSpeed since the former gets called too frequently
+*	 - Replaced RegisterHam with RegisterHamPlayer to add special bot support
+*	 - Replaced read_argv with read_argv_int where appropriate
+*	 - Replaced register_cvar with create_cvar
+*	 - Replaced register_event with register_event_ex for better code readability
+*	 - Revamped the entire plugin for better code style
+*
+*	v1.6 - Kristaps08 (Sycri) - 08/29/12
+*	 - Optimized the code a little bit again
+*
+*	v1.5 - Kristaps08 (Sycri)
+*	 - Fixed freezetime bug
+*	 - Optimized a little bit of the code
+*	 - Added description
+*
+*	v1.4 - Kristaps08 (Sycri)
+*	 - Optimized code
+*
+*	v1.3 - Kristaps08 (Sycri)
+*	 - Changed and cleaned up some code
+*	 - Added fakemeta
+*
+*	v1.2 - Kristaps08 (Sycri)
+*	 - Removed cmd_upgradehelp() because it was not needed
+*	 - Added automatic message that will display after some time
+*	 - Combined amx_give_upgrade and amx_take_upgrade commands together into amx_upgrade
+*	 - Added support for amx_show_activity
+*
+*	v1.1 - Kristaps08 (Sycri)
+*	 - Removed client_connect()
+*	 - Changed from CurWeapon event to Ham_Item_PreFrame
+*	 - Code changes and cleanup
+*
+*	v1.0 - Kristaps08 (Sycri) - 05/15/12
+*	 - First public release
+*
+****************************************************************************/
 
 #include <amxmodx>
 #include <amxmisc>
