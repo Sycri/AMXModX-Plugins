@@ -21,10 +21,10 @@
 
 new gSuperHeroCount;
 
-new Float:gHeroMaxDamageMult[SH_MAXHEROS][31];
+new Float:gHeroMaxDamageMult[SH_MAXHEROS][CSW_LAST_WEAPON + 1];
 
 new Float:gReloadTime[MAX_PLAYERS + 1];
-new bool:gMapBlockWeapons[31]; //1-30 CSW_ constants
+new bool:gMapBlockWeapons[CSW_LAST_WEAPON + 1]; //1-30 CSW_ constants
 
 new CvarReloadMode;
 new CvarDebugMessages;
