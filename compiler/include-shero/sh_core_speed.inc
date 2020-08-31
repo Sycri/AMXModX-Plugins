@@ -4,13 +4,14 @@
 #endif
 #define _sh_core_speed_included
 
+#include <cstrike_const>
+#include <sh_core_speed_const>
+
 #pragma reqlib sh_core_speed
 #if !defined AMXMODX_NOAUTOLOAD
   #pragma loadlib sh_core_speed
 #endif
 
-#include <cstrike_const>
-#include <sh_core_speed_const>
 
 /**************************
  *        NATIVES         *

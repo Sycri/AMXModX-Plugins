@@ -6,14 +6,15 @@
 #endif
 #define _sh_core_main_included
 
+#include <amxmodx>
+#include <engine>
+#include <sh_core_main_const>
+
 #pragma reqlib sh_core_main
 #if !defined AMXMODX_NOAUTOLOAD
   #pragma loadlib sh_core_main
 #endif
 
-#include <amxmodx>
-#include <engine>
-#include <sh_core_main_const>
 
 //----------------------------------------------------------------------------------------------
 // IMPORTANT FUNCTIONS - WHAT EVENTS CAN THE SUPERHEROES REGISTER FOR?

@@ -4,14 +4,15 @@
 #endif
 #define _sh_core_hpap_included
 
+#include <amxmodx>
+#include <fun>
+#include <cstrike>
+
 #pragma reqlib sh_core_hpap
 #if !defined AMXMODX_NOAUTOLOAD
   #pragma loadlib sh_core_hpap
 #endif
 
-#include <amxmodx>
-#include <fun>
-#include <cstrike>
 
 /**************************
  *        NATIVES         *

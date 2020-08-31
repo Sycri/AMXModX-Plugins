@@ -4,12 +4,13 @@
 #endif
 #define _sh_core_objectives_included
 
+#include <sh_core_objectives_const>
+
 #pragma reqlib sh_core_objectives
 #if !defined AMXMODX_NOAUTOLOAD
   #pragma loadlib sh_core_objectives
 #endif
 
-#include <sh_core_objectives_const>
 
 /**************************
  *        NATIVES         *

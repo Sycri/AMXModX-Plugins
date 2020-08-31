@@ -4,12 +4,13 @@
 #endif
 #define _sh_core_gravity_included
 
+#include <cstrike_const>
+
 #pragma reqlib sh_core_gravity
 #if !defined AMXMODX_NOAUTOLOAD
   #pragma loadlib sh_core_gravity
 #endif
 
-#include <cstrike_const>
 
 /**************************
  *        NATIVES         *

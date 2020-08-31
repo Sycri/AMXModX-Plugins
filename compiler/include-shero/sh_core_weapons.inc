@@ -4,13 +4,14 @@
 #endif
 #define _sh_core_weapons_included
 
+#include <cstrike_const>
+#include <sh_core_weapons_const>
+
 #pragma reqlib sh_core_weapons
 #if !defined AMXMODX_NOAUTOLOAD
   #pragma loadlib sh_core_weapons
 #endif
 
-#include <cstrike_const>
-#include <sh_core_weapons_const>
 
 /**************************
  *        NATIVES         *

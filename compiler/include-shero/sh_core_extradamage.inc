@@ -4,12 +4,13 @@
 #endif
 #define _sh_core_extradamage_included
 
+#include <sh_core_extradamage_const>
+
 #pragma reqlib sh_core_extradamage
 #if !defined AMXMODX_NOAUTOLOAD
   #pragma loadlib sh_core_extradamage
 #endif
 
-#include <sh_core_extradamage_const>
 
 /**************************
  *        FORWARDS        *
