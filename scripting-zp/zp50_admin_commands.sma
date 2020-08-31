@@ -271,7 +271,7 @@ public plugin_cfg()
 	if (zp_core_is_zombie(player)) {
 		new playerName[32];
 		get_user_name(player, playerName, charsmax(playerName));
-		client_print(id, print_console, "[ZP] %L (%s).", id, "ALREADY_ZOMBIE", playerName);
+		client_print(id, print_console, "[ZP] %l (%s).", "ALREADY_ZOMBIE", playerName);
 		return PLUGIN_HANDLED;
 	}
 	
@@ -299,7 +299,7 @@ public plugin_cfg()
 	if (!zp_core_is_zombie(player)) {
 		new playerName[32];
 		get_user_name(player, playerName, charsmax(playerName));
-		client_print(id, print_console, "[ZP] %L (%s).", id, "ALREADY_HUMAN", playerName);
+		client_print(id, print_console, "[ZP] %l (%s).", "ALREADY_HUMAN", playerName);
 		return PLUGIN_HANDLED;
 	}
 	
@@ -327,7 +327,7 @@ public plugin_cfg()
 	if (zp_class_nemesis_get(player)) {
 		new playerName[32];
 		get_user_name(player, playerName, charsmax(playerName));
-		client_print(id, print_console, "[ZP] %L (%s).", id, "ALREADY_NEMESIS", playerName);
+		client_print(id, print_console, "[ZP] %l (%s).", "ALREADY_NEMESIS", playerName);
 		return PLUGIN_HANDLED;
 	}
 	
@@ -355,7 +355,7 @@ public plugin_cfg()
 	if (zp_class_survivor_get(player)) {
 		new playerName[32];
 		get_user_name(player, playerName, charsmax(playerName));
-		client_print(id, print_console, "[ZP] %L (%s).", id, "ALREADY_SURVIVOR", playerName);
+		client_print(id, print_console, "[ZP] %l (%s).", "ALREADY_SURVIVOR", playerName);
 		return PLUGIN_HANDLED;
 	}
 	
@@ -383,7 +383,7 @@ public plugin_cfg()
 	if (!allowedToRespawn(id)) {
 		new playerName[32];
 		get_user_name(player, playerName, charsmax(playerName));
-		client_print(id, print_console, "[ZP] %L (%s).", id, "CANT_RESPAWN", playerName);
+		client_print(id, print_console, "[ZP] %l (%s).", "CANT_RESPAWN", playerName);
 		return PLUGIN_HANDLED;
 	}
 	
@@ -404,7 +404,7 @@ public plugin_cfg()
 	
 	// Invalid game mode id
 	if (!(0 <= gamemodeID < zp_gamemodes_get_count())) {
-		client_print(id, print_console, "[ZP] %L (%d).", id, "INVALID_GAME_MODE", gamemodeID);
+		client_print(id, print_console, "[ZP] %l (%d).", "INVALID_GAME_MODE", gamemodeID);
 		return PLUGIN_HANDLED;
 	}
 	
@@ -431,7 +431,7 @@ commandZombie(id, player)
 {
 	// Prevent infecting last human
 	if (zp_core_is_last_human(player)) {
-		zp_colored_print(id, "%L", id, "CMD_CANT_LAST_HUMAN");
+		zp_colored_print(id, "%l", "CMD_CANT_LAST_HUMAN");
 		return;
 	}
 	
@@ -439,13 +439,13 @@ commandZombie(id, player)
 	if (zp_gamemodes_get_current() == ZP_NO_GAME_MODE) {
 		// Infection mode disabled
 		if (gGameModeInfectionID == ZP_INVALID_GAME_MODE) {
-			zp_colored_print(id, "%L", id, "CMD_ONLY_AFTER_GAME_MODE");
+			zp_colored_print(id, "%l", "CMD_ONLY_AFTER_GAME_MODE");
 			return;
 		}
 		
 		// Start infection game mode with this target player
 		if (!zp_gamemodes_start(gGameModeInfectionID, player)) {
-			zp_colored_print(id, "%L", id, "GAME_MODE_CANT_START");
+			zp_colored_print(id, "%l", "GAME_MODE_CANT_START");
 			return;
 		}
 	} else {
@@ -461,13 +461,13 @@ commandHuman(id, player)
 {
 	// Prevent infecting last zombie
 	if (zp_core_is_last_zombie(player)) {
-		zp_colored_print(id, "%L", id, "CMD_CANT_LAST_ZOMBIE");
+		zp_colored_print(id, "%l", "CMD_CANT_LAST_ZOMBIE");
 		return;
 	}
 	
 	// No game mode currently in progress
 	if (zp_gamemodes_get_current() == ZP_NO_GAME_MODE) {
-		zp_colored_print(id, "%L", id, "CMD_ONLY_AFTER_GAME_MODE");
+		zp_colored_print(id, "%l", "CMD_ONLY_AFTER_GAME_MODE");
 		return;
 	}
 	
@@ -482,7 +482,7 @@ commandNemesis(id, player)
 {
 	// Prevent infecting last human
 	if (zp_core_is_last_human(player)) {
-		zp_colored_print(id, "%L", id, "CMD_CANT_LAST_HUMAN");
+		zp_colored_print(id, "%l", "CMD_CANT_LAST_HUMAN");
 		return;
 	}
 	
@@ -490,13 +490,13 @@ commandNemesis(id, player)
 	if (zp_gamemodes_get_current() == ZP_NO_GAME_MODE) {
 		// Nemesis mode disabled
 		if (gGameModeNemesisID == ZP_INVALID_GAME_MODE) {
-			zp_colored_print(id, "%L", id, "CMD_ONLY_AFTER_GAME_MODE");
+			zp_colored_print(id, "%l", "CMD_ONLY_AFTER_GAME_MODE");
 			return;
 		}
 		
 		// Start nemesis game mode with this target player
 		if (!zp_gamemodes_start(gGameModeNemesisID, player)) {
-			zp_colored_print(id, "%L", id, "GAME_MODE_CANT_START");
+			zp_colored_print(id, "%l", "GAME_MODE_CANT_START");
 			return;
 		}
 	} else {
@@ -512,7 +512,7 @@ commandSurvivor(id, player)
 {
 	// Prevent infecting last zombie
 	if (zp_core_is_last_zombie(player)) {
-		zp_colored_print(id, "%L", id, "CMD_CANT_LAST_ZOMBIE");
+		zp_colored_print(id, "%l", "CMD_CANT_LAST_ZOMBIE");
 		return;
 	}
 	
@@ -520,13 +520,13 @@ commandSurvivor(id, player)
 	if (zp_gamemodes_get_current() == ZP_NO_GAME_MODE) {
 		// Survivor mode disabled
 		if (gGameModeSurvivorID == ZP_INVALID_GAME_MODE) {
-			zp_colored_print(id, "%L", id, "CMD_ONLY_AFTER_GAME_MODE");
+			zp_colored_print(id, "%l", "CMD_ONLY_AFTER_GAME_MODE");
 			return;
 		}
 		
 		// Start survivor game mode with this target player
 		if (!zp_gamemodes_start(gGameModeSurvivorID, player)) {
-			zp_colored_print(id, "%L", id, "GAME_MODE_CANT_START");
+			zp_colored_print(id, "%l", "GAME_MODE_CANT_START");
 			return;
 		}
 	} else {
@@ -576,7 +576,7 @@ commandStartGameMode(id, gamemodeID)
 {
 	// Attempt to start game mode
 	if (!zp_gamemodes_start(gamemodeID)) {
-		zp_colored_print(id, "%L", id, "GAME_MODE_CANT_START");
+		zp_colored_print(id, "%l", "GAME_MODE_CANT_START");
 		return;
 	}
 	
@@ -588,8 +588,35 @@ commandStartGameMode(id, gamemodeID)
 	// Show activity?
 	if (amx_show_activity) {
 		switch (get_pcvar_num(amx_show_activity)) {
-			case 1: zp_colored_print(0, "ADMIN - %L: %s", LANG_PLAYER, "CMD_START_GAME_MODE", modeName);
-			case 2: zp_colored_print(0, "ADMIN %s - %L: %s", adminName, LANG_PLAYER, "CMD_START_GAME_MODE", modeName);
+			case 1: { // hide name from all users
+				zp_colored_print(0, "ADMIN - %l: %s", "CMD_START_GAME_MODE", modeName);
+			}
+			case 2: { // show name to all users
+				zp_colored_print(0, "ADMIN %s - %l: %s", adminName, "CMD_START_GAME_MODE", modeName);
+			}
+			case 3: { // show name only to admins, hide name from normal users
+				for (new i = 1; i <= MaxClients; ++i) {
+					if (!is_user_connected(i))
+						continue;
+					
+					if (is_user_admin(i))
+						zp_colored_print(i, "ADMIN %s - %l: %s", adminName, "CMD_START_GAME_MODE", modeName);
+					else
+						zp_colored_print(i, "ADMIN - %l: %s", "CMD_START_GAME_MODE", modeName);
+				}
+			}
+			case 4: { // show name only to admins, display nothing to normal players
+				for (new i = 1; i <= MaxClients; ++i) {
+					if (is_user_connected(i) && is_user_admin(i))
+						zp_colored_print(i, "ADMIN %s - %l: %s", adminName, "CMD_START_GAME_MODE", modeName);
+				}
+			}
+			case 5: { // hide name to admins, display nothing to normal players
+				for (new i = 1; i <= MaxClients; ++i) {
+					if (is_user_connected(i) && is_user_admin(i))
+						zp_colored_print(i, "ADMIN - %l: %s", "CMD_START_GAME_MODE", modeName);
+				}
+			}
 		}
 	}
 	
@@ -612,11 +639,38 @@ showActivity(admin, player, const LANG_KEY[])
 	// Show activity?
 	if (amx_show_activity) {
 		switch (get_pcvar_num(amx_show_activity)) {
-			case 1: zp_colored_print(0, "ADMIN - %s %L", playerName, LANG_PLAYER, LANG_KEY);
-			case 2: zp_colored_print(0, "ADMIN %s - %s %L", adminName, playerName, LANG_PLAYER, LANG_KEY);
+			case 1: { // hide name from all users
+				zp_colored_print(0, "ADMIN - %s %l", playerName, LANG_KEY);
+			}
+			case 2: { // show name to all users
+				zp_colored_print(0, "ADMIN %s - %s %l", adminName, playerName, LANG_KEY);
+			}
+			case 3: { // show name only to admins, hide name from normal users
+				for (new i = 1; i <= MaxClients; ++i) {
+					if (!is_user_connected(i))
+						continue;
+					
+					if (is_user_admin(i))
+						zp_colored_print(i, "ADMIN %s - %s %l", adminName, playerName, LANG_KEY);
+					else
+						zp_colored_print(i, "ADMIN - %s %l", playerName, LANG_KEY);
+				}
+			}
+			case 4: { // show name only to admins, display nothing to normal players
+				for (new i = 1; i <= MaxClients; ++i) {
+					if (is_user_connected(i) && is_user_admin(i))
+						zp_colored_print(i, "ADMIN %s - %s %l", adminName, playerName, LANG_KEY);
+				}
+			}
+			case 5: { // hide name to admins, display nothing to normal players
+				for (new i = 1; i <= MaxClients; ++i) {
+					if (is_user_connected(i) && is_user_admin(i))
+						zp_colored_print(i, "ADMIN - %s %l", playerName, LANG_KEY);
+				}
+			}
 		}
 	}
-	
+
 	// Log to Zombie Plague log file?
 	if (CvarLogAdminCommands) {
 		new authid[32], ip[16];

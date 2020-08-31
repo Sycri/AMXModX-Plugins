@@ -43,7 +43,6 @@ const OFFSET_CSMENUCODE = 205
 
 #define MENUCODE_TEAMSELECT 1
 
-new g_MaxPlayers
 new g_fwSpawn
 new g_GameModeStarted
 new g_RoundEnded
@@ -81,8 +80,6 @@ public plugin_init()
 	unregister_forward(FM_Spawn, g_fwSpawn)
 	
 	register_message(get_user_msgid("Health"), "message_health")
-	
-	g_MaxPlayers = get_maxplayers()
 }
 
 public plugin_natives()

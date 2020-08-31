@@ -28,7 +28,6 @@
 const PDATA_SAFE = 2
 const OFFSET_CSMONEY = 115
 
-new g_MaxPlayers
 new g_GameRestarting
 new g_MsgMoney, g_MsgMoneyBlockStatus
 
@@ -80,8 +79,6 @@ public plugin_init()
 	
 	g_MsgMoney = get_user_msgid("Money")
 	register_message(g_MsgMoney, "message_money")
-	
-	g_MaxPlayers = get_maxplayers()
 }
 
 public plugin_natives()

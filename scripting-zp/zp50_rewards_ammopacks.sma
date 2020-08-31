@@ -21,8 +21,6 @@
 
 #define MAXPLAYERS 32
 
-new g_MaxPlayers
-
 new Float:g_DamageDealtToZombies[MAXPLAYERS+1]
 new Float:g_DamageDealtToHumans[MAXPLAYERS+1]
 
@@ -58,8 +56,6 @@ public plugin_init()
 	RegisterHamBots(Ham_TakeDamage, "fw_TakeDamage_Post", 1)
 	RegisterHam(Ham_Killed, "player", "fw_PlayerKilled_Post", 1)
 	RegisterHamBots(Ham_Killed, "fw_PlayerKilled_Post", 1)
-	
-	g_MaxPlayers = get_maxplayers()
 }
 
 public plugin_natives()

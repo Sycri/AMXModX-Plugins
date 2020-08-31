@@ -64,7 +64,6 @@ new const MAXBPAMMO[] = { -1, 52, -1, 90, 1, 32, 1, 100, 90, 1, 120, 100, 100, 9
 #define SECONDARY_ONLY 2
 #define GRENADES_ONLY 4
 
-new g_MaxPlayers
 new g_IsSurvivor
 
 new cvar_survivor_health, cvar_survivor_base_health, cvar_survivor_speed, cvar_survivor_gravity
@@ -83,8 +82,6 @@ public plugin_init()
 	RegisterHam(Ham_Killed, "player", "fw_PlayerKilled")
 	RegisterHamBots(Ham_Killed, "fw_PlayerKilled")
 	register_forward(FM_ClientDisconnect, "fw_ClientDisconnect_Post", 1)
-	
-	g_MaxPlayers = get_maxplayers()
 	
 	cvar_survivor_health = register_cvar("zp_survivor_health", "0")
 	cvar_survivor_base_health = register_cvar("zp_survivor_base_health", "100")

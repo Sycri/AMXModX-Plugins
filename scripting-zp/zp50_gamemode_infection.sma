@@ -25,7 +25,6 @@
 #define HUD_EVENT_G 0
 #define HUD_EVENT_B 0
 
-new g_MaxPlayers
 new g_HudSync
 new g_TargetPlayer
 
@@ -43,8 +42,6 @@ public plugin_precache()
 	
 	// Create the HUD Sync Objects
 	g_HudSync = CreateHudSyncObj()
-	
-	g_MaxPlayers = get_maxplayers()
 	
 	cvar_infection_chance = register_cvar("zp_infection_chance", "1")
 	cvar_infection_min_players = register_cvar("zp_infection_min_players", "0")

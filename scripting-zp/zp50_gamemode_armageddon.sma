@@ -35,7 +35,6 @@ new Array:g_sound_armageddon
 #define HUD_EVENT_G 50
 #define HUD_EVENT_B 200
 
-new g_MaxPlayers
 new g_HudSync
 
 new cvar_armageddon_chance, cvar_armageddon_min_players
@@ -52,8 +51,6 @@ public plugin_precache()
 	
 	// Create the HUD Sync Objects
 	g_HudSync = CreateHudSyncObj()
-	
-	g_MaxPlayers = get_maxplayers()
 	
 	cvar_armageddon_chance = register_cvar("zp_armageddon_chance", "20")
 	cvar_armageddon_min_players = register_cvar("zp_armageddon_min_players", "0")

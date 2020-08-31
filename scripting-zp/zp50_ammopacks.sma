@@ -13,7 +13,7 @@
 #include <fakemeta>
 #include <zp50_core>
 
-#define is_user_valid(%1) (1 <= %1 <= g_MaxPlayers)
+#define is_user_valid(%1) (1 <= %1 <= MaxClients)
 
 #define TASK_HIDEMONEY 100
 #define ID_HIDEMONEY (taskid - TASK_HIDEMONEY)
@@ -26,7 +26,6 @@ const HIDE_MONEY_BIT = (1<<5)
 
 #define MAXPLAYERS 32
 
-new g_MaxPlayers
 new g_MsgHideWeapon, g_MsgCrosshair
 new g_AmmoPacks[MAXPLAYERS+1]
 
@@ -36,7 +35,6 @@ public plugin_init()
 {
 	register_plugin("[ZP] Ammo Packs", ZP_VERSION_STRING, "ZP Dev Team")
 	
-	MaxClients = get_maxplayers()
 	g_MsgHideWeapon = get_user_msgid("HideWeapon")
 	g_MsgCrosshair = get_user_msgid("Crosshair")
 	

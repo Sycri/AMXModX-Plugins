@@ -46,7 +46,6 @@ new Array:g_models_nemesis_claw
 #define flag_set(%1,%2) %1 |= (1 << (%2 & 31))
 #define flag_unset(%1,%2) %1 &= ~(1 << (%2 & 31))
 
-new g_MaxPlayers
 new g_IsNemesis
 
 new cvar_nemesis_health, cvar_nemesis_base_health, cvar_nemesis_speed, cvar_nemesis_gravity
@@ -64,8 +63,6 @@ public plugin_init()
 	RegisterHam(Ham_Killed, "player", "fw_PlayerKilled")
 	RegisterHamBots(Ham_Killed, "fw_PlayerKilled")
 	register_forward(FM_ClientDisconnect, "fw_ClientDisconnect_Post", 1)
-	
-	g_MaxPlayers = get_maxplayers()
 	
 	cvar_nemesis_health = register_cvar("zp_nemesis_health", "0")
 	cvar_nemesis_base_health = register_cvar("zp_nemesis_base_health", "2000")

@@ -35,7 +35,6 @@ new Array:g_sound_plague
 #define HUD_EVENT_G 50
 #define HUD_EVENT_B 200
 
-new g_MaxPlayers
 new g_HudSync
 
 new cvar_plague_chance, cvar_plague_min_players
@@ -53,8 +52,6 @@ public plugin_precache()
 	
 	// Create the HUD Sync Objects
 	g_HudSync = CreateHudSyncObj()
-	
-	g_MaxPlayers = get_maxplayers()
 	
 	cvar_plague_chance = register_cvar("zp_plague_chance", "20")
 	cvar_plague_min_players = register_cvar("zp_plague_min_players", "0")

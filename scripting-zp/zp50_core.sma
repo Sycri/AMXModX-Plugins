@@ -38,7 +38,6 @@ enum _:TOTAL_FORWARDS
 #define flag_set(%1,%2) %1 |= (1 << (%2 & 31))
 #define flag_unset(%1,%2) %1 &= ~(1 << (%2 & 31))
 
-new g_MaxPlayers
 new g_IsZombie
 new g_IsFirstZombie
 new g_IsLastZombie
@@ -73,8 +72,6 @@ public plugin_init()
 	RegisterHam(Ham_Killed, "player", "fw_PlayerKilled_Post", 1)
 	RegisterHamBots(Ham_Killed, "fw_PlayerKilled_Post", 1)
 	register_forward(FM_ClientDisconnect, "fw_ClientDisconnect_Post", 1)
-	
-	g_MaxPlayers = get_maxplayers()
 	
 	// To help players find ZP servers
 	register_cvar("zp_version", ZP_VERSION_STR_LONG, FCVAR_SERVER|FCVAR_SPONLY)

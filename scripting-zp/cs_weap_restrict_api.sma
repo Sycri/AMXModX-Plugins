@@ -137,10 +137,7 @@ public client_disconnected(id)
 	
 	// Owner not holding an allowed weapon
 	if (!((1 << weaponID) & gAllowedWeaponsBitsum[owner])) {
-		new weapons[32], num;
-		new currentWeaponsBitsum = get_user_weapons(owner, weapons, num);
-		
-		if (currentWeaponsBitsum & (1 << gDefaultAllowedWeapon[owner]))
+		if (user_has_weapon(owner, gDefaultAllowedWeapon[owner]))
 			// Switch to default weapon
 			engclient_cmd(owner, WEAPONENTNAMES[gDefaultAllowedWeapon[owner]]);
 		else
@@ -150,11 +147,11 @@ public client_disconnected(id)
 }
 
 // Prevent player from firing and hide current weapon model
-block_and_hide_weapon(id)
+block_and_hide_weapon(index)
 {
-	fm_cs_set_user_next_attack(id, 99999.0);
-	set_pev(id, pev_viewmodel2, "");
-	set_pev(id, pev_weaponmodel2, "");
+	fm_cs_set_user_next_attack(index, 99999.0);
+	set_pev(index, pev_viewmodel2, "");
+	set_pev(index, pev_weaponmodel2, "");
 }
 
 stock fm_cs_get_weapon_ent_owner(ent)
@@ -184,3 +181,67 @@ stock fm_cs_set_user_next_attack(index, Float:nextAttack)
 // set_ent_data_float(ent, "CBasePlayerWeapon", "m_flNextSecondaryAttack", 99999.0);
 // Also want to block +use? (may block other things such as impulse(impulse are put in a queue))
 // set_ent_data_float(id, "CBaseMonster", "m_flNextAttack", 99999.0);
+
+// A more restrictive method by ConnorMcLeod
+stock ham_strip_user_weapon(index, weaponIndex, slot = 0, bool:switchIfActive = true)
+{
+    new weapon;
+    if(!slot) {
+        static const weaponsSlots[] = {
+            -1,
+            2, //CSW_P228
+            -1,
+            1, //CSW_SCOUT
+            4, //CSW_HEGRENADE
+            1, //CSW_XM1014
+            5, //CSW_C4
+            1, //CSW_MAC10
+            1, //CSW_AUG
+            4, //CSW_SMOKEGRENADE
+            2, //CSW_ELITE
+            2, //CSW_FIVESEVEN
+            1, //CSW_UMP45
+            1, //CSW_SG550
+            1, //CSW_GALIL
+            1, //CSW_FAMAS
+            2, //CSW_USP
+            2, //CSW_GLOCK18
+            1, //CSW_AWP
+            1, //CSW_MP5NAVY
+            1, //CSW_M249
+            1, //CSW_M3
+            1, //CSW_M4A1
+            1, //CSW_TMP
+            1, //CSW_G3SG1
+            4, //CSW_FLASHBANG
+            2, //CSW_DEAGLE
+            1, //CSW_SG552
+            1, //CSW_AK47
+            3, //CSW_KNIFE
+            1 //CSW_P90
+        };
+        slot = weaponsSlots[weaponIndex];
+    }
+
+    weapon = get_ent_data_entity(index, "CBasePlayer", "m_rgpPlayerItems", slot);
+
+    while (weapon > 0) {
+        if (get_ent_data(weapon, "CBasePlayerItem", "m_iId") == weaponIndex)
+            break;
+		
+        weapon = get_ent_data_entity(weapon, "CBasePlayerItem", "m_pNext");
+    }
+
+    if (weapon > 0) {
+        if (switchIfActive && cs_get_user_weapon_entity(index) == weapon)
+            ExecuteHamB(Ham_Weapon_RetireWeapon, weapon);
+		
+        if (ExecuteHamB(Ham_RemovePlayerItem, index, weapon)) {
+            user_has_weapon(index, weaponIndex, 0);
+            ExecuteHamB(Ham_Item_Kill, weapon);
+            return 1;
+        }
+    }
+
+    return 0;
+}

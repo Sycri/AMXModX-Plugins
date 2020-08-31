@@ -33,7 +33,6 @@ new Array:g_sound_nemesis
 #define HUD_EVENT_G 20
 #define HUD_EVENT_B 20
 
-new g_MaxPlayers
 new g_HudSync
 new g_TargetPlayer
 
@@ -49,8 +48,6 @@ public plugin_precache()
 	
 	// Create the HUD Sync Objects
 	g_HudSync = CreateHudSyncObj()
-	
-	g_MaxPlayers = get_maxplayers()
 	
 	cvar_nemesis_chance = register_cvar("zp_nemesis_chance", "20")
 	cvar_nemesis_min_players = register_cvar("zp_nemesis_min_players", "0")

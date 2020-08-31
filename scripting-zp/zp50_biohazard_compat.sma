@@ -27,7 +27,6 @@ enum _:TOTAL_FORWARDS
 new g_Forwards[TOTAL_FORWARDS]
 new g_ForwardResult
 
-new g_MaxPlayers
 new g_GameStarted
 new CsTeams:g_winningteam
 
@@ -39,8 +38,6 @@ public plugin_init()
 	register_event("HLTV", "event_round_start", "a", "1=0", "2=0")
 	register_logevent("logevent_round_end", 2, "1=Round_End")
 	register_message(get_user_msgid("TextMsg"), 	"msg_textmsg")
-	
-	g_MaxPlayers = get_maxplayers()
 	
 	// Forwards
 	g_Forwards[FW_EVENT_INFECT] = CreateMultiForward("event_infect", ET_IGNORE, FP_CELL, FP_CELL)

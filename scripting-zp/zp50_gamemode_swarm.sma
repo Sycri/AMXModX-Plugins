@@ -32,7 +32,6 @@ new Array:g_sound_swarm
 #define HUD_EVENT_G 255
 #define HUD_EVENT_B 20
 
-new g_MaxPlayers
 new g_HudSync
 
 new cvar_swarm_chance, cvar_swarm_min_players
@@ -47,8 +46,6 @@ public plugin_precache()
 	
 	// Create the HUD Sync Objects
 	g_HudSync = CreateHudSyncObj()
-	
-	g_MaxPlayers = get_maxplayers()
 	
 	cvar_swarm_chance = register_cvar("zp_swarm_chance", "20")
 	cvar_swarm_min_players = register_cvar("zp_swarm_min_players", "0")

@@ -32,7 +32,6 @@ new Array:g_sound_survivor
 #define HUD_EVENT_G 20
 #define HUD_EVENT_B 255
 
-new g_MaxPlayers
 new g_HudSync
 new g_TargetPlayer
 
@@ -48,8 +47,6 @@ public plugin_precache()
 	
 	// Create the HUD Sync Objects
 	g_HudSync = CreateHudSyncObj()
-	
-	g_MaxPlayers = get_maxplayers()
 	
 	cvar_survivor_chance = register_cvar("zp_survivor_chance", "20")
 	cvar_survivor_min_players = register_cvar("zp_survivor_min_players", "0")

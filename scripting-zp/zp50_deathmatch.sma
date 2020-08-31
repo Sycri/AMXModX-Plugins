@@ -27,7 +27,6 @@ enum _:TOTAL_FORWARDS
 new g_Forwards[TOTAL_FORWARDS]
 new g_ForwardResult
 
-new g_MaxPlayers
 new g_GameModeStarted
 
 new cvar_deathmatch, cvar_respawn_delay
@@ -48,8 +47,6 @@ public plugin_init()
 	cvar_respawn_zombies = register_cvar("zp_respawn_zombies", "1")
 	cvar_respawn_humans = register_cvar("zp_respawn_humans", "1")
 	cvar_respawn_on_suicide = register_cvar("zp_respawn_on_suicide", "0")
-	
-	g_MaxPlayers = get_maxplayers()
 	
 	g_Forwards[FW_USER_RESPAWN_PRE] = CreateMultiForward("zp_fw_deathmatch_respawn_pre", ET_CONTINUE, FP_CELL)
 }

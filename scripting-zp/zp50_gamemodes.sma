@@ -43,7 +43,6 @@ enum _:TOTAL_FORWARDS
 new g_Forwards[TOTAL_FORWARDS]
 new g_ForwardResult
 
-new g_MaxPlayers
 new g_HudSync
 
 new cvar_gamemode_delay, cvar_round_start_show_hud, cvar_prevent_consecutive
@@ -83,7 +82,6 @@ public plugin_init()
 	g_Forwards[FW_GAME_MODE_START] = CreateMultiForward("zp_fw_gamemodes_start", ET_IGNORE, FP_CELL)
 	g_Forwards[FW_GAME_MODE_END] = CreateMultiForward("zp_fw_gamemodes_end", ET_IGNORE, FP_CELL)
 	
-	g_MaxPlayers = get_maxplayers()
 	g_HudSync = CreateHudSyncObj()
 }
 
