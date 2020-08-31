@@ -9,15 +9,16 @@
 
 #include <amxmodx>
 #include <amxmisc>
-#include <engine>
 #include <fun>
 #include <cstrike>
 #include <hamsandwich>
 #include <sh_core_main>
 #include <sh_core_objectives>
-#include <sh_core_speed>
 
 #pragma semicolon 1
+
+// Hack to be able to use Ham_Player_ResetMaxSpeed (by joaquimandrade)
+new Ham:Ham_Player_ResetMaxSpeed = Ham_Item_PreFrame;
 
 new gSuperHeroCount;
 
@@ -26,6 +27,7 @@ new gHeroSpeedWeapons[SH_MAXHEROS]; // bit-field of weapons
 
 new gPlayerStunTimer[MAX_PLAYERS + 1];
 new Float:gPlayerStunSpeed[MAX_PLAYERS + 1];
+new bool:gFreezeTime;
 
 new sv_maxspeed;
 
@@ -34,13 +36,11 @@ public plugin_init()
 {
 	register_plugin("[SH] Core: Speed", SH_VERSION_STR, SH_AUTHOR_STR);
 
+	register_event("HLTV", "@Event_HLTV", "a", "1=0", "2=0"); // New Round
+	register_logevent("@LogEvent_RoundStart", 2, "1=Round_Start");
+
 	RegisterHamPlayer(Ham_AddPlayerItem, "@Forward_AddPlayerItem_Post", 1);
-	
-	new weaponName[32];
-	for (new i = CSW_P228; i <= CSW_P90; ++i) {
-		if (get_weaponname(i, weaponName, charsmax(weaponName)))
-			RegisterHam(Ham_CS_Item_GetMaxSpeed, weaponName, "@Forward_CS_Item_GetMaxSpeed_Pre");
-	}
+	RegisterHamPlayer(Ham_Player_ResetMaxSpeed, "@Forward_Player_ResetMaxSpeed_Post", 1);
 
 	sv_maxspeed = get_cvar_pointer("sv_maxspeed");
 }
@@ -75,8 +75,8 @@ public client_disconnected(id)
 //----------------------------------------------------------------------------------------------
 public sh_hero_init(id, heroID)
 {
-	if (gHeroMaxSpeed[heroID] > 0.0)
-		setSpeedPowers(id, true);
+	if (gHeroMaxSpeed[heroID] > 0.0 && is_user_alive(id))
+		ExecuteHamB(Ham_Player_ResetMaxSpeed, id);
 }
 //----------------------------------------------------------------------------------------------
 public sh_client_spawn(id)
@@ -140,134 +140,76 @@ bool:@Native_GetStun()
 //native sh_reset_max_speed(id)
 @Native_ResetMaxSpeed()
 {
-	setSpeedPowers(get_param(1), true);
+	if (!sh_is_active())
+		return;
+
+	new id = get_param(1);
+
+	if (!is_user_alive(id))
+		return;
+
+	ExecuteHamB(Ham_Player_ResetMaxSpeed, id);
+}
+//----------------------------------------------------------------------------------------------
+@Event_HLTV()
+{
+	gFreezeTime = true;
+}
+//----------------------------------------------------------------------------------------------
+@LogEvent_RoundStart()
+{
+	gFreezeTime = false;
 }
 //----------------------------------------------------------------------------------------------
 @Forward_AddPlayerItem_Post(id)
 {
-	if (!sh_is_active())
-		return HAM_IGNORED;
-
-	if (!is_user_alive(id) || sh_is_freezetime() || !sh_user_is_loaded(id))
-		return HAM_IGNORED;
-
-	if (gPlayerStunTimer[id] > 0) {
-		static Float:stunSpeed;
-		stunSpeed = gPlayerStunSpeed[id];
-
-		SetHamReturnFloat(stunSpeed);
-		sh_debug_message(id, 5, "Setting Stun Speed To %f", stunSpeed);
-		return HAM_SUPERCEDE;
-	}
-
-	if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_SPEED)
-		return HAM_IGNORED;
-
-	if (cs_get_user_zoom(id) != CS_SET_NO_ZOOM)
-		return HAM_IGNORED;
-
-	static Float:heroSpeed;
-	heroSpeed = getMaxSpeed(id, cs_get_user_weapon(id));
-
-	if (heroSpeed == -1.0)
-		return HAM_IGNORED;
-
-	set_user_maxspeed(id, heroSpeed);
-	sh_debug_message(id, 5, "Setting Speed To %f", heroSpeed);
+	setSpeedPowers(id);
 	return HAM_IGNORED;
 }
 //----------------------------------------------------------------------------------------------
-@Forward_CS_Item_GetMaxSpeed_Pre(weapon, Float:newSpeed)
+@Forward_Player_ResetMaxSpeed_Post(id)
 {
-	if (!sh_is_active())
-		return HAM_IGNORED;
-
-	static owner;
-	owner = entity_get_edict2(weapon, EV_ENT_owner);
-
-	if (!is_user_alive(owner) || !sh_user_is_loaded(owner))
-		return HAM_IGNORED;
-
-	if (gPlayerStunTimer[owner] > 0) {
-		static Float:stunSpeed;
-		stunSpeed = gPlayerStunSpeed[owner];
-
-		SetHamReturnFloat(stunSpeed);
-		sh_debug_message(owner, 5, "Setting Stun Speed To %f", stunSpeed);
-		return HAM_SUPERCEDE;
-	}
-
-	if (owner == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_SPEED)
-		return HAM_IGNORED;
-
-	if (cs_get_user_zoom(owner) != CS_SET_NO_ZOOM)
-		return HAM_IGNORED;
-
-	static Float:heroSpeed;
-	heroSpeed = getMaxSpeed(owner, cs_get_weapon_id(weapon));
-
-	if (heroSpeed == -1.0)
-		return HAM_IGNORED;
-
-	SetHamReturnFloat(heroSpeed);
-	sh_debug_message(owner, 5, "Setting Speed To %f", heroSpeed);
-	return HAM_SUPERCEDE;
+	setSpeedPowers(id);
+	return HAM_IGNORED;
 }
 //----------------------------------------------------------------------------------------------
-setSpeedPowers(id, bool:checkDefault)
+setSpeedPowers(index)
 {
 	if (!sh_is_active())
 		return;
 
-	if (!is_user_alive(id) || sh_is_freezetime() || !sh_user_is_loaded(id))
+	if (!is_user_alive(index) || gFreezeTime || !sh_user_is_loaded(index))
 		return;
 
-	if (gPlayerStunTimer[id] > 0) {
-		new Float:stunSpeed = gPlayerStunSpeed[id];
-		set_user_maxspeed(id, stunSpeed);
+	if (gPlayerStunTimer[index] > 0) {
+		static Float:stunSpeed;
+		stunSpeed = gPlayerStunSpeed[index];
 
-		sh_debug_message(id, 5, "Setting Stun Speed To %f", stunSpeed);
+		set_user_maxspeed(index, stunSpeed);
+		sh_debug_message(index, 5, "Setting Stun Speed To %f", stunSpeed);
 		return;
 	}
 
-	new weapon = cs_get_user_weapon(id);
-	new Float:oldSpeed = get_user_maxspeed(id);
-	new Float:newSpeed;
+	if (index == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_SPEED)
+		return;
 
-	if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_SPEED) {
-		newSpeed = 227.0;
-	} else if (cs_get_user_zoom(id) != CS_SET_NO_ZOOM) {
-		switch (weapon) {
-			// If weapon is a zoomed sniper rifle set default speeds
-			case CSW_SCOUT, CSW_SG550, CSW_AWP, CSW_G3SG1: newSpeed = sh_get_weapon_speed(weapon, true);
-		}
-	} else {
-		newSpeed = getMaxSpeed(id, weapon);
-	}
+	if (cs_get_user_zoom(index) != CS_SET_NO_ZOOM)
+		return;
 
-	sh_debug_message(id, 10, "Checking Speeds - Old: %f - New: %f", oldSpeed, newSpeed);
+	static Float:heroSpeed;
+	heroSpeed = getMaxSpeed(index, cs_get_user_weapon(index));
 
-	// OK SET THE SPEED
-	if (newSpeed != oldSpeed) {
-		switch (newSpeed) {
-			case -1.0: {
-				if (checkDefault) {
-					if (id == sh_get_vip_id())
-						//Still need to check this because vip speed may not be blocked
-						//and user may not have a hero with current weapon speed 
-						set_user_maxspeed(id, 227.0);
-					else
-						// Set default weapon speed
-						// Do not need to check for scoped sniper rifles as getMaxSpeed will
-						// return that value since heroes can not effect scoped sniper rifles.
-						set_user_maxspeed(id, sh_get_weapon_speed(weapon));
-				}
-			}
-			default: {
-				set_user_maxspeed(id, newSpeed);
-				sh_debug_message(id, 5, "Setting Speed To %f", newSpeed);
-			}
-		}
+	if (heroSpeed == -1.0)
+		return;
+
+	static Float:oldSpeed;
+	oldSpeed = get_user_maxspeed(index);
+
+	sh_debug_message(index, 10, "Checking Speeds - Old: %f - New: %f", oldSpeed, heroSpeed);
+
+	if (oldSpeed != heroSpeed) {
+		set_user_maxspeed(index, heroSpeed);
+		sh_debug_message(index, 5, "Setting Speed To %f", heroSpeed);
 	}
 }
 //----------------------------------------------------------------------------------------------
@@ -311,7 +253,7 @@ Float:getMaxSpeed(id, weapon)
 			case -1: { /*Do nothing*/ }
 			case 0: {
 				gPlayerStunTimer[player] = -1;
-				setSpeedPowers(player, true);
+				ExecuteHamB(Ham_Player_ResetMaxSpeed, player);
 			}
 			default: {
 				--gPlayerStunTimer[player];

@@ -1,2 +1,2 @@
 # AMX Mod X Plugin Collection
-My private repository for AMX Mod X plugins.
+My repository for AMX Mod X plugins.

@@ -81,9 +81,9 @@ new const PLUGIN_VERSION[] = "1.3";
 
 new const InfiniteMoneyCommand[] = "amx_infinitemoney";
 
-new CvarStartMoney;
-
 new bool:gHasInfiniteMoney[MAX_PLAYERS + 1];
+
+new CvarStartMoney;
 
 public plugin_init()
 {

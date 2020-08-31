@@ -112,9 +112,9 @@ new const PLUGIN_VERSION[] = "1.9";
 
 new const InvisibleCommand[] = "amx_invisible";
 
-new CvarInvisibleAmount;
-
 new bool:gIsInvisible[MAX_PLAYERS + 1];
+
+new CvarInvisibleAmount;
 
 public plugin_init()
 {

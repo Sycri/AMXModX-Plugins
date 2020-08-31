@@ -75,7 +75,7 @@
 *
 *	Changelog:
 *	v1.3.0 - Sycri (Kristaps08) - 08/29/20
-*	 - Added Ham_AddPlayerItem since Ham_CS_Item_GetMaxSpeed does not catch weapon pickups or purchases
+*	 - Added Ham_AddPlayerItem since Ham_Player_ResetMaxSpeed does not catch weapon pickups or purchases
 *	 - Changed extradamage to use hamsandwhich Ham_TakeDamage.
 *	 - Changed the function chatMessage so that it uses client_print_color
 *	 - Changed most cvars from get_pcvar_num to bind_pcvar_num so variables could be used directly
@@ -92,7 +92,7 @@
 *	 - Replaced client command buy blocking with forward CS_OnBuy
 *	 - Replaced deprecated function client_disconnect with client_disconnected
 *	 - Replaced deprecated function strbreak and stock function strbrkqt with argbreak
-*	 - Replaced event CurWeapon with forward Ham_CS_Item_GetMaxSpeed for more reliable speed change
+*	 - Replaced event CurWeapon with forward Ham_Player_ResetMaxSpeed for more reliable speed change
 *	 - Replaced forward FM_Touch with Ham_Touch since the former is less efficient
 *	 - Replaced register_cvar with create_cvar
 *	 - Replaced SH_MAXSLOTS with MAX_PLAYERS since the latter is in AMX Mod X core

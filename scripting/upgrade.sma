@@ -48,16 +48,16 @@
 *		None
 *
 *	Changelog:
-*	v1.7 - Sycri - 08/21/2020
+*	v1.7 - Sycri - 08/31/2020
 *	 - Added multilingual support to the description of the command amx_upgrade
 *	 - Added FCVAR_SPONLY to cvar upgrade_version to make it unchangeable
-*	 - Added Ham_AddPlayerItem since Ham_CS_Item_GetMaxSpeed does not catch weapon pickups or purchases
+*	 - Added Ham_AddPlayerItem since Ham_Player_ResetMaxSpeed does not catch weapon pickups or purchases
 *	 - Changed from fakemeta to fun because the functions of the latter are native
 *	 - Changed from get_pcvar_num to bind_pcvar_num so variables could be used directly
 *	 - Changed the required admin level of the command amx_upgrade from ADMIN_SLAY to ADMIN_LEVEL_A
 *	 - Forced usage of semicolons for better clarity
 *	 - Replaced amx_show_activity checking with show_activity_key
-*	 - Replaced FM_PlayerPreThink with Ham_CS_Item_GetMaxSpeed since the former gets called too frequently
+*	 - Replaced FM_PlayerPreThink with Ham_Player_ResetMaxSpeed since the former gets called too frequently
 *	 - Replaced RegisterHam with RegisterHamPlayer to add special bot support
 *	 - Replaced read_argv with read_argv_int where appropriate
 *	 - Replaced register_cvar with create_cvar
@@ -98,7 +98,6 @@
 #include <amxmodx>
 #include <amxmisc>
 #include <fun>
-#include <fakemeta>
 #include <cstrike>
 #include <hamsandwich>
 
@@ -108,46 +107,15 @@ new const PLUGIN_VERSION[] = "1.7";
 
 new const UpgradeCommand[] = "amx_upgrade";
 
-new CvarCost;
-new CvarHealth, CvarArmor;
-new Float:CvarGravity, Float:CvarSpeed;
+// Hack to be able to use Ham_Player_ResetMaxSpeed (by joaquimandrade)
+new Ham:Ham_Player_ResetMaxSpeed = Ham_Item_PreFrame;
 
 new bool:gHasUpgrade[MAX_PLAYERS + 1];
 new bool:gIsFreezetime;
 
-new Float:gWeaponSpeed[] = {
-	0.0,
-	250.0,	// CSW_P228
-	0.0,
-	260.0,	// CSW_SCOUT
-	250.0,	// CSW_HEGRENADE
-	240.0,	// CSW_XM1014
-	250.0,	// CSW_C4
-	250.0,	// CSW_MAC10
-	240.0,	// CSW_AUG
-	250.0,	// CSW_SMOKEGRENADE
-	250.0,	// CSW_ELITE
-	250.0,	// CSW_FIVESEVEN
-	250.0,	// CSW_UMP45
-	210.0,	// CSW_SG550
-	240.0,	// CSW_GALI
-	240.0,	// CSW_FAMAS
-	250.0,	// CSW_USP
-	250.0,	// CSW_GLOCK18
-	210.0,	// CSW_AWP
-	250.0,	// CSW_MP5NAVY
-	220.0,	// CSW_M249
-	230.0,	// CSW_M3
-	230.0,	// CSW_M4A1
-	250.0,	// CSW_TMP
-	210.0,	// CSW_G3SG1
-	250.0,	// CSW_FLASHBANG
-	250.0,	// CSW_DEAGLE
-	235.0,	// CSW_SG552
-	221.0,	// CSW_AK47
-	250.0,	// CSW_KNIFE
-	245.0	// CSW_P90
-};
+new CvarCost;
+new CvarHealth, CvarArmor;
+new Float:CvarGravity, Float:CvarSpeed;
 
 public plugin_init()
 {
@@ -162,12 +130,7 @@ public plugin_init()
 	RegisterHamPlayer(Ham_Killed, "@Forward_PlayerKilled_Post", 1);
 	RegisterHamPlayer(Ham_Spawn, "@Forward_PlayerSpawn_Post", 1);
 	RegisterHamPlayer(Ham_AddPlayerItem, "@Forward_AddPlayerItem_Post", 1);
-
-	new weaponName[32];
-	for (new i = CSW_P228; i <= CSW_P90; ++i) {
-		if (get_weaponname(i, weaponName, charsmax(weaponName)))
-			RegisterHam(Ham_CS_Item_GetMaxSpeed, weaponName, "@Forward_CS_Item_GetMaxSpeed_Pre", 0);
-	}
+	RegisterHamPlayer(Ham_Player_ResetMaxSpeed, "@Forward_Player_ResetMaxSpeed_Post", 1);
 
 	register_event_ex("HLTV", "@Event_NewRound", RegisterEvent_Global, "1=0", "2=0");
 	register_logevent("@LogEvent_RoundStart", 2, "1=Round_Start");
@@ -276,7 +239,7 @@ public client_disconnected(id)
 
 @Forward_AddPlayerItem_Post(id)
 {
-	if (!is_user_alive(id) || !gHasUpgrade[id])
+	if (!gHasUpgrade[id] || !is_user_alive(id))
 		return HAM_IGNORED;
 
 	if (gIsFreezetime || cs_get_user_zoom(id) != CS_SET_NO_ZOOM)
@@ -286,19 +249,16 @@ public client_disconnected(id)
 	return HAM_IGNORED;
 }
 
-@Forward_CS_Item_GetMaxSpeed_Pre(weapon)
+@Forward_Player_ResetMaxSpeed_Post(id)
 {
-	static owner;
-	owner = pev(weapon, pev_owner);
-
-	if (!is_user_alive(owner) || !gHasUpgrade[owner])
+	if (!gHasUpgrade[id] || !is_user_alive(id))
 		return HAM_IGNORED;
 
-	if (cs_get_user_zoom(owner) != CS_SET_NO_ZOOM)
+	if (gIsFreezetime || cs_get_user_zoom(id) != CS_SET_NO_ZOOM)
 		return HAM_IGNORED;
 
-	SetHamReturnFloat(CvarSpeed);
-	return HAM_SUPERCEDE;
+	set_user_maxspeed(id, CvarSpeed);
+	return HAM_IGNORED;
 }
 
 @Event_NewRound()
@@ -330,24 +290,5 @@ deupgradePlayer(index)
 		set_user_armor(index, 100);
 
 	set_user_gravity(index, 1.0);
-	cs_reset_user_maxspeed(index);
-}
-
-cs_reset_user_maxspeed(index)
-{
-	new Float:maxSpeed;
-	new weaponID = cs_get_user_weapon(index);
-	
-	if (cs_get_user_vip(index)) {
-		maxSpeed = 227.0;
-	} else if (cs_get_user_zoom(index) == CS_SET_NO_ZOOM) {
-		maxSpeed = gWeaponSpeed[weaponID];
-	} else {
-		switch (weaponID) {
-			case CSW_SCOUT: maxSpeed = 220.0;
-			case CSW_SG550, CSW_AWP, CSW_G3SG1: maxSpeed = 150.0;
-		}
-	}
-	
-	set_user_maxspeed(index, maxSpeed);
+	ExecuteHamB(Ham_Player_ResetMaxSpeed, index);
 }

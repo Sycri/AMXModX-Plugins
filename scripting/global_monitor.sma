@@ -48,6 +48,8 @@
 *	Known Issues:
 *		If lots of hud messages are being displayed at the same time the monitor
 *		 may flash briefly, but does not happen enough to be concerned.
+*		For bots get_user_maxspeed displays nonsensical values so their maxspeed
+*		 is artifically set to display 0.
 *
 ****************************************************************************
 *
@@ -123,12 +125,19 @@
 
 #pragma semicolon 1
 
+// Hack to be able to use Ham_Player_ResetMaxSpeed (by joaquimandrade)
+new Ham:Ham_Player_ResetMaxSpeed = Ham_Item_PreFrame;
+
 #if defined MONITOR_HP || defined MONITOR_SPEC
 	new gUserHealth[MAX_PLAYERS + 1];
 #endif
 
 #if defined MONITOR_AP || defined MONITOR_SPEC
 	new gUserArmor[MAX_PLAYERS + 1];
+#endif
+
+#if defined MONITOR_SPEED || defined MONITOR_SPEC
+	new Float:gUserMaxSpeed[MAX_PLAYERS + 1];
 #endif
 
 new gMonitorHudSync;
@@ -148,6 +157,11 @@ public plugin_init()
 #endif
 
 	RegisterHamPlayer(Ham_Spawn, "@Forward_PlayerSpawn_Post", 1);
+
+#if defined MONITOR_SPEED || defined MONITOR_SPEC
+	RegisterHamPlayer(Ham_AddPlayerItem, "@Forward_AddPlayerItem_Post", 1);
+	RegisterHamPlayer(Ham_Player_ResetMaxSpeed, "@Forward_Player_ResetMaxSpeed_Post", 1);
+#endif
 
 	gMonitorHudSync = CreateHudSyncObj();
 
@@ -213,6 +227,26 @@ public plugin_init()
 	return HAM_IGNORED;
 }
 
+#if defined MONITOR_SPEED || defined MONITOR_SPEC
+@Forward_AddPlayerItem_Post(id)
+{
+	if (!is_user_alive(id) || is_user_bot(id))
+		return HAM_IGNORED;
+
+	gUserMaxSpeed[id] = get_user_maxspeed(id);
+	return HAM_IGNORED;
+}
+
+@Forward_Player_ResetMaxSpeed_Post(id)
+{
+	if (!is_user_alive(id) || is_user_bot(id))
+		return HAM_IGNORED;
+
+	gUserMaxSpeed[id] = get_user_maxspeed(id);
+	return HAM_IGNORED;
+}
+#endif
+
 @Forward_Monitor_Think(ent)
 {
 	if (CvarToggle) {
@@ -270,7 +304,7 @@ public plugin_init()
 				len += formatex(tmp[len], charsmax(tmp) - len, "  |  ");
 #endif
 				entity_get_vector(player, EV_VEC_velocity, velocity);
-				len += formatex(tmp[len], charsmax(tmp) - len, "SPD %d", floatround(vector_length(velocity)));
+				len += formatex(tmp[len], charsmax(tmp) - len, "SPD %d (%d)", floatround(vector_length(velocity)), floatround(gUserMaxSpeed[player]));
 #endif
 
 #if defined MONITOR_GODMODE
@@ -315,7 +349,7 @@ public plugin_init()
 					len += formatex(tmp[len], charsmax(tmp) - len, "  |  ");
 #endif
 					entity_get_vector(aimPlayer, EV_VEC_velocity, velocity);
-					len += formatex(tmp[len], charsmax(tmp) - len, "SPD %d", floatround(vector_length(velocity)));
+					len += formatex(tmp[len], charsmax(tmp) - len, "SPD %d (%d)", floatround(vector_length(velocity)), gUserMaxSpeed[aimPlayer]);
 #endif
 
 #if defined MONITOR_GODMODE
@@ -349,7 +383,7 @@ public plugin_init()
 				gravity = entity_get_float(specPlayer, EV_FL_gravity);
 
 				set_hudmessage(255, 255, 255, 0.018, 0.9, 2, 0.05, 0.1, 0.01, 3.0);
-				ShowSyncHudMsg(player, gMonitorHudSync, "Health: %d  |  Armor: %d^nGravity: %d%%  |  Speed: %d", gUserHealth[specPlayer], gUserArmor[specPlayer], floatround(gravity * 100.0), floatround(vector_length(velocity)));
+				ShowSyncHudMsg(player, gMonitorHudSync, "Health: %d  |  Armor: %d^nGravity: %d%%  |  Speed: %d (%d)", gUserHealth[specPlayer], gUserArmor[specPlayer], floatround(gravity * 100.0), floatround(vector_length(velocity)), floatround(gUserMaxSpeed[specPlayer]));
 			}
 #endif
 		}

@@ -9,7 +9,6 @@
 
 #include <amxmodx>
 #include <amxmisc>
-#include <engine>
 #include <fun>
 #include <cstrike>
 #include <hamsandwich>
@@ -18,12 +17,14 @@
 
 #pragma semicolon 1
 
+// Hack to be able to use Ham_Player_ResetMaxSpeed (by joaquimandrade)
+new Ham:Ham_Player_ResetMaxSpeed = Ham_Item_PreFrame;
+
 new gSuperHeroCount;
 
 new Float:gHeroMinGravity[SH_MAXHEROS];
 new gHeroGravityWeapons[SH_MAXHEROS]; // bit-field of weapons
-
-new gIsFreezeTime;
+new bool:gFreezeTime;
 
 new CvarDebugMessages;
 
@@ -36,12 +37,7 @@ public plugin_init()
 	register_logevent("@LogEvent_RoundStart", 2, "1=Round_Start");
 
 	RegisterHamPlayer(Ham_AddPlayerItem, "@Forward_AddPlayerItem_Post", 1);
-	
-	new weaponName[32];
-	for (new i = CSW_P228; i <= CSW_P90; ++i) {
-		if (get_weaponname(i, weaponName, charsmax(weaponName)))
-			RegisterHam(Ham_Item_Deploy, weaponName, "@Forward_Item_Deploy_Post", 1);
-	}
+	RegisterHamPlayer(Ham_Player_ResetMaxSpeed, "@Forward_Player_ResetMaxSpeed_Post", 1);
 	
 	bind_pcvar_num(get_cvar_pointer("sh_debug_messages"), CvarDebugMessages);
 }
@@ -95,12 +91,12 @@ public sh_client_spawn(id)
 //----------------------------------------------------------------------------------------------
 @Event_HLTV()
 {
-	gIsFreezeTime = true;
+	gFreezeTime = true;
 }
 //----------------------------------------------------------------------------------------------
 @LogEvent_RoundStart()
 {
-	gIsFreezeTime = false;
+	gFreezeTime = false;
 
 	static players[MAX_PLAYERS], playerCount, player, i;
 	get_players_ex(players, playerCount, GetPlayers_ExcludeDead | GetPlayers_ExcludeHLTV);
@@ -114,43 +110,32 @@ public sh_client_spawn(id)
 //----------------------------------------------------------------------------------------------
 @Forward_AddPlayerItem_Post(id)
 {
-	if (!sh_is_active())
-		return HAM_IGNORED;
-
-	if (!is_user_alive(id) || gIsFreezeTime || !sh_user_is_loaded(id))
-		return HAM_IGNORED;
-
-	if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_GRAVITY)
-		return HAM_IGNORED;
-
-	static Float:heroGravity;
-	heroGravity = getMinGravity(id, cs_get_user_weapon(id));
-
-	set_user_gravity(id, heroGravity);
-	sh_debug_message(id, 5, "Setting Gravity To %f", heroGravity);
+	setHamGravityPowers(id);
 	return HAM_IGNORED;
 }
 //----------------------------------------------------------------------------------------------
-@Forward_Item_Deploy_Post(weapon)
+@Forward_Player_ResetMaxSpeed_Post(id)
+{
+	setHamGravityPowers(id);
+	return HAM_IGNORED;
+}
+//----------------------------------------------------------------------------------------------
+setHamGravityPowers(index)
 {
 	if (!sh_is_active())
-		return HAM_IGNORED;
+		return;
 
-	static owner;
-	owner = entity_get_edict2(weapon, EV_ENT_owner);
+	if (!is_user_alive(index) || gFreezeTime || !sh_user_is_loaded(index))
+		return;
 
-	if (!is_user_alive(owner) || gIsFreezeTime || !sh_user_is_loaded(owner))
-		return HAM_IGNORED;
-
-	if (owner == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_GRAVITY)
-		return HAM_IGNORED;
+	if (index == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_GRAVITY)
+		return;
 
 	static Float:heroGravity;
-	heroGravity = getMinGravity(owner, cs_get_weapon_id(weapon));
+	heroGravity = getMinGravity(index, cs_get_user_weapon(index));
 
-	set_user_gravity(owner, heroGravity);
-	sh_debug_message(owner, 5, "Setting Gravity To %f", heroGravity);
-	return HAM_IGNORED;
+	set_user_gravity(index, heroGravity);
+	sh_debug_message(index, 5, "Setting Gravity To %f", heroGravity);
 }
 //----------------------------------------------------------------------------------------------
 resetMinGravity(id)
@@ -172,7 +157,7 @@ setGravityPowers(id)
 	if (!sh_is_active())
 		return;
 
-	if (!is_user_alive(id) || gIsFreezeTime || !sh_user_is_loaded(id))
+	if (!is_user_alive(id) || gFreezeTime || !sh_user_is_loaded(id))
 		return;
 
 	new Float:oldGravity = 1.0;
