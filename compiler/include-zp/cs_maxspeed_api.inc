@@ -5,14 +5,11 @@
 
 #include <cs_maxspeed_api_const>
 
-#if AMXX_VERSION_NUM >= 175
-	#pragma reqlib cs_maxspeed_api
-	#if !defined AMXMODX_NOAUTOLOAD
-		#pragma loadlib cs_maxspeed_api
-	#endif
-#else
-	#pragma library cs_maxspeed_api
+#pragma reqlib cs_maxspeed_api
+#if !defined AMXMODX_NOAUTOLOAD
+	#pragma loadlib cs_maxspeed_api
 #endif
+
 
 /**
  * Sets a player's maxspeed.

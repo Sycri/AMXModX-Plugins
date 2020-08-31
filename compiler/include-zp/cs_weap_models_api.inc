@@ -3,14 +3,11 @@
 #endif
 #define _cs_weap_models_api_included
 
-#if AMXX_VERSION_NUM >= 175
-	#pragma reqlib cs_weap_models_api
-	#if !defined AMXMODX_NOAUTOLOAD
-		#pragma loadlib cs_weap_models_api
-	#endif
-#else
-	#pragma library cs_weap_models_api
+#pragma reqlib cs_weap_models_api
+#if !defined AMXMODX_NOAUTOLOAD
+	#pragma loadlib cs_weap_models_api
 #endif
+
 
 /**
  * Sets a custom view model for a specific weapon for a player.

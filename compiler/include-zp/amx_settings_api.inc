@@ -3,14 +3,11 @@
 #endif
 #define _amx_settings_api_included
 
-#if AMXX_VERSION_NUM >= 175
-	#pragma reqlib amx_settings_api
-	#if !defined AMXMODX_NOAUTOLOAD
-		#pragma loadlib amx_settings_api
-	#endif
-#else
-	#pragma library amx_settings_api
+#pragma reqlib amx_settings_api
+#if !defined AMXMODX_NOAUTOLOAD
+	#pragma loadlib amx_settings_api
 #endif
+
 
 native amx_load_setting_int(const filename[], const section[], const key[], &value)
 native amx_load_setting_float(const filename[], const section[], const key[], &Float:value)

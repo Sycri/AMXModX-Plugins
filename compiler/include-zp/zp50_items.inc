@@ -6,13 +6,9 @@
 #include <zp50_core>
 #include <zp50_items_const>
 
-#if AMXX_VERSION_NUM >= 175
-	#pragma reqlib zp50_items
-	#if !defined AMXMODX_NOAUTOLOAD
-		#pragma loadlib zp50_items
-	#endif
-#else
-	#pragma library zp50_items
+#pragma reqlib zp50_items
+#if !defined AMXMODX_NOAUTOLOAD
+	#pragma loadlib zp50_items
 #endif
 
 

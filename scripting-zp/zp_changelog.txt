@@ -1,0 +1,435 @@
+- Version: 5.0.9 (Aug 31, 2020)
+* Removed [CS] Ham Hooks for Bots API since AMX Mod X 1.9.0 includes a similar thing by default
+* Removed [CS] Player Models API since AMX Mod X 1.9.0 fixed SVC_BAD errors for model setting
+* Removed [CS] Teams API since AMX Mod X 1.9.0 fixes errors and includes the same features now
+* Removed backwards compatibility in includes for AMX Mod X versions older than 1.7.5
+
+- Version: 5.0.8a (Jul 22, 2014)
+* Fixed run time error "Couldn't create temp file" (Settings API)
+* Fixed run time error "[ZP] Invalid Player" (Extra item: Infection Bomb)
+
+- Version: 5.0.8 (Jan 06, 2012)
+* Added back unstuck option to main menu
+* Added back CVAR to prevent consecutive game modes (zp_prevent_consecutive_modes)
+* Fixed custom glow not removed after player disconnects (nemesis, survivor, and rage zombie glow)
+* Fixed last nemesis/survivor leaving not replaced by another nemesis/survivor
+* Fixed PODBots not getting nightvision automatically
+* Fixed zombie defense multiplier not ignored for Nemesis
+* Fixed "respawn as zombie" flag not reset if deathmatch respawn event is blocked
+* Fixed CVAR to respawn players after "worldspawn kill" (now works correctly)
+* API: Added "zp_fw_class_human_select_post" that executes after player selects a class in the menu
+* API: Added "zp_class_human_get_max_health(id, classid)"
+* API: Allow natives to unfreeze/stop burning
+
+- Version: 5.0.7 (Nov 02, 2011)
+* Fixed MP3 ambience sounds not downloaded
+* Fixed respawning after round end / respawning twice (deathmatch module)
+* API: Added native to randomly spawn a player
+* API: Added natives to set players on fire/freeze (custom nades)
+
+- Version: 5.0.6 (Oct 11, 2011)
+* Fixed zombie respawning without the sound of the infection
+* Fixed custom human knife model support missing in zombieplague.ini (V_KNIFE HUMAN setting)
+* Fixed frost/fire nades ignoring Zombie Madness
+* Fixed an exploit that would allow buying more than 1 weapon from the buy menus
+* Fixed ZP 4.3 subplugin compatibility (natives zp_get_zombie_maxhealth, zp_has_round_started)
+* Added Biohazard subplugin compatibility (beta, no zombie class support yet)
+* API: Added natives/forwards to get whether player is frozen/burning and to block them
+
+- Version: 5.0 Stable (Sep 24, 2011)
+* Fixed players respawning as zombies on a new round when deathmatch is enabled
+* Fixed spawning zombies in Nemesis mode and spawning humans in Survivor mode
+* Fixed instances of weapons having no BP ammo after buying from custom buy menu
+* Fixed Invalid Array Handle errors because of plugin order
+* Added CVARs for customizing spawn protection for human/zombies
+* Added natives to display additional text in menu for classes/items
+* Some minor fixes
+
+- Version: 5.0 Beta 4 (Aug 29, 2011)
+* Added full ML Support, including classes/items/modes (uses some old translations from "zombie_plague.txt", new ones in "zombie_plague50.txt")
+* Admin Models: added CVARs for customization
+* Bots now choose different classes throughout the game
+* Fixed bots not obeying class restrictions
+* Fixed Nemesis having silent footsteps
+* Fixed Rage Zombie's glow affecting Nemesis even if nemesis glow is disabled
+* Fixed settings "modelchange delay" and "set modelindex offset" missing in zombieplague.ini
+* Fixed "remember last menu page" feature missing for new menus
+* Fixed exploit that would allow zombies to buy weapons at the time of infection if buyzones+money is enabled
+* Fixed suicide exploit by leaving change teams menu opened until after a game mode started
+* Fixed zombies custom FOV not working if a player is infected while zooming
+* Fixed compatibility with subplugins that check if player is nemesis/survivor on death event
+* Fixed ZP 4.3 compatibility layer not passing nemesis/survivor parameter to some forwards
+
+- Version: 5.0 Beta 3 (Aug 24, 2011)
+* Ambience Sounds: added support for custom game modes
+* Main Menu: replaced changeteam override with "Choose Team" option
+* Fire Grenades: added CVAR to keep original HE grenade explosion
+* Game Modes Manager: recoded to choose default mode when no other mode can be started
+* Fixed Leap for first zombie working on modes other than Infection
+* Fixed Nemesis being able to use Zombie Madness
+* Fixed Zombie Madness sounds not playing
+* Fixed Human Class models not saving to zp_humanclasses.ini file
+* Fixed infection sounds played when custom game modes started
+* Fixed Nemesis/Survivor aura not removed after disconnect
+* Fixed runtime errors in cs_weap_restrict_api and zp50_weapon_drop_strip
+
+- Version: 5.0 Beta 2 (Aug 18, 2011)
+* Admin commands Infect, Nemesis, Survivor will now start game modes when used at roundstart (as in ZP 4.3)
+* Admin commands are now blocked for last zombie/human (as in ZP 4.3)
+* Added CVARs to customize armor protection (Nemesis/Survivor)
+* Added ability for custom game modes to toggle infection on/off
+* Fixed game mode manager incorrectly assessing player count when choosing a game mode at round start
+* Fixed nemesis infecting and survivor getting infected on infection rounds
+* Fixed infection effects spawned at a different location than player's origin
+* Fixed small bug/typo in ZP 4.3 Compatibility Module
+* Fixed runtime error in CS Weapon Models API
+
+- Version: 5.0 Beta 1 (Aug 17, 2011)
+* Redid the entire Mod: there is now a separate plugin/module for each set of features
+* Added support for custom Game Modes
+* Added new gameplay mode: Armageddon Mode
+* Added support for custom Human Classes
+* Added ability to fully disable Ammo Packs and use CS Money instead
+* Added CVARs for extensive customization
+* Changed CVAR names to be more descriptive and organized (zombieplague.cfg has been completely revamped)
+* Changed API native/forward names to be more descriptive and organized (old API is still supported though)
+* Rage Zombie is back! :P
+* Assorted bug fixes
+
+- Version: 4.3 Fix 5a (Jul 04, 2011)
+* Fixed menus causing runtime errors
+* Fixed API to be compatible with some subplugins (e.g. ammo pack bank)
+
+- Version: 4.3 Fix 5 (Jul 03, 2011)
+* Added support for MP3 win sounds
+* Added CVAR to reward zombies ammo packs for damaging humans/survivor (zp_zombie_damage_reward <damage amount>)
+* Added CVAR to enable/disable ZP custom HUD display (zp_hud_display <0/1>)
+* Added zp_zombie_painfree <3> setting (only affect first zombie)
+* Updated method to change player's maxspeed using HamSandwich for better compatibility
+* Fixed new menus not remembering the page you were in last time it was opened
+* Fixed player models with modelT.mdl files not precached automatically
+* Fixed team scores not getting reset after Game Commencing event
+* API: Added native to retrieve description/information of a given zombie class
+* API: Added runtime error support (now you can check logs and see which subplugin is causing the error)
+
+- Version: 4.3 Fix 4 (Jun 24, 2011)
+* Fixed custom model for survivor's weapon not working when changing zp_surv_weapon cvar
+* Fixed zombies/survivor using CS buyzones when money is enabled exploit
+* Fixed zombies not respawning on survivor rounds if zp_surv_allow_respawn enabled and zp_respawn_after_last_human set to 0
+* Fixed settings zp_respawn_after_last_human 0 and zp_deatmatch 4 (balanced respawn) sometimes not working properly
+* Fixed zp_respawn_on_worldspawn_kill not working at all on certain rounds
+
+- Version: 4.3 Fix 3 (Jun 20, 2011)
+* CVAR zp_human_speed can now be set to 0 to make humans use CS default weapon speeds
+* Fixed 3rd party plugins unable to change player's maxspeed
+* Fixed frost grenades not saving player's custom gravity/maxspeed, which would mess up some subplugins like parachute, etc.
+* Implemented better method to change player's maxspeed using HamSandwich (found by joaquimandrade, thanks to PoSiTiOn Of PoWeR for pointing this out)
+* API: Added native to replace ZP player models (zp_override_user_model)
+
+- Version: 4.3 Fix 2 (Jun 19, 2011)
+* Allow humans to use CS buyzones easily if money is enabled and random spawning is on
+* Fixed double flashlight exploit
+* Fixed flares lighting issues
+* Fixed humans unable to use nightvision after buying it with money
+* Fixed menus triggering radio commands when pressing next/back, menus closing automatically when walking out of buyzones
+* Fixed "[CS] Invalid Player" errors when player disconnects after throwing an infection bomb
+* Fixed nightvision not properly removed if zp_nvg_custom is 0 and player turns into human/survivor when his nightvision is turned on
+* Fixed rare runtime error 4: index out of bounds (spec_nvision task)
+
+- Version: 4.3 Fix 1 (Jun 12, 2011)
+* Fixed server crashes during mapchange and some potential crashes due to accessing uninitialized entity's private data
+* Fixed player's armor not properly removed when it gets to 0
+* Fixed p_knife model accidentally removed when cvar zp_admin_knife_models_human is enabled
+* Fixed settings for ignoring nemesis/survivor frags and rewarding frags/ammo packs when deathmatch is enabled
+* Fixed console commands zp_swarm, zp_multi and zp_plague expecting a <target> parameter, even though it's not required to start those modes
+* Fixed spectator nightvision using incorrect colors if you die when zombie madness is enabled
+
+- Version: 4.3 (Apr 20, 2009)
+* Added beta changes (see below for details on those)
+* Added CVAR for the new Nemesis/Survivor to have the same amount of HP as the guy who left
+* Fixed some code still executing when the mod is turned off, which could cause weird bugs
+* Fixed knife model issues when running WeaponMod
+
+- Version: 4.3-beta5 (Apr 15, 2009)
+* Added buy limiters for Antidote and Zombie Madness (CVARs: zp_extra_antidote_limit, zp_extra_madness_limit)
+* Added admin knife model customization to zombieplague.ini (CVARs: zp_admin_knife_models_human, zp_admin_knife_models_zombie)
+* Fixed unstuck feature causing zombies to turn into humans when random spawning is disabled
+* Fixed unneeded hostage sounds precaching and taking up memory on CZ servers
+* Fixed classes and items being incorrectly parsed when their names contain brackets
+* Fixed Swarm Mode being triggered with no zombies or humans on either team
+* Fixed zombie's hegrenades behaving as infection bombs even when their CVAR is disabled
+* Fixed non-human grenades behaving as frostnades and flares
+* Fixed code for blocking infection/cure attempts sometimes not working as it should
+* Fixed calling some natives when the mod is turned off causing run time errors
+* API: Native zp_has_round_started now returns 2 if the round is starting (i.e. not fully started yet)
+* API: Replaced returning PLUGIN_HANDLED with ZP_PLUGIN_HANDLED due to backwards compatibility concerns
+* Removed caching of most CVARs as it would just make the code harder to mantain
+
+- Version: 4.3-beta4 (Mar 27, 2009)
+* Added CVAR to set the default amount of starting ammo packs for new players (zp_starting_ammopacks)
+* Added CVAR to randomly give weapons to players instead of buying them (zp_random_weapons)
+* Added/updated ML translations (zombieplague.txt file is now UTF-8 encoded)
+* Added option to force consistency for player models in zombieplague.ini
+* Extra items menu now only displays items available to the player's class
+* Player list menu for admin commands now only displays connected players
+* Admin console commands now always obey the flags set in zombieplague.ini
+* Nemesis damage CVAR no longer affects damage done by an entity other than nemesis himself (i.e. subplugin's rockets won't be affected now)
+* API: Added natives to retrieve the number of zombies/humans/nemesis/survivors on a round
+* API: Added natives to get a zombie class/extra item's ID via its name
+* API: Added native to force players to buy an extra item
+* API: Added natives to manually set and remove player's nightvision
+* API: Returning PLUGIN_HANDLED on "zp_extra_item_selected" forwards will now cancel the item purchase
+* Optimized code a bit (CVARs are now cached at round start, added cstrike module back)
+* Fixed custom skies not being precached
+
+- Version: 4.3-beta3 (Mar 16, 2009)
+* Added CVAR to toggle respawning on infection rounds
+* Added CVARs to separately toggle respawning of killed zombies, humans, nemesis and survivors
+* Fixed custom flashlight sometimes displaying incorrect batteries charge on the HUD
+* Fixed beta2's incompatibilities with some sub-plugins
+
+- Version: 4.3-beta2 (Mar 12, 2009)
+* Extended admin access flags settings to allow for more customization
+* Ambience Sounds can now be separately toggled for each game mode
+* "Join to Spectator" option now disabled for alive non-admin players to prevent suicide abuse (only if the zp_block_suicide cvar is enabled)
+* Added forwards for when players turn into the last zombie/human
+* Added forwards which allow to block an infection/humanization
+* Updated zp_infect_user native with a "rewards" parameter to have the mod automatically handle frags and ammo packs rewards
+* Implemented a more efficient Pain Shock Free code (thanks ConnorMcLeod)
+* Optimized some code and tasks for less CPU usage
+* Fixed remaining instances of the "weapons not reloading until they're switched" bug
+* Fixed frostnade's screenfade not working properly with freeze durations higher than 15 seconds
+* Fixed players sometimes getting incorrect gravity and rendering settings when transforming from a frozen zombie
+
+- Version: 4.3-beta1 (Mar 06, 2009)
+* Customization settings can now be edited externally, recompiling is no longer needed (zombieplague.ini file)
+* Attributes for zombie classes and extra items can now be edited externally, recompiling is no longer needed (zp_zombieclasses.ini and zp_extraitems.ini files)
+* Added support for multiple random zombie models (at last!)
+* Added global zombie models override setting (to have all zombies use the same set of models regardless of class)
+* Added CVARs to toggle respawning (deathmatch) on rounds other than infection
+* Added CVAR to separately toggle Survivor's unlimited ammo
+* Added CVAR to separately toggle Nemesis' knockback and set its multiplier
+* Respawn: admin command and natives now allowed on all rounds
+* Turn into Zombie/Human: admin command and natives now allowed on all rounds
+* Turn into Nemesis/Survivor: admin command and natives now allowed on all rounds
+* Added natives to force a player to turn into a Nemesis/Survivor
+* Added native to retrieve a user's zombie class for the next infection
+* Added forward for when users gets unfrozen (frostnades)
+* Added support for registering extra items for Survivors and Nemesis
+* Survivor and Nemesis are now allowed to buy custom extra items available for them
+* When the last player from a team disconnects and he/she was a Survivor/Nemesis, the player chosen to keep the round going will now have its health set according to the amount of remaining players, instead of full HP (to keep the round balance)
+* Fixed another Polish ML typo causing a string formatting error (that should be the last of them)
+* Fixed bug where if a player's team changed twice in a short amount of time the team update message wouldn't be sent to clients (due to a task accidentally being removed)
+
+- Version: 4.2 (Feb 11, 2009)
+* Merged in beta changes (see below for details on those)
+* Fixed small bug regarding the knife forcing code
+
+- Version: 4.1-beta4 (Feb 06, 2009)
+* Optimized code and checks for unlimited ammo, custom BP ammo, and bots ammo purchase
+* Fixed reloading not working immediately after picking up a weapon with the extra BP ammo hack
+* Fixed client prediction issues for high latency players when unlimited clip ammo is enabled
+* Fixed server crash "New message started when msg 35 has not been sent yet" when a zombie is forced to switch to the knife and the client has cl_lw set to 0
+
+- Version: 4.1-beta3 (Feb 02, 2009)
+* Added CVARs to separately toggle infection special effects (screenfade, particles, etc.)
+* Added screen shake to the default infection effects
+* Added CVAR to set whether players should see each other's custom flashlights (zp_flash_show_all)
+* Added CVAR to toggle the HUD icons on infection, burning, and freeze events (zp_hud_icons)
+* Added CVAR to control whether worldspawn-killed players should automatically be respawned (zp_respawn_on_worldspawn_kill)
+* Fixed money hiding setting not affecting players who respawn as zombies
+* Fixed zombies getting a temporary godmode when a spawn protected human gets infected by a sub-plugin
+* Fixed a typo in the Polish translation that caused a string formatting error
+* Fixed non-custom nightvision being turned off by CS on some cases when spectating
+* Fixed occasional nightvision issues when zp_nvg_give is set to 0 or 2
+* Minor corrections
+
+- Version: 4.1-beta2 (Jan 29, 2009)
+* Added CVARs to change the amount of Survivors and Nemesis for Plague rounds (zp_plague_nem_number, zp_plague_surv_number)
+* Added CVARs to modify the health of Survivors and Nemesis for Plague rounds (zp_plague_nem_hp_multi, zp_plague_surv_hp_multi)
+* Added CVAR to change Zombie Madness duration (zp_extra_madness_duration)
+* Added CVAR to change Survivor's default weapon (zp_surv_weapon)
+* Updated ML with Dutch language
+* Fixed zombie class menu showing up even after selecting a class manually sometimes
+* Optimized delay code from the default model changing system (now it's flawless)
+
+- Version: 4.1-beta1 (Jan 28, 2009)
+* Added CVAR to set a purchase limit for infection bombs per round (zp_extra_infbomb_limit)
+* Added CVARs to change base health multipliers for Nemesis and Survivor (zp_nem_base_health, zp_surv_base_health)
+* Ambience sounds are now only played during game modes and stopped at round end (to completely avoid past problems with client overflows)
+* Fixed enabling/disabling the mod by changing its CVAR after the map had started (it wouldn't properly turn on/off)
+* Fixed using a high zp_multi_ratio causing all players to turn into zombies
+* Fixed delay code from the default model changing system in order to reduce SVC_BAD when lots of people get infected at once (especially with sub-plugins)
+
+- Version: 4.1 (Oct 25, 2008)
+* Added colored messages
+* Added customization for Survivor's M249 view model
+* Added customization to set the required access to get admin models (ACCESS_FLAG3)
+* Added zp_deathmatch 4 setting: players respawn as zombies/humans depending on how balanced the game is
+* Added zp_lighting 0 setting: disables the mod's custom map lighting
+* Added cvar to prevent the same game mode from being played two consecutive rounds: zp_prevent_consecutive_modes
+* Added cvars to toggle admin models for humans and zombies separately
+* Added cvars to change leap force, height and cooldown for zombies, nemesis, and survivor separately
+* Cvar zp_knockback_ducking can now be given a multiplier for crouching zombies (values of 1 and 0 still mantain the previous functionality)
+* Buying additional ammo will no longer waste ammo packs if the player already has full ammo for every weapon
+* Zombie Madness can now be bought during the special game modes
+* Zombies can no longer buy antidotes on deathmatch when the zp_respawn_after_last_human cvar is disabled and there's only one human left
+* Made a bit more optimizations to the code, mostly to repetitive functions
+* Added delay before stopping ambience sounds on round start to prevent overflows with many players
+* Fixed .mp3 files being incorrectly precached (they're generic resources to HL)
+
+- Version: 4.07 (Oct 01, 2008)
+* Added CVARs to set a minimum amount of players required for the gameplay modes
+* Added CVAR to stop respawning players when only the last human is left: zp_respawn_after_last_human
+* Added CVAR to enable/disable the temporary saving of player's ammo packs and zombie class when they disconnect: zp_stats_save
+* Added zp_leap_zombies 3 setting: gives leap to the LAST zombie
+* Added logging of admin's Steam ID and IP to the zombieplague.log file
+* Added display of ammo packs when spectating somebody
+* Fixed a bug that allowed spectators to be respawned
+* Fixed "Remember weapon choice" setting not being reset for a new player
+* Fixed a bug with the alternate model changing method where the original player model wasn't hid when joining the game and spawning as a zombie
+
+- Version: 4.06 (Sep 09, 2008)
+* Added CVAR to control the damage done by Nemesis per hit: zp_nem_damage (250 by default)
+* Buying an already owned grenade through the extra items menu will now actually increase the grenade count, rather than waste ammo packs
+* Ambience sounds are now correctly played for every mode even when using lengthy songs and should no longer affect other sound events when looping
+* Unstuck feature now goes along with the random spawn cvar
+* When buying additional ammo the correct HUD icons are now displayed (i.e. 9mm, 50ae, etc)
+* Replaced the fake bombsite to force round ending with a fake hostage, thus getting rid of an expensive bomb removal code
+* Made some additional code optimizations to reduce CPU usage and such
+
+- Version: 4.05 (Sep 01, 2008)
+* Added CVAR to set humans/spectators custom nightvision color
+* Added CVAR to enable respawning players who commited suicide (this may be abused, mind you)
+* Added natives to force players to turn into zombies/humans (infection rounds only)
+* Added customization for zombie knife hit/stab sounds
+* Added customization for human knife model (just because changing it with 3rd party plugins wouldn't work properly)
+* Players are now forced "cl_minmodels 0" when they join so that they can see zombies correctly
+* Ambience sounds from the previous round are now stopped when a new one begins
+* Corrected a bit the help MOTD (wasn't updated since 3.6 ;P)
+* Fixed incorrect weapon models showing up when turning into a survivor with a grenade on hand
+* Fixed an exploit with the custom flashlight that allowed for unlimited batteries
+* Fixed possible bugs when players switched to Spectator using the ZP menu
+* Fixed round end event getting called twice sometimes when restarting the game
+* Fixed first spawn not being detected for the first CZ bot that is created
+* Minor fixes and optimizations...
+* 4.05b: Fixed custom human knife model not being precached
+* 4.05c: Fixed a stupid typo in the nightvision code which caused clients to be kicked
+
+- Version: 4.04 (Aug 25, 2008)
+* Added custom leap system (allows changing force, height, and cooldown)
+* Added CVAR to remove dropped weapons from the floor
+* Added CVAR to set custom hitzones for zombies
+* Added CVAR to disable custom admin models
+* Ambience sounds now support different sounds for each game mode
+* Optimized bandwidth usage for temp entity messages
+* Fixed blood coming out of players even when the attack was blocked
+
+- Version: 4.03 (Aug 20, 2008)
+* Added CVAR to set the infection ratio in Plague Mode
+* Added CVAR to prevent players from killing themselves
+* Added CVAR to set a max distance for knockback
+* Fixed flares occasionally going off as smoke grenades when using Nade Modes
+* Fixed a bug in Plague Mode regarding Survivor/Nemesis not turning completely into a zombie/human when chosen to keep the round going after the last player on the opposite team leaves
+* Fixed money sometimes still displaying on HUD when the money remove setting is enabled
+* Cleaned up the code a bit
+
+- Version: 4.02 (Aug 16, 2008)
+* Custom grenades are now compatible with Nade Modes
+* Ambience sounds now stop playing when the map ends (by request)
+* Added CVAR to turn silent footsteps for zombies on/off
+* Fixed knockback not being affected by zombie class multipliers
+* Fixed custom knife model not showing up when zombies are forced to use the knife
+* Additional minor fixes
+
+- Version: 4.01 (Aug 14, 2008)
+* Added support for admin zombie models
+* Added cvar for humans not to get infected if they have armor
+* Added customizaton for zombie knife miss sounds
+* Added chat command /unstuck (by request)
+* Minor fixes on menu codes
+* DEBUG: Added define to enable/disable setting the modelindex offset
+
+- Version: 4.00 (Aug 09, 2008)
+* Added new gameplay mode: Plague Mode
+* Redid buy menu system, added feature to remember weapons choice
+* Redid zombie classes system, added support for external additions (e.g. new classes)
+* Redid extra items system, added support for external additions (e.g. custom items)
+* Survivor can now have its own model
+* Added cvars to set how many frags players get for infections/kills
+* Added additional ML translations
+* Changed a bit the model changing method
+* Fixed round win sounds not being precached
+* Fixed players being able to move before freezetime end
+
+- Version: 3.62 (Jul 28, 2008)
+* Added an option to the Game Menu to join the Spectators team
+* Added cvar to disable zombies night vision and the automatic turn on: zp_nvg_give
+* Added zp_flare_color 5 setting: randomly chooses between red, green, and blue colors only
+* Added cvars to disable the halos (light auras) of Nemesis/Survivor
+* Added cvars to set whether Nemesis/Survivor should also be rewarded ammo packs
+* Added cvar to set whether to block +use on pushables to prevent the speed bug
+* Added a little smoke sprite when people stop burning
+* Added 2 more natives for the making of sub-plugins
+* Corrected a cvar name: "zp_lightning" should be "zp_lighting" (duh...)
+
+- Version: 3.61 (Jul 20, 2008)
+* Added command to enable/disable the plugin: zp_toggle <1/0>
+* Added CVAR to disable the custom buy menus: zp_buy_custom
+* Added CVAR to set a slowdown on burning zombies: zp_fire_slowdown
+* Added some HUD icons for burning, frozen and infected events
+* Fixed a typo in the extra items purchase code for bots (also, they will no longer get extra items if disabled by cvar)
+* Fixed false spawn detection for bots when they join the game (credits to vittu)
+
+- Version: 3.60 (Jul 15, 2008)
+* Added a few natives and forwards, along with an include file for those out there willing to make any sub-plugins or something (if you need more, just request!)
+* Thunderclaps now available for zp_lightning settings a to d
+* Added CVARs to disable extra items separately (e.g. infection bomb, etc.)
+* When a Nemesis/Survivor disconnects, the random player chosen to keep the game going will now be a Nemesis/Survivor too (instead of the round going on as infection mode, which looked sorta confusing)
+* Bots now buy extra items after respawn instead of during a fight
+* PODBots: Survivor bots now able to repick weapons in case they drop the M249 (more like a temporary fix)
+* Improved a bit some repetitive tasks handling
+* Minor changes and fixes
+
+- Version: 3.59 (Jul 02, 2008)
+* Zombie models can now be assigned to each class separately
+* Bots can now buy extra items, PODBots use nightvision correctly and don't get confused with players respawning on deathmatch mode anymore
+* Players can now correctly join during survivor/swarm rounds (they'll automatically spawn as zombies if they shall)
+* Added CVAR to give longjump to first zombie: zp_zombie_first_leap
+* Added CVAR to change time before respawning on deathmatch mode: zp_spawn_delay
+* Added CVAR to change fire grenade's burning damage: zp_fire_damage
+* Added CVAR to change flare's lightning radius: zp_flare_size
+* Fixed players not respawning as zombies when the corresponding deathmatch setting was enabled
+* Fixed multiple infection mode triggering when it would result on a single zombie being infected
+* Fixed flares floating midair
+* Fixed the most rare occurrences of players stacking on a single team, so that no manual game restarts are required anymore
+* Fixed players getting an incorrect amount of ammo for some weapons when buying
+* Changed say command "menu" to "zpmenu" (it can still be accessed by pressing M anyway)
+* Minor changes/corrections
+
+- Version: 3.58 (Jun 23, 2008)
+* Added support for Condition-Zero bots and changed bomb removal method (thus hopefully fixing all related crashing errors)
+* Fixed grenades exploding when dropped from corpses on CZ
+* Fixed zombie bleeding feature using incorrect decals on CZ
+* Added additional knockback customization (you can now set intensity for each weapon separately)
+* Added CVAR for zombies not to be knocked back when they're ducking: zp_knockback_ducking
+* Fixed HUD Messages overlapping with some miscstats announcements
+
+- Version: 3.57 (Jun 20, 2008)
+* Added support for PODBot MM V3B19k+: bots buy their own weapons/ammo and choose their zombie class (thanks KWo)
+* Added support for grenades and pistols to the Extra Items Weapons List
+* Added a notice for players when the last zombie/human leaves
+* Fixed flares potentially turning into smokegrenades when changing their duration
+* Infection Bomb can now kill the last human
+* Minor changes to the code
+
+- Version: 3.56 (Jun 13, 2008)
+* Added support for ambience sounds
+* Added CVAR to control whether player's money should be removed: zp_remove_money
+* Added CVAR to ignore Nemesis/Survivor frags: zp_nem_ignore_frags/zp_surv_ignore_frags
+* Added CVAR to give the last human an extra health reward: zp_human_last_extrahp
+* Fixed compiler error when trying to use the alternative model changing method
+* Fixed zombieplague.log entries being formatted somewhat incorrectly
+
+-Version: 3.55 (Jun 09, 2008)
+* Public release

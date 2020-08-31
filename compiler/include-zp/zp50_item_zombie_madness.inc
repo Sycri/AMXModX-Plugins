@@ -5,13 +5,9 @@
 
 #include <zp50_core>
 
-#if AMXX_VERSION_NUM >= 175
-	#pragma reqlib zp50_item_zombie_madness
-	#if !defined AMXMODX_NOAUTOLOAD
-		#pragma loadlib zp50_item_zombie_madness
-	#endif
-#else
-	#pragma library zp50_item_zombie_madness
+#pragma reqlib zp50_item_zombie_madness
+#if !defined AMXMODX_NOAUTOLOAD
+	#pragma loadlib zp50_item_zombie_madness
 #endif
 
 

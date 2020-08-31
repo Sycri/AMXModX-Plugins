@@ -5,13 +5,9 @@
 
 #include <zp50_class_human>
 
-#if AMXX_VERSION_NUM >= 175
-	#pragma reqlib zp50_class_survivor
-	#if !defined AMXMODX_NOAUTOLOAD
-		#pragma loadlib zp50_class_survivor
-	#endif
-#else
-	#pragma library zp50_class_survivor
+#pragma reqlib zp50_class_survivor
+#if !defined AMXMODX_NOAUTOLOAD
+	#pragma loadlib zp50_class_survivor
 #endif
 
 

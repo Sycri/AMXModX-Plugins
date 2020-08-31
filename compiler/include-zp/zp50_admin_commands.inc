@@ -5,13 +5,9 @@
 
 #include <zp50_core>
 
-#if AMXX_VERSION_NUM >= 175
-	#pragma reqlib zp50_admin_commands
-	#if !defined AMXMODX_NOAUTOLOAD
-		#pragma loadlib zp50_admin_commands
-	#endif
-#else
-	#pragma library zp50_admin_commands
+#pragma reqlib zp50_admin_commands
+#if !defined AMXMODX_NOAUTOLOAD
+	#pragma loadlib zp50_admin_commands
 #endif
 
 

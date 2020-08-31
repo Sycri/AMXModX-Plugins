@@ -5,13 +5,9 @@
 
 #include <zp50_core>
 
-#if AMXX_VERSION_NUM >= 175
-	#pragma reqlib zp50_grenade_fire
-	#if !defined AMXMODX_NOAUTOLOAD
-		#pragma loadlib zp50_grenade_fire
-	#endif
-#else
-	#pragma library zp50_grenade_fire
+#pragma reqlib zp50_grenade_fire
+#if !defined AMXMODX_NOAUTOLOAD
+	#pragma loadlib zp50_grenade_fire
 #endif
 
 

@@ -5,14 +5,11 @@
 
 #include <zp50_core_const>
 
-#if AMXX_VERSION_NUM >= 175
-	#pragma reqlib zp50_core
-	#if !defined AMXMODX_NOAUTOLOAD
-		#pragma loadlib zp50_core
-	#endif
-#else
-	#pragma library zp50_core
+#pragma reqlib zp50_core
+#if !defined AMXMODX_NOAUTOLOAD
+	#pragma loadlib zp50_core
 #endif
+
 
 /**
  * Returns whether a player is a zombie.

@@ -6,13 +6,9 @@
 #include <zp50_core>
 #include <zp50_gamemodes_const>
 
-#if AMXX_VERSION_NUM >= 175
-	#pragma reqlib zp50_gamemodes
-	#if !defined AMXMODX_NOAUTOLOAD
-		#pragma loadlib zp50_gamemodes
-	#endif
-#else
-	#pragma library zp50_gamemodes
+#pragma reqlib zp50_gamemodes
+#if !defined AMXMODX_NOAUTOLOAD
+	#pragma loadlib zp50_gamemodes
 #endif
 
 

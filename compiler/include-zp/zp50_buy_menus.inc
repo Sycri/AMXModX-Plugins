@@ -5,13 +5,9 @@
 
 #include <zp50_core>
 
-#if AMXX_VERSION_NUM >= 175
-	#pragma reqlib zp50_buy_menus
-	#if !defined AMXMODX_NOAUTOLOAD
-		#pragma loadlib zp50_buy_menus
-	#endif
-#else
-	#pragma library zp50_buy_menus
+#pragma reqlib zp50_buy_menus
+#if !defined AMXMODX_NOAUTOLOAD
+	#pragma loadlib zp50_buy_menus
 #endif
 
 
