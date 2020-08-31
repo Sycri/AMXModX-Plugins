@@ -5,7 +5,7 @@
 	---------------------------
 	
 	This plugin is part of Zombie Plague Mod and is distributed under the
-	terms of the GNU General Public License. Check ZP_ReadMe.txt for details.
+	terms of the GNU General Public License. Check zp_readme.txt for details.
 	
 ================================================================================*/
 
@@ -221,7 +221,7 @@ public event_round_start()
 	
 	// Save player's money at round start, plus our custom money rewards
 	new id
-	for (id = 1; id <= g_MaxPlayers; id++)
+	for (id = 1; id <= MaxClients; id++)
 	{
 		if (!is_user_connected(id) || g_MoneyRewarded[id] == NO_DATA)
 			continue;
@@ -238,7 +238,7 @@ public zp_fw_gamemodes_end()
 	{
 		// Human team wins
 		new id
-		for (id = 1; id <= g_MaxPlayers; id++)
+		for (id = 1; id <= MaxClients; id++)
 		{
 			if (!is_user_connected(id))
 				continue;
@@ -253,7 +253,7 @@ public zp_fw_gamemodes_end()
 	{
 		// Zombie team wins
 		new id
-		for (id = 1; id <= g_MaxPlayers; id++)
+		for (id = 1; id <= MaxClients; id++)
 		{
 			if (!is_user_connected(id))
 				continue;
@@ -268,7 +268,7 @@ public zp_fw_gamemodes_end()
 	{
 		// No one wins
 		new id
-		for (id = 1; id <= g_MaxPlayers; id++)
+		for (id = 1; id <= MaxClients; id++)
 		{
 			if (!is_user_connected(id))
 				continue;

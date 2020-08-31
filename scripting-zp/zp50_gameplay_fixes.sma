@@ -5,7 +5,7 @@
 	---------------------------
 	
 	This plugin is part of Zombie Plague Mod and is distributed under the
-	terms of the GNU General Public License. Check ZP_ReadMe.txt for details.
+	terms of the GNU General Public License. Check zp_readme.txt for details.
 	
 ================================================================================*/
 
@@ -354,7 +354,7 @@ public zp_fw_gamemodes_start()
 	if (get_pcvar_num(cvar_block_suicide))
 	{
 		new id
-		for (id = 1; id <= g_MaxPlayers; id++)
+		for (id = 1; id <= MaxClients; id++)
 		{
 			if (!is_user_alive(id))
 				continue;
@@ -373,7 +373,7 @@ public zp_fw_gamemodes_end()
 	
 	// Stop respawning after game mode ends
 	new id
-	for (id = 1; id <= g_MaxPlayers; id++)
+	for (id = 1; id <= MaxClients; id++)
 		remove_task(id+TASK_RESPAWN)
 }
 
@@ -429,7 +429,7 @@ GetAliveCTCount()
 {
 	new iCTs, id
 	
-	for (id = 1; id <= g_MaxPlayers; id++)
+	for (id = 1; id <= MaxClients; id++)
 	{
 		if (is_user_alive(id) && cs_get_user_team(id) == CS_TEAM_CT)
 			iCTs++
@@ -443,7 +443,7 @@ GetAliveTCount()
 {
 	new iTs, id
 	
-	for (id = 1; id <= g_MaxPlayers; id++)
+	for (id = 1; id <= MaxClients; id++)
 	{
 		if (is_user_alive(id) && cs_get_user_team(id) == CS_TEAM_T)
 			iTs++
@@ -457,7 +457,7 @@ GetCTCount()
 {
 	new iCTs, id
 	
-	for (id = 1; id <= g_MaxPlayers; id++)
+	for (id = 1; id <= MaxClients; id++)
 	{
 		if (is_user_connected(id) && cs_get_user_team(id) == CS_TEAM_CT)
 			iCTs++
@@ -471,7 +471,7 @@ GetTCount()
 {
 	new iTs, id
 	
-	for (id = 1; id <= g_MaxPlayers; id++)
+	for (id = 1; id <= MaxClients; id++)
 	{
 		if (is_user_connected(id) && cs_get_user_team(id) == CS_TEAM_T)
 			iTs++
@@ -485,7 +485,7 @@ GetAliveCount()
 {
 	new iAlive, id
 	
-	for (id = 1; id <= g_MaxPlayers; id++)
+	for (id = 1; id <= MaxClients; id++)
 	{
 		if (is_user_alive(id))
 			iAlive++
@@ -499,7 +499,7 @@ GetRandomAlive(target_index)
 {
 	new iAlive, id
 	
-	for (id = 1; id <= g_MaxPlayers; id++)
+	for (id = 1; id <= MaxClients; id++)
 	{
 		if (is_user_alive(id))
 			iAlive++

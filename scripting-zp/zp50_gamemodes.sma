@@ -5,7 +5,7 @@
 	-------------------------------
 	
 	This plugin is part of Zombie Plague Mod and is distributed under the
-	terms of the GNU General Public License. Check ZP_ReadMe.txt for details.
+	terms of the GNU General Public License. Check zp_readme.txt for details.
 	
 	-TODO: cvar prevent consecutive modes (should work for all except default)
 	
@@ -333,7 +333,7 @@ public event_round_start()
 {
 	// Players respawn as humans when a new round begins
 	new id
-	for (id = 1; id <= g_MaxPlayers; id++)
+	for (id = 1; id <= MaxClients; id++)
 	{
 		if (!is_user_connected(id))
 			continue;
@@ -565,7 +565,7 @@ balance_teams()
 	new id, CsTeams:team
 	
 	// First, set everyone to CT
-	for (id = 1; id <= g_MaxPlayers; id++)
+	for (id = 1; id <= MaxClients; id++)
 	{
 		// Skip if not connected
 		if (!is_user_connected(id))
@@ -585,7 +585,7 @@ balance_teams()
 	while (iTerrors < iMaxTerrors)
 	{
 		// Keep looping through all players
-		if (++id > g_MaxPlayers) id = 1
+		if (++id > MaxClients) id = 1
 		
 		// Skip if not connected
 		if (!is_user_connected(id))
@@ -611,7 +611,7 @@ GetAliveCount()
 {
 	new iAlive, id
 	
-	for (id = 1; id <= g_MaxPlayers; id++)
+	for (id = 1; id <= MaxClients; id++)
 	{
 		if (is_user_alive(id))
 			iAlive++
@@ -625,7 +625,7 @@ GetPlayingCount()
 {
 	new iPlaying, id, CsTeams:team
 	
-	for (id = 1; id <= g_MaxPlayers; id++)
+	for (id = 1; id <= MaxClients; id++)
 	{
 		if (!is_user_connected(id))
 			continue;

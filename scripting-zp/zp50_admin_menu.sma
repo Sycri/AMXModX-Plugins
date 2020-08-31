@@ -5,7 +5,7 @@
 	-----------------------
 	
 	This plugin is part of Zombie Plague Mod and is distributed under the
-	terms of the GNU General Public License. Check ZP_ReadMe.txt for details.
+	terms of the GNU General Public License. Check zp_readme.txt for details.
 	
 ================================================================================*/
 
@@ -204,7 +204,7 @@ show_menu_player_list(id)
 	menuid = menu_create(menu, "menu_player_list")
 	
 	// Player List
-	for (player = 0; player <= g_MaxPlayers; player++)
+	for (player = 0; player <= MaxClients; player++)
 	{
 		// Skip if not connected
 		if (!is_user_connected(player))

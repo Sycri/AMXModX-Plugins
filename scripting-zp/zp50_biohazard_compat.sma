@@ -5,7 +5,7 @@
 	----------------------------------------------
 	
 	This plugin is part of Zombie Plague Mod and is distributed under the
-	terms of the GNU General Public License. Check ZP_ReadMe.txt for details.
+	terms of the GNU General Public License. Check zp_readme.txt for details.
 	
 	TODO:
 	- Bio 2.00 zombie classes support
@@ -262,7 +262,7 @@ public native_firstzombie(plugin_id, num_params)
 		return -1;
 	
 	new player
-	for (player = 1; player <= g_MaxPlayers; player++)
+	for (player = 1; player <= MaxClients; player++)
 	{
 		if (is_user_alive(player) && zp_core_is_first_zombie(player))
 			return player;

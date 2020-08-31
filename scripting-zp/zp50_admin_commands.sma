@@ -5,7 +5,7 @@
 	---------------------------
 	
 	This plugin is part of Zombie Plague Mod and is distributed under the
-	terms of the GNU General Public License. Check ZP_ReadMe.txt for details.
+	terms of the GNU General Public License. Check zp_readme.txt for details.
 	
 ================================================================================*/
 
@@ -22,78 +22,77 @@
 #include <zp50_colorchat>
 #include <zp50_log>
 
+#pragma semicolon 1
+
 // Settings file
-new const ZP_SETTINGS_FILE[] = "zombieplague.ini"
+new const ZP_SETTINGS_FILE[] = "zombieplague.ini";
 
 #define ACCESSFLAG_MAX_LENGTH 2
 
 // Access flags
-new g_access_make_zombie[ACCESSFLAG_MAX_LENGTH] = "d"
-new g_access_make_human[ACCESSFLAG_MAX_LENGTH] = "d"
-new g_access_respawn_players[ACCESSFLAG_MAX_LENGTH] = "d"
-new g_access_make_nemesis[ACCESSFLAG_MAX_LENGTH] = "d"
-new g_access_make_survivor[ACCESSFLAG_MAX_LENGTH] = "d"
-new g_access_start_game_mode[ACCESSFLAG_MAX_LENGTH] = "d"
+new gAccessMakeZombie[ACCESSFLAG_MAX_LENGTH] = "d";
+new gAccessMakeHuman[ACCESSFLAG_MAX_LENGTH] = "d";
+new gAccessRespawnPlayers[ACCESSFLAG_MAX_LENGTH] = "d";
+new gAccessMakeNemesis[ACCESSFLAG_MAX_LENGTH] = "d";
+new gAccessMakeSurvivor[ACCESSFLAG_MAX_LENGTH] = "d";
+new gAccessStartGameMode[ACCESSFLAG_MAX_LENGTH] = "d";
 
-new g_MaxPlayers
-new g_GameModeInfectionID, g_GameModeNemesisID, g_GameModeSurvivorID
+new gGameModeInfectionID, gGameModeNemesisID, gGameModeSurvivorID;
 
-new cvar_amx_show_activity
-new cvar_deathmatch
-new cvar_log_admin_commands
+new CvarLogAdminCommands;
+new amx_show_activity;
+new zp_deathmatch;
 
 public plugin_init()
 {
-	register_plugin("[ZP] Admin Commands", ZP_VERSION_STRING, "ZP Dev Team")
+	register_plugin("[ZP] Admin Commands", ZP_VERSION_STRING, "ZP Dev Team");
 	
 	// Admin commands
-	register_concmd("zp_zombie", "cmd_zombie", _, "<target> - Turn someone into a Zombie", 0)
-	register_concmd("zp_human", "cmd_human", _, "<target> - Turn someone back to Human", 0)
-	register_concmd("zp_respawn", "cmd_respawn", _, "<target> - Respawn someone", 0)
-	register_concmd("zp_start_game_mode", "cmd_start_game_mode", _, "<game mode id> - Start specific game mode", 0)
+	register_concmd("zp_zombie", "@ConsoleCommand_Zombie", _, "<target> - Turn someone into a Zombie", 0);
+	register_concmd("zp_human", "@ConsoleCommand_Human", _, "<target> - Turn someone back to Human", 0);
+	register_concmd("zp_respawn", "@ConsoleCommand_Respawn", _, "<target> - Respawn someone", 0);
+	register_concmd("zp_start_game_mode", "@ConsoleCommand_StartGameMode", _, "<game mode id> - Start specific game mode", 0);
 	
 	// Nemesis Class loaded?
 	if (LibraryExists(LIBRARY_NEMESIS, LibType_Library))
-		register_concmd("zp_nemesis", "cmd_nemesis", _, "<target> - Turn someone into a Nemesis", 0)
+		register_concmd("zp_nemesis", "@ConsoleCommand_Nemesis", _, "<target> - Turn someone into a Nemesis", 0);
 	
 	// Survivor Class loaded?
 	if (LibraryExists(LIBRARY_SURVIVOR, LibType_Library))
-		register_concmd("zp_survivor", "cmd_survivor", _, "<target> - Turn someone into a Survivor", 0)
+		register_concmd("zp_survivor", "@ConsoleCommand_Survivor", _, "<target> - Turn someone into a Survivor", 0);
 	
-	g_MaxPlayers = get_maxplayers()
-	
-	cvar_log_admin_commands = register_cvar("zp_log_admin_commands", "1")
+	bind_pcvar_num(create_cvar("zp_log_admin_commands", "1"), CvarLogAdminCommands);
 }
 
 public plugin_precache()
 {
 	// Load from external file, save if not found
-	if (!amx_load_setting_string(ZP_SETTINGS_FILE, "Access Flags", "MAKE ZOMBIE", g_access_make_zombie, charsmax(g_access_make_zombie)))
-		amx_save_setting_string(ZP_SETTINGS_FILE, "Access Flags", "MAKE ZOMBIE", g_access_make_zombie)
-	if (!amx_load_setting_string(ZP_SETTINGS_FILE, "Access Flags", "MAKE HUMAN", g_access_make_human, charsmax(g_access_make_human)))
-		amx_save_setting_string(ZP_SETTINGS_FILE, "Access Flags", "MAKE HUMAN", g_access_make_human)
-	if (!amx_load_setting_string(ZP_SETTINGS_FILE, "Access Flags", "MAKE NEMESIS", g_access_make_nemesis, charsmax(g_access_make_nemesis)))
-		amx_save_setting_string(ZP_SETTINGS_FILE, "Access Flags", "MAKE NEMESIS", g_access_make_nemesis)
-	if (!amx_load_setting_string(ZP_SETTINGS_FILE, "Access Flags", "MAKE SURVIVOR", g_access_make_survivor, charsmax(g_access_make_survivor)))
-		amx_save_setting_string(ZP_SETTINGS_FILE, "Access Flags", "MAKE SURVIVOR", g_access_make_survivor)
-	if (!amx_load_setting_string(ZP_SETTINGS_FILE, "Access Flags", "RESPAWN PLAYERS", g_access_respawn_players, charsmax(g_access_respawn_players)))
-		amx_save_setting_string(ZP_SETTINGS_FILE, "Access Flags", "RESPAWN PLAYERS", g_access_respawn_players)
-	if (!amx_load_setting_string(ZP_SETTINGS_FILE, "Access Flags", "START GAME MODE", g_access_start_game_mode, charsmax(g_access_start_game_mode)))
-		amx_save_setting_string(ZP_SETTINGS_FILE, "Access Flags", "START GAME MODE", g_access_start_game_mode)
+	if (!amx_load_setting_string(ZP_SETTINGS_FILE, "Access Flags", "MAKE ZOMBIE", gAccessMakeZombie, charsmax(gAccessMakeZombie)))
+		amx_save_setting_string(ZP_SETTINGS_FILE, "Access Flags", "MAKE ZOMBIE", gAccessMakeZombie);
+	if (!amx_load_setting_string(ZP_SETTINGS_FILE, "Access Flags", "MAKE HUMAN", gAccessMakeHuman, charsmax(gAccessMakeHuman)))
+		amx_save_setting_string(ZP_SETTINGS_FILE, "Access Flags", "MAKE HUMAN", gAccessMakeHuman);
+	if (!amx_load_setting_string(ZP_SETTINGS_FILE, "Access Flags", "MAKE NEMESIS", gAccessMakeNemesis, charsmax(gAccessMakeNemesis)))
+		amx_save_setting_string(ZP_SETTINGS_FILE, "Access Flags", "MAKE NEMESIS", gAccessMakeNemesis);
+	if (!amx_load_setting_string(ZP_SETTINGS_FILE, "Access Flags", "MAKE SURVIVOR", gAccessMakeSurvivor, charsmax(gAccessMakeSurvivor)))
+		amx_save_setting_string(ZP_SETTINGS_FILE, "Access Flags", "MAKE SURVIVOR", gAccessMakeSurvivor);
+	if (!amx_load_setting_string(ZP_SETTINGS_FILE, "Access Flags", "RESPAWN PLAYERS", gAccessRespawnPlayers, charsmax(gAccessRespawnPlayers)))
+		amx_save_setting_string(ZP_SETTINGS_FILE, "Access Flags", "RESPAWN PLAYERS", gAccessRespawnPlayers);
+	if (!amx_load_setting_string(ZP_SETTINGS_FILE, "Access Flags", "START GAME MODE", gAccessStartGameMode, charsmax(gAccessStartGameMode)))
+		amx_save_setting_string(ZP_SETTINGS_FILE, "Access Flags", "START GAME MODE", gAccessStartGameMode);
 }
 
 public plugin_natives()
 {
-	register_library("zp50_admin_commands")
-	register_native("zp_admin_commands_zombie", "native_admin_commands_zombie")
-	register_native("zp_admin_commands_human", "native_admin_commands_human")
-	register_native("zp_admin_commands_nemesis", "native_admin_commands_nemesis")
-	register_native("zp_admin_commands_survivor", "native_admin_commands_survivor")
-	register_native("zp_admin_commands_respawn", "native_admin_commands_respawn")
-	register_native("zp_admin_commands_start_mode", "_admin_commands_start_mode")
+	register_library("zp50_admin_commands");
+	register_native("zp_admin_commands_zombie", "@Native_AdminCommandsZombie");
+	register_native("zp_admin_commands_human", "@Native_AdminCommandsHuman");
+	register_native("zp_admin_commands_nemesis", "@Native_AdminCommandsNemesis");
+	register_native("zp_admin_commands_survivor", "@Native_AdminCommandsSurvivor");
+	register_native("zp_admin_commands_respawn", "@Native_AdminCommandsRespawn");
+	register_native("zp_admin_commands_start_mode", "@Native_AdminCommandsStartGameMode");
 	
-	set_module_filter("module_filter")
-	set_native_filter("native_filter")
+	set_module_filter("module_filter");
+	set_native_filter("native_filter");
 }
 public module_filter(const module[])
 {
@@ -112,72 +111,66 @@ public native_filter(const name[], index, trap)
 
 public plugin_cfg()
 {
-	cvar_amx_show_activity = get_cvar_pointer("amx_show_activity")
-	cvar_deathmatch = get_cvar_pointer("zp_deathmatch")
-	g_GameModeInfectionID = zp_gamemodes_get_id("Infection Mode")
-	g_GameModeNemesisID = zp_gamemodes_get_id("Nemesis Mode")
-	g_GameModeSurvivorID = zp_gamemodes_get_id("Survivor Mode")
+	amx_show_activity = get_cvar_pointer("amx_show_activity");
+	zp_deathmatch = get_cvar_pointer("zp_deathmatch");
+	gGameModeInfectionID = zp_gamemodes_get_id("Infection Mode");
+	gGameModeNemesisID = zp_gamemodes_get_id("Nemesis Mode");
+	gGameModeSurvivorID = zp_gamemodes_get_id("Survivor Mode");
 }
 
-public native_admin_commands_zombie(plugin_id, num_params)
+@Native_AdminCommandsZombie(plugin_id, num_params)
 {
-	new id_admin = get_param(1)
+	new adminID = get_param(1);
 	
-	if (!is_user_connected(id_admin))
-	{
-		log_error(AMX_ERR_NATIVE, "[ZP] Invalid Player (%d)", id_admin)
+	if (!is_user_connected(adminID)) {
+		log_error(AMX_ERR_NATIVE, "[ZP] Invalid Player (%d)", adminID);
 		return false;
 	}
 	
-	new player = get_param(2)
+	new player = get_param(2);
 	
-	if (!is_user_alive(player))
-	{
-		log_error(AMX_ERR_NATIVE, "[ZP] Invalid Player (%d)", player)
+	if (!is_user_alive(player)) {
+		log_error(AMX_ERR_NATIVE, "[ZP] Invalid Player (%d)", player);
 		return false;
 	}
 	
-	command_zombie(id_admin, player)
+	commandZombie(adminID, player);
 	return true;
 }
 
-public native_admin_commands_human(plugin_id, num_params)
+@Native_AdminCommandsHuman(plugin_id, num_params)
 {
-	new id_admin = get_param(1)
+	new adminID = get_param(1);
 	
-	if (!is_user_connected(id_admin))
-	{
-		log_error(AMX_ERR_NATIVE, "[ZP] Invalid Player (%d)", id_admin)
+	if (!is_user_connected(adminID)) {
+		log_error(AMX_ERR_NATIVE, "[ZP] Invalid Player (%d)", adminID);
 		return false;
 	}
 	
-	new player = get_param(2)
+	new player = get_param(2);
 	
-	if (!is_user_alive(player))
-	{
-		log_error(AMX_ERR_NATIVE, "[ZP] Invalid Player (%d)", player)
+	if (!is_user_alive(player)) {
+		log_error(AMX_ERR_NATIVE, "[ZP] Invalid Player (%d)", player);
 		return false;
 	}
 	
-	command_human(id_admin, player)
+	commandHuman(adminID, player);
 	return true;
 }
 
-public native_admin_commands_nemesis(plugin_id, num_params)
+@Native_AdminCommandsNemesis(plugin_id, num_params)
 {
-	new id_admin = get_param(1)
+	new adminID = get_param(1);
 	
-	if (!is_user_connected(id_admin))
-	{
-		log_error(AMX_ERR_NATIVE, "[ZP] Invalid Player (%d)", id_admin)
+	if (!is_user_connected(adminID)) {
+		log_error(AMX_ERR_NATIVE, "[ZP] Invalid Player (%d)", adminID);
 		return false;
 	}
 	
-	new player = get_param(2)
+	new player = get_param(2);
 	
-	if (!is_user_alive(player))
-	{
-		log_error(AMX_ERR_NATIVE, "[ZP] Invalid Player (%d)", player)
+	if (!is_user_alive(player)) {
+		log_error(AMX_ERR_NATIVE, "[ZP] Invalid Player (%d)", player);
 		return false;
 	}
 	
@@ -185,25 +178,23 @@ public native_admin_commands_nemesis(plugin_id, num_params)
 	if (!LibraryExists(LIBRARY_NEMESIS, LibType_Library))
 		return false;
 	
-	command_nemesis(id_admin, player)
+	commandNemesis(adminID, player);
 	return true;
 }
 
-public native_admin_commands_survivor(plugin_id, num_params)
+@Native_AdminCommandsSurvivor(plugin_id, num_params)
 {
-	new id_admin = get_param(1)
+	new adminID = get_param(1);
 	
-	if (!is_user_connected(id_admin))
-	{
-		log_error(AMX_ERR_NATIVE, "[ZP] Invalid Player (%d)", id_admin)
+	if (!is_user_connected(adminID)) {
+		log_error(AMX_ERR_NATIVE, "[ZP] Invalid Player (%d)", adminID);
 		return false;
 	}
 	
-	new player = get_param(2)
+	new player = get_param(2);
 	
-	if (!is_user_alive(player))
-	{
-		log_error(AMX_ERR_NATIVE, "[ZP] Invalid Player (%d)", player)
+	if (!is_user_alive(player)) {
+		log_error(AMX_ERR_NATIVE, "[ZP] Invalid Player (%d)", player);
 		return false;
 	}
 	
@@ -211,229 +202,223 @@ public native_admin_commands_survivor(plugin_id, num_params)
 	if (!LibraryExists(LIBRARY_SURVIVOR, LibType_Library))
 		return false;
 	
-	command_survivor(id_admin, player)
+	commandSurvivor(adminID, player);
 	return true;
 }
 
-public native_admin_commands_respawn(plugin_id, num_params)
+@Native_AdminCommandsRespawn(plugin_id, num_params)
 {
-	new id_admin = get_param(1)
+	new adminID = get_param(1);
 	
-	if (!is_user_connected(id_admin))
-	{
-		log_error(AMX_ERR_NATIVE, "[ZP] Invalid Player (%d)", id_admin)
+	if (!is_user_connected(adminID)) {
+		log_error(AMX_ERR_NATIVE, "[ZP] Invalid Player (%d)", adminID);
 		return false;
 	}
 	
-	new player = get_param(2)
+	new player = get_param(2);
 	
-	if (!is_user_connected(player))
-	{
-		log_error(AMX_ERR_NATIVE, "[ZP] Invalid Player (%d)", player)
+	if (!is_user_connected(player)) {
+		log_error(AMX_ERR_NATIVE, "[ZP] Invalid Player (%d)", player);
 		return false;
 	}
 	
 	// Respawn allowed for player?
-	if (!allowed_respawn(player))
+	if (!allowedToRespawn(player))
 		return false;
 	
-	command_respawn(id_admin, player)
+	commandRespawn(adminID, player);
 	return true;
 }
 
-public _admin_commands_start_mode(plugin_id, num_params)
+@Native_AdminCommandsStartGameMode(plugin_id, num_params)
 {
-	new id_admin = get_param(1)
+	new adminID = get_param(1);
 	
-	if (!is_user_connected(id_admin))
-	{
-		log_error(AMX_ERR_NATIVE, "[ZP] Invalid Player (%d)", id_admin)
+	if (!is_user_connected(adminID)) {
+		log_error(AMX_ERR_NATIVE, "[ZP] Invalid Player (%d)", adminID);
 		return false;
 	}
 	
-	new game_mode_id = get_param(2)
+	new gamemodeID = get_param(2);
 	
 	// Invalid game mode id
-	if (!(0 <= game_mode_id < zp_gamemodes_get_count()))
-	{
-		log_error(AMX_ERR_NATIVE, "[ZP] Invalid game mode id (%d).", game_mode_id)
+	if (!(0 <= gamemodeID < zp_gamemodes_get_count())) {
+		log_error(AMX_ERR_NATIVE, "[ZP] Invalid game mode id (%d).", gamemodeID);
 		return false;
 	}
 	
-	command_start_mode(id_admin, game_mode_id)
+	commandStartGameMode(adminID, gamemodeID);
 	return true;
 }
 
 // zp_zombie [target]
-public cmd_zombie(id, level, cid)
+@ConsoleCommand_Zombie(id, level, cid)
 {
 	// Check for access flag - Make Zombie
-	if (!cmd_access(id, read_flags(g_access_make_zombie), cid, 2))
+	if (!cmd_access(id, read_flags(gAccessMakeZombie), cid, 2))
 		return PLUGIN_HANDLED;
 	
 	// Retrieve arguments
-	new arg[32], player
-	read_argv(1, arg, charsmax(arg))
-	player = cmd_target(id, arg, (CMDTARGET_ONLY_ALIVE | CMDTARGET_ALLOW_SELF))
+	new arg[32], player;
+	read_argv(1, arg, charsmax(arg));
+	player = cmd_target(id, arg, (CMDTARGET_ONLY_ALIVE | CMDTARGET_ALLOW_SELF));
 	
 	// Invalid target
-	if (!player) return PLUGIN_HANDLED;
+	if (!player)
+		return PLUGIN_HANDLED;
 	
 	// Target not allowed to be zombie
-	if (zp_core_is_zombie(player))
-	{
-		new player_name[32]
-		get_user_name(player, player_name, charsmax(player_name))
-		client_print(id, print_console, "[ZP] %L (%s).", id, "ALREADY_ZOMBIE", player_name)
+	if (zp_core_is_zombie(player)) {
+		new playerName[32];
+		get_user_name(player, playerName, charsmax(playerName));
+		client_print(id, print_console, "[ZP] %L (%s).", id, "ALREADY_ZOMBIE", playerName);
 		return PLUGIN_HANDLED;
 	}
 	
-	command_zombie(id, player)
+	commandZombie(id, player);
 	return PLUGIN_HANDLED;
 }
 
 // zp_human [target]
-public cmd_human(id, level, cid)
+@ConsoleCommand_Human(id, level, cid)
 {
 	// Check for access flag - Make Human
-	if (!cmd_access(id, read_flags(g_access_make_human), cid, 2))
+	if (!cmd_access(id, read_flags(gAccessMakeHuman), cid, 2))
 		return PLUGIN_HANDLED;
 	
 	// Retrieve arguments
-	new arg[32], player
-	read_argv(1, arg, charsmax(arg))
-	player = cmd_target(id, arg, (CMDTARGET_ONLY_ALIVE | CMDTARGET_ALLOW_SELF))
+	new arg[32], player;
+	read_argv(1, arg, charsmax(arg));
+	player = cmd_target(id, arg, (CMDTARGET_ONLY_ALIVE | CMDTARGET_ALLOW_SELF));
 	
 	// Invalid target
-	if (!player) return PLUGIN_HANDLED;
+	if (!player)
+		return PLUGIN_HANDLED;
 	
 	// Target not allowed to be human
-	if (!zp_core_is_zombie(player))
-	{
-		new player_name[32]
-		get_user_name(player, player_name, charsmax(player_name))
-		client_print(id, print_console, "[ZP] %L (%s).", id, "ALREADY_HUMAN", player_name)
+	if (!zp_core_is_zombie(player)) {
+		new playerName[32];
+		get_user_name(player, playerName, charsmax(playerName));
+		client_print(id, print_console, "[ZP] %L (%s).", id, "ALREADY_HUMAN", playerName);
 		return PLUGIN_HANDLED;
 	}
 	
-	command_human(id, player)
+	commandHuman(id, player);
 	return PLUGIN_HANDLED;
 }
 
 // zp_nemesis [target]
-public cmd_nemesis(id, level, cid)
+@ConsoleCommand_Nemesis(id, level, cid)
 {
 	// Check for access flag - Make Nemesis
-	if (!cmd_access(id, read_flags(g_access_make_nemesis), cid, 2))
+	if (!cmd_access(id, read_flags(gAccessMakeNemesis), cid, 2))
 		return PLUGIN_HANDLED;
 	
 	// Retrieve arguments
-	new arg[32], player
-	read_argv(1, arg, charsmax(arg))
-	player = cmd_target(id, arg, (CMDTARGET_ONLY_ALIVE | CMDTARGET_ALLOW_SELF))
+	new arg[32], player;
+	read_argv(1, arg, charsmax(arg));
+	player = cmd_target(id, arg, (CMDTARGET_ONLY_ALIVE | CMDTARGET_ALLOW_SELF));
 	
 	// Invalid target
-	if (!player) return PLUGIN_HANDLED;
+	if (!player)
+		return PLUGIN_HANDLED;
 	
 	// Target not allowed to be nemesis
-	if (zp_class_nemesis_get(player))
-	{
-		new player_name[32]
-		get_user_name(player, player_name, charsmax(player_name))
-		client_print(id, print_console, "[ZP] %L (%s).", id, "ALREADY_NEMESIS", player_name)
+	if (zp_class_nemesis_get(player)) {
+		new playerName[32];
+		get_user_name(player, playerName, charsmax(playerName));
+		client_print(id, print_console, "[ZP] %L (%s).", id, "ALREADY_NEMESIS", playerName);
 		return PLUGIN_HANDLED;
 	}
 	
-	command_nemesis(id, player)
+	commandNemesis(id, player);
 	return PLUGIN_HANDLED;
 }
 
 // zp_survivor [target]
-public cmd_survivor(id, level, cid)
+@ConsoleCommand_Survivor(id, level, cid)
 {
 	// Check for access flag - Make Survivor
-	if (!cmd_access(id, read_flags(g_access_make_survivor), cid, 2))
+	if (!cmd_access(id, read_flags(gAccessMakeSurvivor), cid, 2))
 		return PLUGIN_HANDLED;
 	
 	// Retrieve arguments
-	new arg[32], player
-	read_argv(1, arg, charsmax(arg))
-	player = cmd_target(id, arg, (CMDTARGET_ONLY_ALIVE | CMDTARGET_ALLOW_SELF))
+	new arg[32], player;
+	read_argv(1, arg, charsmax(arg));
+	player = cmd_target(id, arg, (CMDTARGET_ONLY_ALIVE | CMDTARGET_ALLOW_SELF));
 	
 	// Invalid target
-	if (!player) return PLUGIN_HANDLED;
+	if (!player)
+		return PLUGIN_HANDLED;
 	
 	// Target not allowed to be survivor
-	if (zp_class_survivor_get(player))
-	{
-		new player_name[32]
-		get_user_name(player, player_name, charsmax(player_name))
-		client_print(id, print_console, "[ZP] %L (%s).", id, "ALREADY_SURVIVOR", player_name)
+	if (zp_class_survivor_get(player)) {
+		new playerName[32];
+		get_user_name(player, playerName, charsmax(playerName));
+		client_print(id, print_console, "[ZP] %L (%s).", id, "ALREADY_SURVIVOR", playerName);
 		return PLUGIN_HANDLED;
 	}
 	
-	command_survivor(id, player)
+	commandSurvivor(id, player);
 	return PLUGIN_HANDLED;
 }
 
 // zp_respawn [target]
-public cmd_respawn(id, level, cid)
+@ConsoleCommand_Respawn(id, level, cid)
 {
 	// Check for access flag - Respawn
-	if (!cmd_access(id, read_flags(g_access_respawn_players), cid, 2))
+	if (!cmd_access(id, read_flags(gAccessRespawnPlayers), cid, 2))
 		return PLUGIN_HANDLED;
 	
 	// Retrieve arguments
-	new arg[32], player
-	read_argv(1, arg, charsmax(arg))
-	player = cmd_target(id, arg, CMDTARGET_ALLOW_SELF)
+	new arg[32], player;
+	read_argv(1, arg, charsmax(arg));
+	player = cmd_target(id, arg, CMDTARGET_ALLOW_SELF);
 	
 	// Invalid target
-	if (!player) return PLUGIN_HANDLED;
+	if (!player)
+		return PLUGIN_HANDLED;
 	
 	// Target not allowed to be respawned
-	if (!allowed_respawn(id))
-	{
-		new player_name[32]
-		get_user_name(player, player_name, charsmax(player_name))
-		client_print(id, print_console, "[ZP] %L (%s).", id, "CANT_RESPAWN", player_name)
+	if (!allowedToRespawn(id)) {
+		new playerName[32];
+		get_user_name(player, playerName, charsmax(playerName));
+		client_print(id, print_console, "[ZP] %L (%s).", id, "CANT_RESPAWN", playerName);
 		return PLUGIN_HANDLED;
 	}
 	
-	command_respawn(id, player)
+	commandRespawn(id, player);
 	return PLUGIN_HANDLED;
 }
 
 // zp_gamemodes_start [game mode id]
-public cmd_start_game_mode(id, level, cid)
+@ConsoleCommand_StartGameMode(id, level, cid)
 {
 	// Check for access flag - Start Game Mode
-	if (!cmd_access(id, read_flags(g_access_start_game_mode), cid, 2))
+	if (!cmd_access(id, read_flags(gAccessStartGameMode), cid, 2))
 		return PLUGIN_HANDLED;
 	
 	// Retrieve arguments
-	new arg[32], game_mode_id
-	read_argv(1, arg, charsmax(arg))
-	game_mode_id = str_to_num(arg)
+	new gamemodeID;
+	read_argv_int(gamemodeID);
 	
 	// Invalid game mode id
-	if (!(0 <= game_mode_id < zp_gamemodes_get_count()))
-	{
-		client_print(id, print_console, "[ZP] %L (%d).", id, "INVALID_GAME_MODE", game_mode_id)
+	if (!(0 <= gamemodeID < zp_gamemodes_get_count())) {
+		client_print(id, print_console, "[ZP] %L (%d).", id, "INVALID_GAME_MODE", gamemodeID);
 		return PLUGIN_HANDLED;
 	}
 	
-	command_start_mode(id, game_mode_id)
+	commandStartGameMode(id, gamemodeID);
 	return PLUGIN_HANDLED;
 }
 
 // Checks if a player is allowed to respawn
-allowed_respawn(id)
+allowedToRespawn(id)
 {
 	if (is_user_alive(id))
 		return false;
 	
-	new CsTeams:team = cs_get_user_team(id)
+	new CsTeams:team = cs_get_user_team(id);
 	
 	if (team == CS_TEAM_SPECTATOR || team == CS_TEAM_UNASSIGNED)
 		return false;
@@ -442,337 +427,226 @@ allowed_respawn(id)
 }
 
 // Admin Command. zp_zombie
-command_zombie(id, player)
+commandZombie(id, player)
 {
 	// Prevent infecting last human
-	if (zp_core_is_last_human(player))
-	{
-		zp_colored_print(id, "%L", id, "CMD_CANT_LAST_HUMAN")
+	if (zp_core_is_last_human(player)) {
+		zp_colored_print(id, "%L", id, "CMD_CANT_LAST_HUMAN");
 		return;
 	}
 	
 	// Check if a game mode is in progress
-	if (zp_gamemodes_get_current() == ZP_NO_GAME_MODE)
-	{
+	if (zp_gamemodes_get_current() == ZP_NO_GAME_MODE) {
 		// Infection mode disabled
-		if (g_GameModeInfectionID == ZP_INVALID_GAME_MODE)
-		{
-			zp_colored_print(id, "%L", id, "CMD_ONLY_AFTER_GAME_MODE")
+		if (gGameModeInfectionID == ZP_INVALID_GAME_MODE) {
+			zp_colored_print(id, "%L", id, "CMD_ONLY_AFTER_GAME_MODE");
 			return;
 		}
 		
 		// Start infection game mode with this target player
-		if (!zp_gamemodes_start(g_GameModeInfectionID, player))
-		{
-			zp_colored_print(id, "%L", id, "GAME_MODE_CANT_START")
+		if (!zp_gamemodes_start(gGameModeInfectionID, player)) {
+			zp_colored_print(id, "%L", id, "GAME_MODE_CANT_START");
 			return;
 		}
-	}
-	else
-	{
+	} else {
 		// Make player infect himself
-		zp_core_infect(player, player)
+		zp_core_infect(player, player);
 	}
-	
-	// Get user names
-	new admin_name[32], player_name[32]
-	get_user_name(id, admin_name, charsmax(admin_name))
-	get_user_name(player, player_name, charsmax(player_name))
-	
-	// Show activity?
-	if (cvar_amx_show_activity)
-	{
-		switch (get_pcvar_num(cvar_amx_show_activity))
-		{
-			case 1: zp_colored_print(0, "ADMIN - %s %L", player_name, LANG_PLAYER, "CMD_INFECT")
-			case 2: zp_colored_print(0, "ADMIN %s - %s %L", admin_name, player_name, LANG_PLAYER, "CMD_INFECT")
-		}
-	}
-	
-	// Log to Zombie Plague log file?
-	if (get_pcvar_num(cvar_log_admin_commands))
-	{
-		new authid[32], ip[16]
-		get_user_authid(id, authid, charsmax(authid))
-		get_user_ip(id, ip, charsmax(ip), 1)
-		zp_log("ADMIN %s <%s><%s> - %s %L (Players: %d)", admin_name, authid, ip, player_name, LANG_SERVER, "CMD_INFECT", GetPlayingCount())
-	}
+
+	showActivity(id, player, "CMD_INFECT");
 }
 
 // Admin Command. zp_human
-command_human(id, player)
+commandHuman(id, player)
 {
 	// Prevent infecting last zombie
-	if (zp_core_is_last_zombie(player))
-	{
-		zp_colored_print(id, "%L", id, "CMD_CANT_LAST_ZOMBIE")
+	if (zp_core_is_last_zombie(player)) {
+		zp_colored_print(id, "%L", id, "CMD_CANT_LAST_ZOMBIE");
 		return;
 	}
 	
 	// No game mode currently in progress
-	if (zp_gamemodes_get_current() == ZP_NO_GAME_MODE)
-	{
-		zp_colored_print(id, "%L", id, "CMD_ONLY_AFTER_GAME_MODE")
+	if (zp_gamemodes_get_current() == ZP_NO_GAME_MODE) {
+		zp_colored_print(id, "%L", id, "CMD_ONLY_AFTER_GAME_MODE");
 		return;
 	}
 	
 	// Make player cure himself
-	zp_core_cure(player, player)
-	
-	// Get user names
-	new admin_name[32], player_name[32]
-	get_user_name(id, admin_name, charsmax(admin_name))
-	get_user_name(player, player_name, charsmax(player_name))
-	
-	// Show activity?
-	if (cvar_amx_show_activity)
-	{
-		switch (get_pcvar_num(cvar_amx_show_activity))
-		{
-			case 1: zp_colored_print(0, "ADMIN - %s %L", player_name, LANG_PLAYER, "CMD_DISINFECT")
-			case 2: zp_colored_print(0, "ADMIN %s - %s %L", admin_name, player_name, LANG_PLAYER, "CMD_DISINFECT")
-		}
-	}
-	
-	// Log to Zombie Plague log file?
-	if (get_pcvar_num(cvar_log_admin_commands))
-	{
-		new authid[32], ip[16]
-		get_user_authid(id, authid, charsmax(authid))
-		get_user_ip(id, ip, charsmax(ip), 1)
-		zp_log("ADMIN %s <%s><%s> - %s %L (Players: %d)", admin_name, authid, ip, player_name, LANG_SERVER, "CMD_DISINFECT", GetPlayingCount())
-	}
+	zp_core_cure(player, player);
+
+	showActivity(id, player, "CMD_DISINFECT");
 }
 
 // Admin Command. zp_nemesis
-command_nemesis(id, player)
+commandNemesis(id, player)
 {
 	// Prevent infecting last human
-	if (zp_core_is_last_human(player))
-	{
-		zp_colored_print(id, "%L", id, "CMD_CANT_LAST_HUMAN")
+	if (zp_core_is_last_human(player)) {
+		zp_colored_print(id, "%L", id, "CMD_CANT_LAST_HUMAN");
 		return;
 	}
 	
 	// Check if a game mode is in progress
-	if (zp_gamemodes_get_current() == ZP_NO_GAME_MODE)
-	{
+	if (zp_gamemodes_get_current() == ZP_NO_GAME_MODE) {
 		// Nemesis mode disabled
-		if (g_GameModeNemesisID == ZP_INVALID_GAME_MODE)
-		{
-			zp_colored_print(id, "%L", id, "CMD_ONLY_AFTER_GAME_MODE")
+		if (gGameModeNemesisID == ZP_INVALID_GAME_MODE) {
+			zp_colored_print(id, "%L", id, "CMD_ONLY_AFTER_GAME_MODE");
 			return;
 		}
 		
 		// Start nemesis game mode with this target player
-		if (!zp_gamemodes_start(g_GameModeNemesisID, player))
-		{
-			zp_colored_print(id, "%L", id, "GAME_MODE_CANT_START")
+		if (!zp_gamemodes_start(gGameModeNemesisID, player)) {
+			zp_colored_print(id, "%L", id, "GAME_MODE_CANT_START");
 			return;
 		}
-	}
-	else
-	{
+	} else {
 		// Make player nemesis
-		zp_class_nemesis_set(player)
+		zp_class_nemesis_set(player);
 	}
 	
-	// Get user names
-	new admin_name[32], player_name[32]
-	get_user_name(id, admin_name, charsmax(admin_name))
-	get_user_name(player, player_name, charsmax(player_name))
-	
-	// Show activity?
-	if (cvar_amx_show_activity)
-	{
-		switch (get_pcvar_num(cvar_amx_show_activity))
-		{
-			case 1: zp_colored_print(0, "ADMIN - %s %L", player_name, LANG_PLAYER, "CMD_NEMESIS")
-			case 2: zp_colored_print(0, "ADMIN %s - %s %L", admin_name, player_name, LANG_PLAYER, "CMD_NEMESIS")
-		}
-	}
-	
-	// Log to Zombie Plague log file?
-	if (get_pcvar_num(cvar_log_admin_commands))
-	{
-		new authid[32], ip[16]
-		get_user_authid(id, authid, charsmax(authid))
-		get_user_ip(id, ip, charsmax(ip), 1)
-		zp_log("ADMIN %s <%s><%s> - %s %L (Players: %d)", admin_name, authid, ip, player_name, LANG_SERVER, "CMD_NEMESIS", GetPlayingCount())
-	}
+	showActivity(id, player, "CMD_NEMESIS");
 }
 
 // Admin Command. zp_survivor
-command_survivor(id, player)
+commandSurvivor(id, player)
 {
 	// Prevent infecting last zombie
-	if (zp_core_is_last_zombie(player))
-	{
-		zp_colored_print(id, "%L", id, "CMD_CANT_LAST_ZOMBIE")
+	if (zp_core_is_last_zombie(player)) {
+		zp_colored_print(id, "%L", id, "CMD_CANT_LAST_ZOMBIE");
 		return;
 	}
 	
 	// Check if a game mode is in progress
-	if (zp_gamemodes_get_current() == ZP_NO_GAME_MODE)
-	{
+	if (zp_gamemodes_get_current() == ZP_NO_GAME_MODE) {
 		// Survivor mode disabled
-		if (g_GameModeSurvivorID == ZP_INVALID_GAME_MODE)
-		{
-			zp_colored_print(id, "%L", id, "CMD_ONLY_AFTER_GAME_MODE")
+		if (gGameModeSurvivorID == ZP_INVALID_GAME_MODE) {
+			zp_colored_print(id, "%L", id, "CMD_ONLY_AFTER_GAME_MODE");
 			return;
 		}
 		
 		// Start survivor game mode with this target player
-		if (!zp_gamemodes_start(g_GameModeSurvivorID, player))
-		{
-			zp_colored_print(id, "%L", id, "GAME_MODE_CANT_START")
+		if (!zp_gamemodes_start(gGameModeSurvivorID, player)) {
+			zp_colored_print(id, "%L", id, "GAME_MODE_CANT_START");
 			return;
 		}
-	}
-	else
-	{
+	} else {
 		// Make player survivor
-		zp_class_survivor_set(player)
+		zp_class_survivor_set(player);
 	}
 	
-	// Get user names
-	new admin_name[32], player_name[32]
-	get_user_name(id, admin_name, charsmax(admin_name))
-	get_user_name(player, player_name, charsmax(player_name))
-	
-	// Show activity?
-	if (cvar_amx_show_activity)
-	{
-		switch (get_pcvar_num(cvar_amx_show_activity))
-		{
-			case 1: zp_colored_print(0, "ADMIN - %s %L", player_name, LANG_PLAYER, "CMD_SURVIVAL")
-			case 2: zp_colored_print(0, "ADMIN %s - %s %L", admin_name, player_name, LANG_PLAYER, "CMD_SURVIVAL")
-		}
-	}
-	
-	// Log to Zombie Plague log file?
-	if (get_pcvar_num(cvar_log_admin_commands))
-	{
-		new authid[32], ip[16]
-		get_user_authid(id, authid, charsmax(authid))
-		get_user_ip(id, ip, charsmax(ip), 1)
-		zp_log("ADMIN %s <%s><%s> - %s %L (Players: %d)", admin_name, authid, ip, player_name, LANG_SERVER, "CMD_SURVIVAL", GetPlayingCount())
-	}
+	showActivity(id, player, "CMD_SURVIVAL");
 }
 
 // Admin Command. zp_respawn
-command_respawn(id, player)
+commandRespawn(id, player)
 {
 	// Deathmatch module active?
-	if (cvar_deathmatch)
-	{
+	if (zp_deathmatch) {
 		// Respawn as zombie?
-		if (get_pcvar_num(cvar_deathmatch) == 2 || (get_pcvar_num(cvar_deathmatch) == 3 && random_num(0, 1)) || (get_pcvar_num(cvar_deathmatch) == 4 && zp_core_get_zombie_count() < GetAliveCount()/2))
-		{
-			// Only allow respawning as zombie after a game mode started
-			if (zp_gamemodes_get_current() != ZP_NO_GAME_MODE) zp_core_respawn_as_zombie(player, true)
+		switch (get_pcvar_num(zp_deathmatch)) {
+			case 2: {
+				respawnAsZombieDuringGameMode(player);
+			}
+			case 3: {
+				if (random_num(0, 1))
+					respawnAsZombieDuringGameMode(player);
+			}
+			case 4: {
+				if (zp_core_get_zombie_count() < getAliveCount() / 2)
+					respawnAsZombieDuringGameMode(player);
+			}
 		}
 	}
 	
 	// Respawn player!
-	respawn_player_manually(player)
-	
-	// Get user names
-	new admin_name[32], player_name[32]
-	get_user_name(id, admin_name, charsmax(admin_name))
-	get_user_name(player, player_name, charsmax(player_name))
-	
-	// Show activity?
-	if (cvar_amx_show_activity)
-	{
-		switch (get_pcvar_num(cvar_amx_show_activity))
-		{
-			case 1: zp_colored_print(0, "ADMIN - %s %L", player_name, LANG_PLAYER, "CMD_RESPAWN")
-			case 2: zp_colored_print(0, "ADMIN %s - %s %L", admin_name, player_name, LANG_PLAYER, "CMD_RESPAWN")
-		}
-	}
-	
-	// Log to Zombie Plague log file?
-	if (get_pcvar_num(cvar_log_admin_commands))
-	{
-		new authid[32], ip[16]
-		get_user_authid(id, authid, charsmax(authid))
-		get_user_ip(id, ip, charsmax(ip), 1)
-		zp_log("ADMIN %s <%s><%s> - %s %L (Players: %d)", admin_name, authid, ip, player_name, LANG_SERVER, "CMD_RESPAWN", GetPlayingCount())
-	}
+	ExecuteHamB(Ham_CS_RoundRespawn, player);
+
+	showActivity(id, player, "CMD_RESPAWN");
 }
 
-// Respawn Player Manually (called after respawn checks are done)
-respawn_player_manually(id)
+respawnAsZombieDuringGameMode(id)
 {
-	// Respawn!
-	ExecuteHamB(Ham_CS_RoundRespawn, id)
+	// Only allow respawning as zombie after a game mode started
+	if (zp_gamemodes_get_current() != ZP_NO_GAME_MODE)
+		zp_core_respawn_as_zombie(id, true);
 }
 
 // Admin Command. zp_start_game_mode
-command_start_mode(id, game_mode_id)
+commandStartGameMode(id, gamemodeID)
 {
 	// Attempt to start game mode
-	if (!zp_gamemodes_start(game_mode_id))
-	{
-		zp_colored_print(id, "%L", id, "GAME_MODE_CANT_START")
+	if (!zp_gamemodes_start(gamemodeID)) {
+		zp_colored_print(id, "%L", id, "GAME_MODE_CANT_START");
 		return;
 	}
 	
 	// Get user names
-	new admin_name[32], mode_name[32]
-	get_user_name(id, admin_name, charsmax(admin_name))
-	zp_gamemodes_get_name(game_mode_id, mode_name, charsmax(mode_name))
+	new adminName[32], modeName[32];
+	get_user_name(id, adminName, charsmax(adminName));
+	zp_gamemodes_get_name(gamemodeID, modeName, charsmax(modeName));
 	
 	// Show activity?
-	if (cvar_amx_show_activity)
-	{
-		switch (get_pcvar_num(cvar_amx_show_activity))
-		{
-			case 1: zp_colored_print(0, "ADMIN - %L: %s", LANG_PLAYER, "CMD_START_GAME_MODE", mode_name)
-			case 2: zp_colored_print(0, "ADMIN %s - %L: %s", admin_name, LANG_PLAYER, "CMD_START_GAME_MODE", mode_name)
+	if (amx_show_activity) {
+		switch (get_pcvar_num(amx_show_activity)) {
+			case 1: zp_colored_print(0, "ADMIN - %L: %s", LANG_PLAYER, "CMD_START_GAME_MODE", modeName);
+			case 2: zp_colored_print(0, "ADMIN %s - %L: %s", adminName, LANG_PLAYER, "CMD_START_GAME_MODE", modeName);
 		}
 	}
 	
 	// Log to Zombie Plague log file?
-	if (get_pcvar_num(cvar_log_admin_commands))
-	{
-		new authid[32], ip[16]
-		get_user_authid(id, authid, charsmax(authid))
-		get_user_ip(id, ip, charsmax(ip), 1)
-		zp_log("ADMIN %s <%s><%s> - %L: %s (Players: %d)", admin_name, authid, ip, LANG_SERVER, "CMD_START_GAME_MODE", mode_name, GetPlayingCount())
+	if (CvarLogAdminCommands) {
+		new authid[32], ip[16];
+		get_user_authid(id, authid, charsmax(authid));
+		get_user_ip(id, ip, charsmax(ip), 1);
+		zp_log("ADMIN %s <%s><%s> - %L: %s (Players: %d)", adminName, authid, ip, LANG_SERVER, "CMD_START_GAME_MODE", modeName, getPlayingCount());
+	}
+}
+
+showActivity(admin, player, const LANG_KEY[])
+{
+	// Get user names
+	new adminName[32], playerName[32];
+	get_user_name(admin, adminName, charsmax(adminName));
+	get_user_name(player, playerName, charsmax(playerName));
+	
+	// Show activity?
+	if (amx_show_activity) {
+		switch (get_pcvar_num(amx_show_activity)) {
+			case 1: zp_colored_print(0, "ADMIN - %s %L", playerName, LANG_PLAYER, LANG_KEY);
+			case 2: zp_colored_print(0, "ADMIN %s - %s %L", adminName, playerName, LANG_PLAYER, LANG_KEY);
+		}
+	}
+	
+	// Log to Zombie Plague log file?
+	if (CvarLogAdminCommands) {
+		new authid[32], ip[16];
+		get_user_authid(admin, authid, charsmax(authid));
+		get_user_ip(admin, ip, charsmax(ip), 1);
+		zp_log("ADMIN %s <%s><%s> - %s %L (Players: %d)", adminName, authid, ip, playerName, LANG_SERVER, LANG_KEY, getPlayingCount());
 	}
 }
 
 // Get Playing Count -returns number of users playing-
-GetPlayingCount()
+getPlayingCount()
 {
-	new iPlaying, id, CsTeams:team
+	new CsTeams:team, playing;
+	new players[MAX_PLAYERS], playerCount, player;
+	get_players_ex(players, playerCount, GetPlayers_ExcludeHLTV);
 	
-	for (id = 1; id <= g_MaxPlayers; id++)
-	{
-		if (!is_user_connected(id))
-			continue;
+	for (new i = 0; i < playerCount; ++i) {
+		player = players[i];
 		
-		team = cs_get_user_team(id)
+		team = cs_get_user_team(player);
 		
 		if (team != CS_TEAM_SPECTATOR && team != CS_TEAM_UNASSIGNED)
-			iPlaying++
+			++playing;
 	}
 	
-	return iPlaying;
+	return playing;
 }
 
 // Get Alive Count -returns alive players number-
-GetAliveCount()
+getAliveCount()
 {
-	new iAlive, id
-	
-	for (id = 1; id <= g_MaxPlayers; id++)
-	{
-		if (is_user_alive(id))
-			iAlive++
-	}
-	
-	return iAlive;
+	return get_playersnum_ex(GetPlayers_ExcludeDead | GetPlayers_ExcludeHLTV);
 }

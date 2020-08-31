@@ -31,7 +31,7 @@
 #include <zp50_grenade_frost>
 
 #define CS_MONEY_LIMIT 16000
-#define is_user_valid(%1) (1 <= %1 <= g_MaxPlayers)
+#define is_user_valid(%1) (1 <= %1 <= MaxClients)
 
 #define ZP_EXTRAITEMS_FILE "zp_extraitems.ini"
 #define CLAWMODEL_PATH "models/zombie_plague/%s"
@@ -85,8 +85,6 @@ enum _:TOTAL_FORWARDS
 new g_Forwards[TOTAL_FORWARDS]
 new g_ForwardResult
 
-new g_MaxPlayers
-
 new cvar_ammopack_to_money_enable, cvar_ammopack_to_money_ratio
 new cvar_zombie_first_hp_multiplier
 
@@ -100,7 +98,6 @@ public plugin_init()
 	register_plugin("[ZP] ZP 4.3 Subplugin Compatibility", ZP_VERSION_STRING, "ZP Dev Team")
 	
 	register_event("HLTV", "event_round_start", "a", "1=0", "2=0")
-	g_MaxPlayers = get_maxplayers()
 	
 	cvar_ammopack_to_money_enable = register_cvar("zp_ammopack_to_money_enable", "1")
 	cvar_ammopack_to_money_ratio = register_cvar("zp_ammopack_to_money_ratio", "160") // 1 Ammo Pack = $ 160
@@ -138,10 +135,10 @@ public zp_fw_gamemodes_start(game_mode_id)
 	{
 		// Get first zombie index
 		new player_index = 1
-		while ((!is_user_alive(player_index) || !zp_core_is_zombie(player_index)) && player_index <= g_MaxPlayers)
+		while ((!is_user_alive(player_index) || !zp_core_is_zombie(player_index)) && player_index <= MaxClients)
 			player_index++
 		
-		if (player_index > g_MaxPlayers)
+		if (player_index > MaxClients)
 		{
 			abort(AMX_ERR_GENERAL, "ERROR - first zombie index not found!")
 			player_index = 0
@@ -157,10 +154,10 @@ public zp_fw_gamemodes_start(game_mode_id)
 	{
 		// Get nemesis index
 		new player_index = 1
-		while ((!is_user_alive(player_index) || !zp_class_nemesis_get(player_index)) && player_index <= g_MaxPlayers)
+		while ((!is_user_alive(player_index) || !zp_class_nemesis_get(player_index)) && player_index <= MaxClients)
 			player_index++
 		
-		if (player_index > g_MaxPlayers)
+		if (player_index > MaxClients)
 		{
 			abort(AMX_ERR_GENERAL, "ERROR - nemesis index not found!")
 			player_index = 0
@@ -172,10 +169,10 @@ public zp_fw_gamemodes_start(game_mode_id)
 	{
 		// Get survivor index
 		new player_index = 1
-		while ((!is_user_alive(player_index) || !zp_class_survivor_get(player_index)) && player_index <= g_MaxPlayers)
+		while ((!is_user_alive(player_index) || !zp_class_survivor_get(player_index)) && player_index <= MaxClients)
 			player_index++
 		
-		if (player_index > g_MaxPlayers)
+		if (player_index > MaxClients)
 		{
 			abort(AMX_ERR_GENERAL, "ERROR - survivor index not found!")
 			player_index = 0

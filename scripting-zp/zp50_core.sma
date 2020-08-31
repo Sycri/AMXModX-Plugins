@@ -5,7 +5,7 @@
 	------------------------
 	
 	This plugin is part of Zombie Plague Mod and is distributed under the
-	terms of the GNU General Public License. Check ZP_ReadMe.txt for details.
+	terms of the GNU General Public License. Check zp_readme.txt for details.
 	
 ================================================================================*/
 
@@ -190,7 +190,7 @@ CheckLastZombieHuman()
 	
 	if (zombie_count == 1)
 	{
-		for (id = 1; id <= g_MaxPlayers; id++)
+		for (id = 1; id <= MaxClients; id++)
 		{
 			// Last zombie
 			if (is_user_alive(id) && flag_get(g_IsZombie, id))
@@ -206,7 +206,7 @@ CheckLastZombieHuman()
 	{
 		g_LastZombieForwardCalled = false
 		
-		for (id = 1; id <= g_MaxPlayers; id++)
+		for (id = 1; id <= MaxClients; id++)
 			flag_unset(g_IsLastZombie, id)
 	}
 	
@@ -219,7 +219,7 @@ CheckLastZombieHuman()
 	
 	if (human_count == 1)
 	{
-		for (id = 1; id <= g_MaxPlayers; id++)
+		for (id = 1; id <= MaxClients; id++)
 		{
 			// Last human
 			if (is_user_alive(id) && !flag_get(g_IsZombie, id))
@@ -235,7 +235,7 @@ CheckLastZombieHuman()
 	{
 		g_LastHumanForwardCalled = false
 		
-		for (id = 1; id <= g_MaxPlayers; id++)
+		for (id = 1; id <= MaxClients; id++)
 			flag_unset(g_IsLastHuman, id)
 	}
 	
@@ -418,7 +418,7 @@ GetZombieCount()
 {
 	new iZombies, id
 	
-	for (id = 1; id <= g_MaxPlayers; id++)
+	for (id = 1; id <= MaxClients; id++)
 	{
 		if (is_user_alive(id) && flag_get(g_IsZombie, id))
 			iZombies++
@@ -432,7 +432,7 @@ GetHumanCount()
 {
 	new iHumans, id
 	
-	for (id = 1; id <= g_MaxPlayers; id++)
+	for (id = 1; id <= MaxClients; id++)
 	{
 		if (is_user_alive(id) && !flag_get(g_IsZombie, id))
 			iHumans++

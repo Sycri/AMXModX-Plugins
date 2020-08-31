@@ -3,6 +3,7 @@
 * Removed [CS] Player Models API since AMX Mod X 1.9.0 fixed SVC_BAD errors for model setting
 * Removed [CS] Teams API since AMX Mod X 1.9.0 fixes errors and includes the same features now
 * Removed backwards compatibility in includes for AMX Mod X versions older than 1.7.5
+* Replaced variable g_MaxPlayers with MaxClients which is available in AMX Mod X since version 1.8.3
 
 - Version: 5.0.8a (Jul 22, 2014)
 * Fixed run time error "Couldn't create temp file" (Settings API)

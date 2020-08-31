@@ -5,7 +5,7 @@
 	------------------------------ 
 	
 	This plugin is part of Zombie Plague Mod and is distributed under the
-	terms of the GNU General Public License. Check ZP_ReadMe.txt for details.
+	terms of the GNU General Public License. Check zp_readme.txt for details.
 	
 ================================================================================*/
 
@@ -195,7 +195,7 @@ public zp_fw_gamemodes_start()
 	}
 	
 	// Turn the remaining players into humans
-	for (id = 1; id <= g_MaxPlayers; id++)
+	for (id = 1; id <= MaxClients; id++)
 	{
 		// Not alive
 		if (!is_user_alive(id))
@@ -239,7 +239,7 @@ GetAliveCount()
 {
 	new iAlive, id
 	
-	for (id = 1; id <= g_MaxPlayers; id++)
+	for (id = 1; id <= MaxClients; id++)
 	{
 		if (is_user_alive(id))
 			iAlive++
@@ -253,7 +253,7 @@ GetRandomAlive(target_index)
 {
 	new iAlive, id
 	
-	for (id = 1; id <= g_MaxPlayers; id++)
+	for (id = 1; id <= MaxClients; id++)
 	{
 		if (is_user_alive(id))
 			iAlive++

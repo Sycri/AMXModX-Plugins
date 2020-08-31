@@ -5,7 +5,7 @@
 	-----------------------
 	
 	This plugin is part of Zombie Plague Mod and is distributed under the
-	terms of the GNU General Public License. Check ZP_ReadMe.txt for details.
+	terms of the GNU General Public License. Check zp_readme.txt for details.
 	
 ================================================================================*/
 
@@ -36,7 +36,7 @@ public plugin_init()
 {
 	register_plugin("[ZP] Ammo Packs", ZP_VERSION_STRING, "ZP Dev Team")
 	
-	g_MaxPlayers = get_maxplayers()
+	MaxClients = get_maxplayers()
 	g_MsgHideWeapon = get_user_msgid("HideWeapon")
 	g_MsgCrosshair = get_user_msgid("Crosshair")
 	
