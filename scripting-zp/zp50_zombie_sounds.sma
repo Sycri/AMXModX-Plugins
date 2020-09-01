@@ -13,7 +13,6 @@
 #include <fakemeta>
 #include <hamsandwich>
 #include <amx_settings_api>
-#include <cs_ham_bots_api>
 #include <zp50_core>
 #define LIBRARY_NEMESIS "zp50_class_nemesis"
 #include <zp50_class_nemesis>
@@ -57,8 +56,7 @@ public plugin_init()
 	register_plugin("[ZP] Zombie Sounds", ZP_VERSION_STRING, "ZP Dev Team")
 	
 	register_forward(FM_EmitSound, "fw_EmitSound")
-	RegisterHam(Ham_Killed, "player", "fw_PlayerKilled")
-	RegisterHamBots(Ham_Killed, "fw_PlayerKilled")
+	RegisterHamPlayer(Ham_Killed, "fw_PlayerKilled")
 	
 	cvar_zombie_sounds_pain = register_cvar("zp_zombie_sounds_pain", "1")
 	cvar_zombie_sounds_attack = register_cvar("zp_zombie_sounds_attack", "1")

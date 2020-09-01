@@ -275,23 +275,23 @@ showMenuPlayerList(id)
 showMenuGameModeList(id)
 {
 	static menu[128], transkey[64];
-	new menuid, index, itemData[2], gamemodeCount = zp_gamemodes_get_count();
+	new menuid, i, itemData[2], gamemodeCount = zp_gamemodes_get_count();
 	
 	// Title
 	formatex(menu, charsmax(menu), "%l:\r", "MENU_INFO4");
 	menuid = menu_create(menu, "@Menu_GameModeList");
 	
 	// Item List
-	for (index = 0; index < gamemodeCount; ++index) {
+	for (i = 0; i < gamemodeCount; ++i) {
 		// Add Game Mode Name
-		zp_gamemodes_get_name(index, menu, charsmax(menu));
+		zp_gamemodes_get_name(i, menu, charsmax(menu));
 		
 		// ML support for mode name
 		formatex(transkey, charsmax(transkey), "MODENAME %s", menu);
 		if (GetLangTransKey(transkey) != TransKey_Bad)
 			formatex(menu, charsmax(menu), "%l", transkey);
 		
-		itemData[0] = index;
+		itemData[0] = i;
 		itemData[1] = 0;
 		menu_additem(menuid, menu, itemData);
 	}

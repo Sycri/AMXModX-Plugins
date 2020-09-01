@@ -12,7 +12,6 @@
 #include <amxmodx>
 #include <fun>
 #include <amx_settings_api>
-#include <cs_teams_api>
 #include <zp50_gamemodes>
 #include <zp50_class_nemesis>
 #include <zp50_class_survivor>

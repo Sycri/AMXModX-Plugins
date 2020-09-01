@@ -13,7 +13,6 @@
 #include <cstrike>
 #include <fakemeta>
 #include <hamsandwich>
-#include <cs_ham_bots_api>
 #include <zp50_core>
 #define LIBRARY_NEMESIS "zp50_class_nemesis"
 #include <zp50_class_nemesis>
@@ -48,8 +47,8 @@ public plugin_init()
 	
 	register_clcmd("nightvision", "clcmd_nightvision_toggle")
 	register_event("ResetHUD", "event_reset_hud", "b")
-	RegisterHam(Ham_Killed, "player", "fw_PlayerKilled_Post", 1)
-	RegisterHamBots(Ham_Killed, "fw_PlayerKilled_Post", 1)
+	
+	RegisterHamPlayer(Ham_Killed, "fw_PlayerKilled_Post", 1)
 	
 	cvar_nvision_custom = register_cvar("zp_nvision_custom", "0")
 	cvar_nvision_radius = register_cvar("zp_nvision_radius", "80")

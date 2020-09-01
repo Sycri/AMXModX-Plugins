@@ -13,7 +13,6 @@
 #include <fun>
 #include <hamsandwich>
 #include <amx_settings_api>
-#include <cs_ham_bots_api>
 #include <zp50_class_zombie>
 #define LIBRARY_NEMESIS "zp50_class_nemesis"
 #include <zp50_class_nemesis>
@@ -47,8 +46,7 @@ public plugin_precache()
 	for (index = 0; index < sizeof zombieclass5_clawmodels; index++)
 		zp_class_zombie_register_claw(g_ZombieClassID, zombieclass5_clawmodels[index])
 	
-	RegisterHam(Ham_Killed, "player", "fw_PlayerKilled_Post", 1)
-	RegisterHamBots(Ham_Killed, "fw_PlayerKilled_Post", 1)
+	RegisterHamPlayer(Ham_Killed, "fw_PlayerKilled_Post", 1)
 	
 	// HP rewarded for infection/kills
 	if (!amx_load_setting_int(ZP_ZOMBIECLASSES_FILE, zombieclass5_name, "HP REWARD", zombieclass5_hp_reward))

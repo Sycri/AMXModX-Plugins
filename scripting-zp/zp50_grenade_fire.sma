@@ -16,7 +16,6 @@
 #include <xs>
 #include <amx_settings_api>
 #include <cs_weap_models_api>
-#include <cs_ham_bots_api>
 #include <zp50_core>
 #define LIBRARY_NEMESIS "zp50_class_nemesis"
 #include <zp50_class_nemesis>
@@ -75,8 +74,7 @@ public plugin_init()
 {
 	register_plugin("[ZP] Grenade: Fire", ZP_VERSION_STRING, "ZP Dev Team")
 	
-	RegisterHam(Ham_Killed, "player", "fw_PlayerKilled")
-	RegisterHamBots(Ham_Killed, "fw_PlayerKilled")
+	RegisterHamPlayer(Ham_Killed, "fw_PlayerKilled")
 	register_forward(FM_SetModel, "fw_SetModel")
 	RegisterHam(Ham_Think, "grenade", "fw_ThinkGrenade")
 	

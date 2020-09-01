@@ -12,7 +12,6 @@
 #include <amxmodx>
 #include <fakemeta>
 #include <hamsandwich>
-#include <cs_ham_bots_api>
 #include <zp50_core>
 #define LIBRARY_NEMESIS "zp50_class_nemesis"
 #include <zp50_class_nemesis>
@@ -26,10 +25,8 @@ public plugin_init()
 	cvar_zombie_defense = register_cvar("zp_zombie_defense", "0.75")
 	cvar_zombie_hitzones = register_cvar("zp_zombie_hitzones", "0")
 	
-	RegisterHam(Ham_TraceAttack, "player", "fw_TraceAttack")
-	RegisterHamBots(Ham_TraceAttack, "fw_TraceAttack")
-	RegisterHam(Ham_TakeDamage, "player", "fw_TakeDamage")
-	RegisterHamBots(Ham_TakeDamage, "fw_TakeDamage")
+	RegisterHamPlayer(Ham_TraceAttack, "fw_TraceAttack")
+	RegisterHamPlayer(Ham_TakeDamage, "fw_TakeDamage")
 }
 
 public plugin_natives()

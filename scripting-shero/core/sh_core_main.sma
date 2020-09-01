@@ -2775,7 +2775,7 @@ getSaveKey(id, savekey[32])
 			}
 		}
 		if (botName[0] != '^0') {
-			replace_all(botName, charsmax(botName), " ", "_");
+			replace_string(botName, charsmax(botName), " ", "_");
 			formatex(savekey, charsmax(savekey), "[BOT]%s", botName);
 		}
 	} else {	

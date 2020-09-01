@@ -13,7 +13,6 @@
 #include <cstrike>
 #include <fakemeta>
 #include <hamsandwich>
-#include <cs_ham_bots_api>
 #include <zp50_gamemodes>
 #define LIBRARY_NEMESIS "zp50_class_nemesis"
 #include <zp50_class_nemesis>
@@ -70,12 +69,9 @@ public plugin_init()
 	if (LibraryExists(LIBRARY_SURVIVOR, LibType_Library))
 		cvar_money_survivor_ignore = register_cvar("zp_money_survivor_ignore", "0")
 	
-	RegisterHam(Ham_TakeDamage, "player", "fw_TakeDamage_Post", 1)
-	RegisterHamBots(Ham_TakeDamage, "fw_TakeDamage_Post", 1)
-	RegisterHam(Ham_Killed, "player", "fw_PlayerKilled")
-	RegisterHamBots(Ham_Killed, "fw_PlayerKilled")
-	RegisterHam(Ham_Killed, "player", "fw_PlayerKilled_Post", 1)
-	RegisterHamBots(Ham_Killed, "fw_PlayerKilled_Post", 1)
+	RegisterHamPlayer(Ham_TakeDamage, "fw_TakeDamage_Post", 1)
+	RegisterHamPlayer(Ham_Killed, "fw_PlayerKilled")
+	RegisterHamPlayer(Ham_Killed, "fw_PlayerKilled_Post", 1)
 	
 	g_MsgMoney = get_user_msgid("Money")
 	register_message(g_MsgMoney, "message_money")

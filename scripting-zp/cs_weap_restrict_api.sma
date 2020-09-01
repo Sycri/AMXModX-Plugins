@@ -137,12 +137,16 @@ public client_disconnected(id)
 	
 	// Owner not holding an allowed weapon
 	if (!((1 << weaponID) & gAllowedWeaponsBitsum[owner])) {
-		if (user_has_weapon(owner, gDefaultAllowedWeapon[owner]))
-			// Switch to default weapon
-			engclient_cmd(owner, WEAPONENTNAMES[gDefaultAllowedWeapon[owner]]);
-		else
-			// Otherwise, block weapon firing and hide current weapon
-			block_and_hide_weapon(owner);
+		if (is_user_bot(owner)) {
+			ham_strip_user_weapon(owner, weaponID);
+		} else {
+			if (user_has_weapon(owner, gDefaultAllowedWeapon[owner]))
+				// Switch to default weapon
+				engclient_cmd(owner, WEAPONENTNAMES[gDefaultAllowedWeapon[owner]]);
+			else
+				// Otherwise, block weapon firing and hide current weapon
+				block_and_hide_weapon(owner);
+		}
 	}
 }
 

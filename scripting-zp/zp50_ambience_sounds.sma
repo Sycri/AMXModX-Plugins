@@ -10,121 +10,119 @@
 ================================================================================*/
 
 #include <amxmodx>
+#include <amxmisc>
 #include <amx_settings_api>
 #include <zp50_gamemodes>
 
+#pragma semicolon 1
+
 // Settings file
-new const ZP_SETTINGS_FILE[] = "zombieplague.ini"
+new const ZP_SETTINGS_FILE[] = "zombieplague.ini";
 
 #define TASK_AMBIENCESOUNDS 100
 
-new Array:g_ambience_sounds_handle
-new Array:g_ambience_durations_handle
+new Array:gAmbienceSoundsHandle;
+new Array:gAmbienceDurationsHandle;
 
 public plugin_init()
 {
-	register_plugin("[ZP] Ambience Sonds", ZP_VERSION_STRING, "ZP Dev Team")
-	register_event("30", "event_intermission", "a")
+	register_plugin("[ZP] Ambience Sounds", ZP_VERSION_STRING, "ZP Dev Team");
+
+	register_event_ex("30", "@Event_Intermission", RegisterEvent_Global);
 }
 
 public plugin_precache()
 {
-	g_ambience_sounds_handle = ArrayCreate(1, 1)
-	g_ambience_durations_handle = ArrayCreate(1, 1)
+	gAmbienceSoundsHandle = ArrayCreate(1, 1);
+	gAmbienceDurationsHandle = ArrayCreate(1, 1);
 	
-	new index, modename[32], key[64]
-	for (index = 0; index < zp_gamemodes_get_count(); index++)
-	{
-		zp_gamemodes_get_name(index, modename, charsmax(modename))
+	new modeName[32], key[64];
+	for (new i = 0; i < zp_gamemodes_get_count(); ++i) {
+		zp_gamemodes_get_name(i, modeName, charsmax(modeName));
 		
-		new Array:ambience_sounds = ArrayCreate(64, 1)
-		formatex(key, charsmax(key), "SOUNDS (%s)", modename)
-		amx_load_setting_string_arr(ZP_SETTINGS_FILE, "Ambience Sounds", key, ambience_sounds)
-		if (ArraySize(ambience_sounds) > 0)
-		{
+		new Array:ambienceSounds = ArrayCreate(64, 1);
+		formatex(key, charsmax(key), "SOUNDS (%s)", modeName);
+		amx_load_setting_string_arr(ZP_SETTINGS_FILE, "Ambience Sounds", key, ambienceSounds);
+		if (ArraySize(ambienceSounds) > 0) {
 			// Precache ambience sounds
-			new sound_index, sound[128]
-			for (sound_index = 0; sound_index < ArraySize(ambience_sounds); sound_index++)
-			{
-				ArrayGetString(ambience_sounds, sound_index, sound, charsmax(sound))
-				if (equal(sound[strlen(sound)-4], ".mp3"))
-				{
-					format(sound, charsmax(sound), "sound/%s", sound)
-					precache_generic(sound)
+			new sound[128];
+			for (new soundIndex = 0; soundIndex < ArraySize(ambienceSounds); ++soundIndex) {
+				ArrayGetString(ambienceSounds, soundIndex, sound, charsmax(sound));
+
+				if (equal(sound[strlen(sound)-4], ".mp3")) {
+					format(sound, charsmax(sound), "sound/%s", sound);
+					precache_generic(sound);
+				} else {
+					precache_sound(sound);
 				}
-				else
-					precache_sound(sound)
 			}
+		} else {
+			ArrayDestroy(ambienceSounds);
+			amx_save_setting_string(ZP_SETTINGS_FILE, "Ambience Sounds", key, "");
 		}
-		else
-		{
-			ArrayDestroy(ambience_sounds)
-			amx_save_setting_string(ZP_SETTINGS_FILE, "Ambience Sounds", key, "")
-		}
-		ArrayPushCell(g_ambience_sounds_handle, ambience_sounds)
+		ArrayPushCell(gAmbienceSoundsHandle, ambienceSounds);
 		
-		new Array:ambience_durations = ArrayCreate(1, 1)
-		formatex(key, charsmax(key), "DURATIONS (%s)", modename)
-		amx_load_setting_int_arr(ZP_SETTINGS_FILE, "Ambience Sounds", key, ambience_durations)
-		if (ArraySize(ambience_durations) <= 0)
-		{
-			ArrayDestroy(ambience_durations)
-			amx_save_setting_string(ZP_SETTINGS_FILE, "Ambience Sounds", key, "")
+		new Array:ambienceDurations = ArrayCreate(1, 1);
+		formatex(key, charsmax(key), "DURATIONS (%s)", modeName);
+		amx_load_setting_int_arr(ZP_SETTINGS_FILE, "Ambience Sounds", key, ambienceDurations);
+		if (ArraySize(ambienceDurations) <= 0) {
+			ArrayDestroy(ambienceDurations);
+			amx_save_setting_string(ZP_SETTINGS_FILE, "Ambience Sounds", key, "");
 		}
-		ArrayPushCell(g_ambience_durations_handle, ambience_durations)
+		ArrayPushCell(gAmbienceDurationsHandle, ambienceDurations);
 	}
 }
 
 // Event Map Ended
-public event_intermission()
+@Event_Intermission()
 {
 	// Remove ambience sounds task
-	remove_task(TASK_AMBIENCESOUNDS)
+	remove_task(TASK_AMBIENCESOUNDS);
 }
 
 public zp_fw_gamemodes_end()
 {
 	// Stop ambience sounds
-	remove_task(TASK_AMBIENCESOUNDS)
+	remove_task(TASK_AMBIENCESOUNDS);
 }
 
 public zp_fw_gamemodes_start()
 {
 	// Start ambience sounds after a mode begins
-	remove_task(TASK_AMBIENCESOUNDS)
-	set_task(2.0, "ambience_sound_effects", TASK_AMBIENCESOUNDS)
+	remove_task(TASK_AMBIENCESOUNDS);
+	set_task(2.0, "@Task_AmbienceSoundEffects", TASK_AMBIENCESOUNDS);
 }
 
 // Ambience Sound Effects Task
-public ambience_sound_effects(taskid)
+@Task_AmbienceSoundEffects(taskid)
 {
 	// Play a random sound depending on game mode
-	new current_game_mode = zp_gamemodes_get_current()
-	new Array:sounds_handle = ArrayGetCell(g_ambience_sounds_handle, current_game_mode)
-	new Array:durations_handle = ArrayGetCell(g_ambience_durations_handle, current_game_mode)
+	new currentGameMode = zp_gamemodes_get_current();
+	new Array:soundsHandle = ArrayGetCell(gAmbienceSoundsHandle, currentGameMode);
+	new Array:durationsHandle = ArrayGetCell(gAmbienceDurationsHandle, currentGameMode);
 	
 	// No ambience sounds loaded for this mode
-	if (sounds_handle == Invalid_Array || durations_handle == Invalid_Array)
+	if (soundsHandle == Invalid_Array || durationsHandle == Invalid_Array)
 		return;
 	
 	// Get random sound from array
-	new sound[64], iRand, duration
-	iRand = random_num(0, ArraySize(sounds_handle) - 1)
-	ArrayGetString(sounds_handle, iRand, sound, charsmax(sound))
-	duration = ArrayGetCell(durations_handle, iRand)
+	new sound[64], rand, duration;
+	rand = random_num(0, ArraySize(soundsHandle) - 1);
+	ArrayGetString(soundsHandle, rand, sound, charsmax(sound));
+	duration = ArrayGetCell(durationsHandle, rand);
 	
 	// Play it on clients
-	PlaySoundToClients(sound)
+	PlaySoundToClients(sound);
 	
 	// Set the task for when the sound is done playing
-	set_task(float(duration), "ambience_sound_effects", TASK_AMBIENCESOUNDS)
+	set_task(float(duration), "@Task_AmbienceSoundEffects", TASK_AMBIENCESOUNDS);
 }
 
 // Plays a sound on clients
 PlaySoundToClients(const sound[])
 {
-	if (equal(sound[strlen(sound)-4], ".mp3"))
-		client_cmd(0, "mp3 play ^"sound/%s^"", sound)
+	if (equal(sound[strlen(sound) - 4], ".mp3"))
+		client_cmd(0, "mp3 play ^"sound/%s^"", sound);
 	else
-		client_cmd(0, "spk ^"%s^"", sound)
+		client_cmd(0, "spk ^"%s^"", sound);
 }

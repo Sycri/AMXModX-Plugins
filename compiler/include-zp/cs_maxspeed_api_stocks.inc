@@ -8,9 +8,9 @@
 stock cs_set_player_maxspeed_auto(id, Float:maxspeed)
 {
 	if (MAXSPEED_BARRIER_MIN <= maxspeed <= MAXSPEED_BARRIER_MAX)
-		cs_set_player_maxspeed(id, maxspeed, true)
+		cs_set_player_maxspeed(id, maxspeed, true);
 	else
-		cs_set_player_maxspeed(id, maxspeed, false)
+		cs_set_player_maxspeed(id, maxspeed, false);
 }
 
 stock cs_maxspeed_display_value(Float:maxspeed)

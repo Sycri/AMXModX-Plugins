@@ -14,8 +14,6 @@
 #include <cstrike>
 #include <fakemeta>
 #include <hamsandwich>
-#include <cs_teams_api>
-#include <cs_ham_bots_api>
 #include <zp50_gamemodes>
 #define LIBRARY_NEMESIS "zp50_class_nemesis"
 #include <zp50_class_nemesis>
@@ -43,8 +41,7 @@ public plugin_init()
 	
 	g_MsgScoreInfo = get_user_msgid("ScoreInfo")
 	
-	RegisterHam(Ham_Killed, "player", "fw_PlayerKilled")
-	RegisterHamBots(Ham_Killed, "fw_PlayerKilled")
+	RegisterHamPlayer(Ham_Killed, "fw_PlayerKilled")
 	
 	cvar_frags_zombie_killed = register_cvar("zp_frags_zombie_killed", "1")
 	cvar_frags_human_killed = register_cvar("zp_frags_human_killed", "1")

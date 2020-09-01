@@ -15,7 +15,6 @@
 #include <hamsandwich>
 #include <amx_settings_api>
 #include <cs_weap_models_api>
-#include <cs_ham_bots_api>
 #include <zp50_core>
 
 // Settings file
@@ -96,14 +95,10 @@ public plugin_init()
 {
 	register_plugin("[ZP] Grenade: Frost", ZP_VERSION_STRING, "ZP Dev Team")
 	
-	RegisterHam(Ham_Player_ResetMaxSpeed, "player", "fw_ResetMaxSpeed_Post", 1)
-	RegisterHamBots(Ham_Player_ResetMaxSpeed, "fw_ResetMaxSpeed_Post", 1)
-	RegisterHam(Ham_TakeDamage, "player", "fw_TakeDamage")
-	RegisterHamBots(Ham_TakeDamage, "fw_TakeDamage")
-	RegisterHam(Ham_TraceAttack, "player", "fw_TraceAttack")
-	RegisterHamBots(Ham_TraceAttack, "fw_TraceAttack")
-	RegisterHam(Ham_Killed, "player", "fw_PlayerKilled")
-	RegisterHamBots(Ham_Killed, "fw_PlayerKilled")
+	RegisterHamPlayer(Ham_Player_ResetMaxSpeed, "fw_ResetMaxSpeed_Post", 1)
+	RegisterHamPlayer(Ham_TakeDamage, "fw_TakeDamage")
+	RegisterHamPlayer(Ham_TraceAttack, "fw_TraceAttack")
+	RegisterHamPlayer(Ham_Killed, "fw_PlayerKilled")
 	register_forward(FM_PlayerPreThink, "fw_PlayerPreThink")
 	register_forward(FM_SetModel, "fw_SetModel")
 	RegisterHam(Ham_Think, "grenade", "fw_ThinkGrenade")

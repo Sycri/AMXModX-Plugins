@@ -11,7 +11,6 @@
 
 #include <amxmodx>
 #include <hamsandwich>
-#include <cs_ham_bots_api>
 #include <zp50_gamemodes>
 #define LIBRARY_NEMESIS "zp50_class_nemesis"
 #include <zp50_class_nemesis>
@@ -52,10 +51,8 @@ public plugin_init()
 	if (LibraryExists(LIBRARY_SURVIVOR, LibType_Library))
 		cvar_ammop_survivor_ignore = register_cvar("zp_ammop_survivor_ignore", "0")
 	
-	RegisterHam(Ham_TakeDamage, "player", "fw_TakeDamage_Post", 1)
-	RegisterHamBots(Ham_TakeDamage, "fw_TakeDamage_Post", 1)
-	RegisterHam(Ham_Killed, "player", "fw_PlayerKilled_Post", 1)
-	RegisterHamBots(Ham_Killed, "fw_PlayerKilled_Post", 1)
+	RegisterHamPlayer(Ham_TakeDamage, "fw_TakeDamage_Post", 1)
+	RegisterHamPlayer(Ham_Killed, "fw_PlayerKilled_Post", 1)
 }
 
 public plugin_natives()

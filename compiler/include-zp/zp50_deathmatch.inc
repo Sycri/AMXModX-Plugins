@@ -12,4 +12,4 @@
  *
  * @param id		Player index.
  */
-forward zp_fw_deathmatch_respawn_pre(id)
+forward zp_fw_deathmatch_respawn_pre(id);

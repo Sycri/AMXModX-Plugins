@@ -16,7 +16,6 @@
 #include <hamsandwich>
 #include <amx_settings_api>
 #include <cs_teams_api>
-#include <cs_ham_bots_api>
 #include <zp50_gamemodes>
 #define LIBRARY_NEMESIS "zp50_class_nemesis"
 #include <zp50_class_nemesis>
@@ -69,8 +68,7 @@ public plugin_init()
 	register_clcmd("jointeam", "clcmd_changeteam")
 	
 	register_event("HLTV", "event_round_start", "a", "1=0", "2=0")
-	RegisterHam(Ham_Spawn, "player", "fw_PlayerSpawn_Post", 1)
-	RegisterHamBots(Ham_Spawn, "fw_PlayerSpawn_Post", 1)
+	RegisterHamPlayer(Ham_Spawn, "fw_PlayerSpawn_Post", 1)
 	RegisterHam(Ham_Use, "func_tank", "fw_UseStationary")
 	RegisterHam(Ham_Use, "func_tankmortar", "fw_UseStationary")
 	RegisterHam(Ham_Use, "func_tankrocket", "fw_UseStationary")

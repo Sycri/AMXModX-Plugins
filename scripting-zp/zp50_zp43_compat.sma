@@ -14,7 +14,6 @@
 #include <fakemeta>
 #include <hamsandwich>
 #include <amx_settings_api>
-#include <cs_player_models_api>
 #include <zp50_class_zombie>
 #define LIBRARY_NEMESIS "zp50_class_nemesis"
 #include <zp50_class_nemesis>
@@ -748,7 +747,7 @@ public native_override_user_model(plugin_id, num_params)
 	new new_model[32]
 	get_string(2, new_model, charsmax(new_model))
 	
-	cs_set_player_model(id, new_model)
+	cs_set_user_model(id, new_model)
 	return true;
 }
 

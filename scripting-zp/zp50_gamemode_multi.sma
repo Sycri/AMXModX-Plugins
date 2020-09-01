@@ -14,7 +14,6 @@
 #include <hamsandwich>
 #include <amx_settings_api>
 #include <cs_teams_api>
-#include <cs_ham_bots_api>
 #include <zp50_gamemodes>
 #include <zp50_deathmatch>
 

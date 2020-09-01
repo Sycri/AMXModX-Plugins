@@ -12,7 +12,6 @@
 #include <amxmodx>
 #include <fakemeta>
 #include <hamsandwich>
-#include <cs_ham_bots_api>
 #include <zp50_core>
 #define LIBRARY_NEMESIS "zp50_class_nemesis"
 #include <zp50_class_nemesis>
@@ -39,8 +38,7 @@ public plugin_init()
 	if (LibraryExists(LIBRARY_SURVIVOR, LibType_Library))
 		cvar_painshockfree_survivor = register_cvar("zp_painshockfree_survivor", "1")
 	
-	RegisterHam(Ham_TakeDamage, "player", "fw_TakeDamage_Post", 1)
-	RegisterHamBots(Ham_TakeDamage, "fw_TakeDamage_Post", 1)
+	RegisterHamPlayer(Ham_TakeDamage, "fw_TakeDamage_Post", 1)
 }
 
 public plugin_natives()

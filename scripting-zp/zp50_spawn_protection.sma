@@ -13,7 +13,6 @@
 #include <cstrike>
 #include <fakemeta>
 #include <hamsandwich>
-#include <cs_ham_bots_api>
 #include <zp50_core>
 
 #define TASK_SPAWNPROTECT 100
@@ -32,14 +31,10 @@ public plugin_init()
 {
 	register_plugin("[ZP] Spawn Protection", ZP_VERSION_STRING, "ZP Dev Team")
 	
-	RegisterHam(Ham_Spawn, "player", "fw_PlayerSpawn_Post", 1)
-	RegisterHamBots(Ham_Spawn, "fw_PlayerSpawn_Post", 1)
-	RegisterHam(Ham_TraceAttack, "player", "fw_TraceAttack")
-	RegisterHamBots(Ham_TraceAttack, "fw_TraceAttack")
-	RegisterHam(Ham_TakeDamage, "player", "fw_TakeDamage")
-	RegisterHamBots(Ham_TakeDamage, "fw_TakeDamage")
-	RegisterHam(Ham_Killed, "player", "fw_PlayerKilled_Post", 1)
-	RegisterHamBots(Ham_Killed, "fw_PlayerKilled_Post", 1)
+	RegisterHamPlayer(Ham_Spawn, "fw_PlayerSpawn_Post", 1)
+	RegisterHamPlayer(Ham_TraceAttack, "fw_TraceAttack")
+	RegisterHamPlayer(Ham_TakeDamage, "fw_TakeDamage")
+	RegisterHamPlayer(Ham_Killed, "fw_PlayerKilled_Post", 1)
 	
 	cvar_spawn_protection_time = register_cvar("zp_spawn_protection_time", "3")
 	cvar_spawn_protection_humans = register_cvar("zp_spawn_protection_humans", "1")

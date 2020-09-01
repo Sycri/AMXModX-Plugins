@@ -17,7 +17,7 @@
  * @param id		Player index.
  * @return			Internal zombie class ID, or ZP_INVALID_ZOMBIE_CLASS if not yet chosen.
  */
-native zp_class_zombie_get_current(id)
+native zp_class_zombie_get_current(id);
 
 /**
  * Returns a player's next zombie class ID (for the next infection).
@@ -25,16 +25,16 @@ native zp_class_zombie_get_current(id)
  * @param id		Player index.
  * @return			Internal zombie class ID, or ZP_INVALID_ZOMBIE_CLASS if not yet chosen.
  */
-native zp_class_zombie_get_next(id)
+native zp_class_zombie_get_next(id);
 
 /**
  * Sets a player's next zombie class ID (for the next infection).
  *
  * @param id		Player index.
- * @param classid	A valid zombie class ID.
+ * @param classID	A valid zombie class ID.
  * @return			True on success, false otherwise.
  */
-native zp_class_zombie_set_next(id, classid)
+native zp_class_zombie_set_next(id, classID);
 
 /**
  * Returns the default maximum health for a specific zombie class.
@@ -42,10 +42,10 @@ native zp_class_zombie_set_next(id, classid)
  * Note: does not take into account any kind of HP multipliers.
  *
  * @param id		Player index.
- * @param classid	A valid zombie class ID.
+ * @param classID	A valid zombie class ID.
  * @return			Maximum amount of health points, -1 on error.
  */
-native zp_class_zombie_get_max_health(id, classid)
+native zp_class_zombie_get_max_health(id, classID);
 
 /**
  * Registers a custom class which will be added to the zombie classes menu of ZP.
@@ -60,94 +60,94 @@ native zp_class_zombie_get_max_health(id, classid)
  * @param gravity		Class gravity multiplier.
  * @return				An internal zombie class ID, or ZP_INVALID_ZOMBIE_CLASS on failure.
  */
-native zp_class_zombie_register(const name[], const description[], health, Float:speed, Float:gravity)
+native zp_class_zombie_register(const name[], const description[], health, Float:speed, Float:gravity);
 
 /**
  * Registers a custom player model for a given zombie class.
  *
- * @param classid		A valid zombie class ID.
+ * @param classID		A valid zombie class ID.
  * @param model			Player model's short name.
  * @return				True on success, false otherwise.
  */
-native zp_class_zombie_register_model(classid, const model[])
+native zp_class_zombie_register_model(classID, const model[]);
 
 /**
  * Registers a custom claw model for a given zombie class.
  *
- * @param classid		A valid zombie class ID.
+ * @param classID		A valid zombie class ID.
  * @param clawmodel		Claw model filename.
  * @return				True on success, false otherwise.
  */
-native zp_class_zombie_register_claw(classid, const clawmodel[])
+native zp_class_zombie_register_claw(classID, const clawmodel[]);
 
 /**
  * Registers a zombie class' knockback multiplier.
  *
- * @param classid		A valid zombie class ID.
+ * @param classID		A valid zombie class ID.
  * @param knockback		Knockback multiplier.
  * @return				True on success, false otherwise.
  */
-native zp_class_zombie_register_kb(classid, Float:knockback)
+native zp_class_zombie_register_kb(classID, Float:knockback);
 
 /**
  * Returns a zombie class' ID.
  *
- * @param name		Class name to look for.
+ * @param realName	Class name to look for.
  * @return			Internal zombie class ID, or ZP_INVALID_ZOMBIE_CLASS if not found.
  */
-native zp_class_zombie_get_id(const real_name[])
+native zp_class_zombie_get_id(const realName[]);
 
 /**
  * Returns a zombie class' name.
  *
- * @param classid	A valid zombie class ID.
+ * @param classID	A valid zombie class ID.
  * @param name		The buffer to store the string in.
  * @param len		Character size of the output buffer.
  * @return			True on success, false otherwise.
  */
-native zp_class_zombie_get_name(classid, name[], len)
+native zp_class_zombie_get_name(classID, name[], len);
 
 /**
  * Returns a zombie class' real name (used when registering the class).
  *
- * @param classid	A valid zombie class ID.
- * @param name		The buffer to store the string in.
+ * @param classID	A valid zombie class ID.
+ * @param realName	The buffer to store the string in.
  * @param len		Character size of the output buffer.
  * @return			True on success, false otherwise.
  */
-native zp_class_zombie_get_real_name(classid, real_name[], len)
+native zp_class_zombie_get_real_name(classID, realName[], len);
 
 /**
  * Returns a zombie class' description.
  *
- * @param classid		A valid zombie class ID.
+ * @param classID		A valid zombie class ID.
  * @param description	The buffer to store the string in.
  * @param len			Character size of the output buffer.
  * @return				True on success, false otherwise.
  */
-native zp_class_zombie_get_desc(classid, description[], len)
+native zp_class_zombie_get_desc(classID, description[], len);
 
 /**
  * Returns a zombie class' knockback multiplier.
  *
- * @param classid		A valid zombie class ID.
+ * @param classID		A valid zombie class ID.
  * @return				Knockback multiplier (float value).
  */
-native Float:zp_class_zombie_get_kb(classid)
+native Float:zp_class_zombie_get_kb(classID);
 
 /**
  * Returns number of registered zombie classes.
  *
  * @return			Zombie class count.
  */
-native zp_class_zombie_get_count()
+native zp_class_zombie_get_count();
 
 /**
  * Shows menu with available zombie classes to a player.
  *
  * @param id		Player index.
  */
-native zp_class_zombie_show_menu(id)
+native zp_class_zombie_show_menu(id);
 
 /**
  * Appends text to a class being displayed on the zombie classes menu.
@@ -155,7 +155,7 @@ native zp_class_zombie_show_menu(id)
  *
  * @param text		Additional text to display.
  */
-native zp_class_zombie_menu_text_add(const text[])
+native zp_class_zombie_menu_text_add(const text[]);
 
 /**
  * Called when determining whether a class should be available to a player.
@@ -166,14 +166,14 @@ native zp_class_zombie_menu_text_add(const text[])
  *	- ZP_CLASS_DONT_SHOW (don't show in menu, don't allow selection)
  *
  * @param id			Player index.
- * @param classid		Internal zombie class ID.
+ * @param classID		Internal zombie class ID.
  */
-forward zp_fw_class_zombie_select_pre(id, classid)
+forward zp_fw_class_zombie_select_pre(id, classID);
 
 /**
  * Called right after a player selects a class from the menu.
  *
  * @param id			Player index.
- * @param classid		Internal zombie class ID.
+ * @param classID		Internal zombie class ID.
  */
-forward zp_fw_class_zombie_select_post(id, classid)
+forward zp_fw_class_zombie_select_post(id, classID);

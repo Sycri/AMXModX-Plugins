@@ -18,7 +18,7 @@
  * @param player	Target player index.
  * @return			True on success, false otherwise.
  */
-native zp_admin_commands_zombie(id, player)
+native zp_admin_commands_zombie(id, player);
 
 /**
  * Manually executes admin command: zp_human.
@@ -27,7 +27,7 @@ native zp_admin_commands_zombie(id, player)
  * @param player	Target player index.
  * @return			True on success, false otherwise.
  */
-native zp_admin_commands_human(id, player)
+native zp_admin_commands_human(id, player);
 
 /**
  * Manually executes admin command: zp_nemesis.
@@ -36,7 +36,7 @@ native zp_admin_commands_human(id, player)
  * @param player	Target player index.
  * @return			True on success, false otherwise.
  */
-native zp_admin_commands_nemesis(id, player)
+native zp_admin_commands_nemesis(id, player);
 
 /**
  * Manually executes admin command: zp_survivor.
@@ -45,7 +45,7 @@ native zp_admin_commands_nemesis(id, player)
  * @param player	Target player index.
  * @return			True on success, false otherwise.
  */
-native zp_admin_commands_survivor(id, player)
+native zp_admin_commands_survivor(id, player);
 
 /**
  * Manually executes admin command: zp_respawn.
@@ -54,13 +54,13 @@ native zp_admin_commands_survivor(id, player)
  * @param player	Target player index.
  * @return			True on success, false otherwise.
  */
-native zp_admin_commands_respawn(id, player)
+native zp_admin_commands_respawn(id, player);
 
 /**
  * Manually executes admin command: zp_start_game_mode.
  *
  * @param id				Admin player index.
- * @param game_mode_id		A valid game mode ID.
+ * @param gamemodeID		A valid game mode ID.
  * @return					True on success, false otherwise.
  */
-native zp_admin_commands_start_mode(id, game_mode_id)
+native zp_admin_commands_start_mode(id, gamemodeID);

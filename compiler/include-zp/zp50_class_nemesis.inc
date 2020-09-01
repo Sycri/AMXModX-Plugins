@@ -17,7 +17,7 @@
  * @param id		Player index.
  * @return			True if it is, false otherwise.
  */
-native zp_class_nemesis_get(id)
+native zp_class_nemesis_get(id);
 
 /**
  * Forces a player to become a Nemesis.
@@ -25,11 +25,11 @@ native zp_class_nemesis_get(id)
  * @param id		Player index.
  * @return			True on success, false otherwise.
  */
-native zp_class_nemesis_set(id)
+native zp_class_nemesis_set(id);
 
 /**
  * Returns number of alive nemesis.
  *
  * @return		Nemesis count.
  */
-native zp_class_nemesis_get_count()
+native zp_class_nemesis_get_count();

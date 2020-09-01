@@ -17,4 +17,4 @@
  *
  * @param id		Player index.
  */
-native zp_admin_menu_show(id)
+native zp_admin_menu_show(id);

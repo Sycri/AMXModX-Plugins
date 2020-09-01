@@ -14,7 +14,6 @@
 #include <fakemeta>
 #include <hamsandwich>
 #include <amx_settings_api>
-#include <cs_ham_bots_api>
 #include <zp50_core>
 #define LIBRARY_NEMESIS "zp50_class_nemesis"
 #include <zp50_class_nemesis>
@@ -47,8 +46,7 @@ public plugin_init()
 	cvar_zombie_silent = register_cvar("zp_zombie_silent", "1")
 	cvar_zombie_bleeding = register_cvar("zp_zombie_bleeding", "1")
 	
-	RegisterHam(Ham_Killed, "player", "fw_PlayerKilled")
-	RegisterHamBots(Ham_Killed, "fw_PlayerKilled")
+	RegisterHamPlayer(Ham_Killed, "fw_PlayerKilled")
 	
 	// Check if it's a CZ server
 	new mymod[6]

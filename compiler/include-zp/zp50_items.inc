@@ -22,60 +22,60 @@
  * @param cost			Cost to display on the menu.
  * @return				An internal item ID, or ZP_INVALID_ITEM on failure.
  */
-native zp_items_register(const name[], cost)
+native zp_items_register(const name[], cost);
 
 /**
  * Returns an item's ID.
  *
- * @param name		Item name to look for.
+ * @param realName	Item name to look for.
  * @return			Internal item ID, or ZP_INVALID_ITEM if not found.
  */
-native zp_items_get_id(const real_name[])
+native zp_items_get_id(const realName[]);
 
 /**
  * Returns an item's name.
  *
- * @param itemid	A valid item ID.
+ * @param itemID	A valid item ID.
  * @param name		The buffer to store the string in.
  * @param len		Character size of the output buffer.
  * @return			True on success, false otherwise.
  */
-native zp_items_get_name(itemid, name[], len)
+native zp_items_get_name(itemID, name[], len);
 
 /**
  * Returns an item's real name (used when registering the item).
  *
  * @param classid	A valid item ID.
- * @param name		The buffer to store the string in.
+ * @param realName	The buffer to store the string in.
  * @param len		Character size of the output buffer.
  * @return			True on success, false otherwise.
  */
-native zp_items_get_real_name(itemid, real_name[], len)
+native zp_items_get_real_name(itemID, realName[], len);
 
 /**
  * Returns an item's cost.
  *
- * @param itemid		A valid item ID.
+ * @param itemID		A valid item ID.
  * @return				Item's cost.
  */
-native zp_items_get_cost(itemid)
+native zp_items_get_cost(itemID);
 
 /**
  * Shows menu with available extra items for player.
  *
  * @param id		Player index.
  */
-native zp_items_show_menu(id)
+native zp_items_show_menu(id);
 
 /**
  * Forces a player to buy an extra item.
  *
  * @param id			Player index.
- * @param itemid		A valid extra item ID.
- * @param ignorecost	If set, item's cost won't be deduced from player.
+ * @param itemID		A valid extra item ID.
+ * @param ignoreCost	If set, item's cost won't be deduced from player.
  * @return				True on success, false otherwise.
  */
-native zp_items_force_buy(id, itemid, ignorecost = false)
+native zp_items_force_buy(id, itemID, ignoreCost = false);
 
 /**
  * Appends text to an item being displayed on the extra items menu.
@@ -83,7 +83,7 @@ native zp_items_force_buy(id, itemid, ignorecost = false)
  *
  * @param text		Additional text to display.
  */
-native zp_items_menu_text_add(const text[])
+native zp_items_menu_text_add(const text[]);
 
 /**
  * Called when determining whether an item should be available to a player.
@@ -94,16 +94,16 @@ native zp_items_menu_text_add(const text[])
  *	- ZP_ITEM_DONT_SHOW (don't show in menu, don't allow selection)
  *
  * @param id			Player index.
- * @param itemid		Internal item ID.
- * @param ignorecost	Whether item cost should be ignored.
+ * @param itemID		Internal item ID.
+ * @param ignoreCost	Whether item cost should be ignored.
  */
-forward zp_fw_items_select_pre(id, itemid, ignorecost)
+forward zp_fw_items_select_pre(id, itemID, ignoreCost);
 
 /**
  * Called after a player selected an item from the extra items menu.
  *
  * @param id			Player index.
- * @param itemid		Internal item ID.
- * @param ignorecost	Whether item cost should be ignored.
+ * @param itemID		Internal item ID.
+ * @param ignoreCost	Whether item cost should be ignored.
  */
-forward zp_fw_items_select_post(id, itemid, ignorecost)
+forward zp_fw_items_select_post(id, itemID, ignoreCost);

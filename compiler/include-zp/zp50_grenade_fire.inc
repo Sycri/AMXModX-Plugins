@@ -16,7 +16,7 @@
  *
  * @param id		Player index.
  */
-native zp_grenade_fire_get(id)
+native zp_grenade_fire_get(id);
 
 /**
  * Sets a player on fire / stops burning.
@@ -25,7 +25,7 @@ native zp_grenade_fire_get(id)
  * @param set		True to set on fire, false to stop burning.
  * @return			True on success, false otherwise.
  */
-native zp_grenade_fire_set(id, set = true)
+native zp_grenade_fire_set(id, set = true);
 
 /**
  * Called when a player is about to start burning.
@@ -33,4 +33,4 @@ native zp_grenade_fire_set(id, set = true)
  *
  * @param id		Player index.
  */
-forward zp_fw_grenade_fire_pre(id)
+forward zp_fw_grenade_fire_pre(id);

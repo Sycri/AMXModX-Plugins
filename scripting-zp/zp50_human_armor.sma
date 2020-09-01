@@ -13,7 +13,6 @@
 #include <cstrike>
 #include <fakemeta>
 #include <hamsandwich>
-#include <cs_ham_bots_api>
 #include <zp50_core>
 #define LIBRARY_NEMESIS "zp50_class_nemesis"
 #include <zp50_class_nemesis>
@@ -44,8 +43,7 @@ public plugin_init()
 	if (LibraryExists(LIBRARY_SURVIVOR, LibType_Library))
 		cvar_survivor_armor_protect = register_cvar("zp_survivor_armor_protect", "1")
 	
-	RegisterHam(Ham_TakeDamage, "player", "fw_TakeDamage")
-	RegisterHamBots(Ham_TakeDamage, "fw_TakeDamage")
+	RegisterHamPlayer(Ham_TakeDamage, "fw_TakeDamage")
 }
 
 public plugin_natives()

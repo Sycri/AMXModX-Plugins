@@ -17,7 +17,7 @@
  * @param id		Player index.
  * @return			True if it is, false otherwise.
  */
-native zp_core_is_zombie(id)
+native zp_core_is_zombie(id);
 
 /**
  * Returns whether a player is the first zombie.
@@ -25,7 +25,7 @@ native zp_core_is_zombie(id)
  * @param id		Player index.
  * @return			True if it is, false otherwise.
  */
-native zp_core_is_first_zombie(id)
+native zp_core_is_first_zombie(id);
 
 /**
  * Returns whether a player is the last zombie.
@@ -33,7 +33,7 @@ native zp_core_is_first_zombie(id)
  * @param id		Player index.
  * @return			True if it is, false otherwise.
  */
-native zp_core_is_last_zombie(id)
+native zp_core_is_last_zombie(id);
 
 /**
  * Returns whether a player is the last human.
@@ -41,21 +41,21 @@ native zp_core_is_last_zombie(id)
  * @param id		Player index.
  * @return			True if it is, false otherwise.
  */
-native zp_core_is_last_human(id)
+native zp_core_is_last_human(id);
 
 /**
  * Returns number of alive zombies.
  *
  * @return		Zombie count.
  */
-native zp_core_get_zombie_count()
+native zp_core_get_zombie_count();
 
 /**
  * Returns number of alive humans.
  *
  * @return		Human count.
  */
-native zp_core_get_human_count()
+native zp_core_get_human_count();
 
 /**
  * Turns a player into a zombie.
@@ -64,7 +64,7 @@ native zp_core_get_human_count()
  * @param attacker	Player who triggered the infection. (optional)
  * @return			True on success, false otherwise.
  */
-native zp_core_infect(id, attacker = 0)
+native zp_core_infect(id, attacker = 0);
 
 /**
  * Turns a player into a human.
@@ -73,7 +73,7 @@ native zp_core_infect(id, attacker = 0)
  * @param attacker	Player who triggered the cure. (optional)
  * @return			True on success, false otherwise.
  */
-native zp_core_cure(id, attacker = 0)
+native zp_core_cure(id, attacker = 0);
 
 /**
  * Forces a player to become a zombie/human.
@@ -83,8 +83,8 @@ native zp_core_cure(id, attacker = 0)
  * @param id		Player index to be infected/cured.
  * @return			True on success, false otherwise.
  */
-native zp_core_force_infect(id)
-native zp_core_force_cure(id)
+native zp_core_force_infect(id);
+native zp_core_force_cure(id);
 
 /**
  * Sets whether the player will be respawned as zombie or human.
@@ -92,7 +92,7 @@ native zp_core_force_cure(id)
  * @param id			Player index.
  * @param zombie		True to respawn as zombie, false otherwise.
  */
-native zp_core_respawn_as_zombie(id, zombie = true)
+native zp_core_respawn_as_zombie(id, zombie = true);
 
 /**
  * Called when a player gets infected.
@@ -101,8 +101,8 @@ native zp_core_respawn_as_zombie(id, zombie = true)
  * @param attacker	Player who triggered the infection.
  *					(0 if not available, id = attacker if he infected himself)
  */
-forward zp_fw_core_infect(id, attacker)
-forward zp_fw_core_infect_post(id, attacker)
+forward zp_fw_core_infect(id, attacker);
+forward zp_fw_core_infect_post(id, attacker);
 
 /**
  * Called when a player turns back to human.
@@ -111,8 +111,8 @@ forward zp_fw_core_infect_post(id, attacker)
  * @param attacker	Player who triggered the cure.
  *					(0 if not available, id = attacker if he cured himself)
  */
-forward zp_fw_core_cure(id, attacker)
-forward zp_fw_core_cure_post(id, attacker)
+forward zp_fw_core_cure(id, attacker);
+forward zp_fw_core_cure_post(id, attacker);
 
 /**
  * Called on a player infect/cure attempt. You can block it by
@@ -122,8 +122,8 @@ forward zp_fw_core_cure_post(id, attacker)
  * @param attacker	Player who is triggering the infection/cure.
  *					(0 if not available, id = attacker if he is infecting/curing himself)
  */
-forward zp_fw_core_infect_pre(id, attacker)
-forward zp_fw_core_cure_pre(id, attacker)
+forward zp_fw_core_infect_pre(id, attacker);
+forward zp_fw_core_cure_pre(id, attacker);
 
 /**
  * Called when a player becomes the last zombie/human.
@@ -132,12 +132,12 @@ forward zp_fw_core_cure_pre(id, attacker)
  *
  * @param id		Player index.
  */
-forward zp_fw_core_last_zombie(id)
-forward zp_fw_core_last_human(id)
+forward zp_fw_core_last_zombie(id);
+forward zp_fw_core_last_human(id);
 
 /**
  * Called when a player spawns, before applying human/zombie attributes to him.
  *
  * @param id		Player index.
  */
-forward zp_fw_core_spawn_post(id)
+forward zp_fw_core_spawn_post(id);

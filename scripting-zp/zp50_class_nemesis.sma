@@ -10,14 +10,13 @@
 ================================================================================*/
 
 #include <amxmodx>
+#include <cstrike>
 #include <fun>
 #include <fakemeta>
 #include <hamsandwich>
 #include <amx_settings_api>
 #include <cs_maxspeed_api>
-#include <cs_player_models_api>
 #include <cs_weap_models_api>
-#include <cs_ham_bots_api>
 #include <zp50_core>
 #define LIBRARY_GRENADE_FROST "zp50_grenade_frost"
 #include <zp50_grenade_frost>
@@ -58,10 +57,8 @@ public plugin_init()
 {
 	register_plugin("[ZP] Class: Nemesis", ZP_VERSION_STRING, "ZP Dev Team")
 	
-	RegisterHam(Ham_TakeDamage, "player", "fw_TakeDamage")
-	RegisterHamBots(Ham_TakeDamage, "fw_TakeDamage")
-	RegisterHam(Ham_Killed, "player", "fw_PlayerKilled")
-	RegisterHamBots(Ham_Killed, "fw_PlayerKilled")
+	RegisterHamPlayer(Ham_TakeDamage, "fw_TakeDamage")
+	RegisterHamPlayer(Ham_Killed, "fw_PlayerKilled")
 	register_forward(FM_ClientDisconnect, "fw_ClientDisconnect_Post", 1)
 	
 	cvar_nemesis_health = register_cvar("zp_nemesis_health", "0")
@@ -282,7 +279,7 @@ public zp_fw_core_infect_post(id, attacker)
 	// Apply nemesis player model
 	new player_model[PLAYERMODEL_MAX_LENGTH]
 	ArrayGetString(g_models_nemesis_player, random_num(0, ArraySize(g_models_nemesis_player) - 1), player_model, charsmax(player_model))
-	cs_set_player_model(id, player_model)
+	cs_set_user_model(id, player_model)
 	
 	// Apply nemesis claw model
 	new model[MODEL_MAX_LENGTH]

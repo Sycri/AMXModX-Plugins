@@ -13,7 +13,6 @@
 #include <cstrike>
 #include <fakemeta>
 #include <hamsandwich>
-#include <cs_ham_bots_api>
 #include <zp50_core>
 
 // CS Player CBase Offsets (win32)
@@ -62,8 +61,7 @@ public plugin_init()
 	cvar_remove_dropped_weapons = register_cvar("zp_remove_dropped_weapons", "0")
 	
 	register_forward(FM_SetModel, "fw_SetModel")
-	RegisterHam(Ham_AddPlayerItem, "player", "fw_AddPlayerItem")
-	RegisterHamBots(Ham_AddPlayerItem, "fw_AddPlayerItem")
+	RegisterHamPlayer(Ham_AddPlayerItem, "fw_AddPlayerItem")
 	RegisterHam(Ham_Touch, "weaponbox", "fw_TouchWeapon")
 	RegisterHam(Ham_Touch, "armoury_entity", "fw_TouchWeapon")
 	RegisterHam(Ham_Touch, "weapon_shield", "fw_TouchWeapon")

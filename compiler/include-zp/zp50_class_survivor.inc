@@ -17,7 +17,7 @@
  * @param id		Player index.
  * @return			True if it is, false otherwise.
  */
-native zp_class_survivor_get(id)
+native zp_class_survivor_get(id);
 
 /**
  * Forces a player to become a Survivor.
@@ -25,11 +25,11 @@ native zp_class_survivor_get(id)
  * @param id		Player index.
  * @return			True on success, false otherwise.
  */
-native zp_class_survivor_set(id)
+native zp_class_survivor_set(id);
 
 /**
  * Returns number of alive survivors.
  *
  * @return		Survivor count.
  */
-native zp_class_survivor_get_count()
+native zp_class_survivor_get_count();

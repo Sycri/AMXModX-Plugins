@@ -16,18 +16,18 @@
  *
  * @param id					Player index.
  * @param set					True to enable, false to remove restrictions.
- * @param allowed_bitsum		Bitsum containing allowed weapons.
- * @param allowed_default		Default allowed weapon to switch back to. (in CSW_ format)
+ * @param allowedBitsum		Bitsum containing allowed weapons.
+ * @param allowedDefault		Default allowed weapon to switch back to. (in CSW_ format)
  */
-native cs_set_player_weap_restrict(id, set, allowed_bitsum = 0, allowed_default = 0)
+native cs_set_player_weap_restrict(id, set, allowedBitsum = 0, allowedDefault = 0);
 
 /**
  * Returns whether a player has weapon restrictions enabled. In the case
  * that he does, also returns allowed_bistum and allowed_default (by referenced).
  *
  * @param id					Player index.
- * @param allowed_bitsum		Bitsum containing allowed weapons.
- * @param allowed_default		Default allowed weapon to switch back to. (in CSW_ format)
+ * @param allowedBitsum		Bitsum containing allowed weapons.
+ * @param allowedDefault		Default allowed weapon to switch back to. (in CSW_ format)
  * @return						True if restrictions are enabled, false otherwise.
  */
-native cs_get_player_weap_restrict(id, &allowed_bitsum=0, &allowed_default=0)
+native cs_get_player_weap_restrict(id, &allowedBitsum=0, &allowedDefault=0);

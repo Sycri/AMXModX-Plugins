@@ -16,7 +16,6 @@
 #include <fakemeta>
 #include <hamsandwich>
 #include <cs_teams_api>
-#include <cs_ham_bots_api>
 #include <zp50_core>
 #include <zp50_gamemodes_const>
 #define LIBRARY_NEMESIS "zp50_class_nemesis"
@@ -66,12 +65,10 @@ public plugin_init()
 	register_event("TextMsg", "event_game_restart", "a", "2=#Game_will_restart_in")
 	
 	register_forward(FM_ClientDisconnect, "fw_ClientDisconnect_Post", 1)
-	RegisterHam(Ham_Killed, "player", "fw_PlayerKilled_Post", 1)
-	RegisterHamBots(Ham_Killed, "fw_PlayerKilled_Post", 1)
-	RegisterHam(Ham_TraceAttack, "player", "fw_TraceAttack")
-	RegisterHamBots(Ham_TraceAttack, "fw_TraceAttack")
-	RegisterHam(Ham_TakeDamage, "player", "fw_TakeDamage")
-	RegisterHamBots(Ham_TakeDamage, "fw_TakeDamage")
+
+	RegisterHamPlayer(Ham_Killed, "fw_PlayerKilled_Post", 1)
+	RegisterHamPlayer(Ham_TraceAttack, "fw_TraceAttack")
+	RegisterHamPlayer(Ham_TakeDamage, "fw_TakeDamage")
 	
 	cvar_gamemode_delay = register_cvar("zp_gamemode_delay", "10")
 	cvar_round_start_show_hud = register_cvar("zp_round_start_show_hud", "1")
@@ -576,7 +573,7 @@ balance_teams()
 			continue;
 		
 		// Set team
-		cs_set_player_team(id, CS_TEAM_CT, 0)
+		cs_set_player_team(id, CS_TEAM_CT, false)
 	}
 	
 	// Then randomly move half of the players to Terrorists
@@ -598,7 +595,7 @@ balance_teams()
 		// Random chance
 		if (random_num(0, 1))
 		{
-			cs_set_player_team(id, CS_TEAM_T, 0)
+			cs_set_player_team(id, CS_TEAM_T, false)
 			iTerrors++
 		}
 	}

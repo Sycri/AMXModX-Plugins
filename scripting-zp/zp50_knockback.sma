@@ -14,7 +14,6 @@
 #include <hamsandwich>
 #include <xs>
 #include <amx_settings_api>
-#include <cs_ham_bots_api>
 #include <zp50_class_zombie>
 #define LIBRARY_NEMESIS "zp50_class_nemesis"
 #include <zp50_class_nemesis>
@@ -74,8 +73,7 @@ public plugin_init()
 {
 	register_plugin("[ZP] Knockback", ZP_VERSION_STRING, "ZP Dev Team")
 	
-	RegisterHam(Ham_TraceAttack, "player", "fw_TraceAttack_Post", 1)
-	RegisterHamBots(Ham_TraceAttack, "fw_TraceAttack_Post", 1)
+	RegisterHamPlayer(Ham_TraceAttack, "fw_TraceAttack_Post", 1)
 	
 	cvar_knockback_damage = register_cvar("zp_knockback_damage", "1")
 	cvar_knockback_power = register_cvar("zp_knockback_power", "1")

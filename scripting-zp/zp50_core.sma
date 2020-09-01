@@ -14,7 +14,6 @@
 #include <cstrike>
 #include <fakemeta>
 #include <hamsandwich>
-#include <cs_ham_bots_api>
 #include <zp50_core_const>
 
 #define MAXPLAYERS 32
@@ -67,10 +66,9 @@ public plugin_init()
 	
 	g_Forwards[FW_USER_SPAWN_POST] = CreateMultiForward("zp_fw_core_spawn_post", ET_IGNORE, FP_CELL)
 	
-	RegisterHam(Ham_Spawn, "player", "fw_PlayerSpawn_Post", 1)
-	RegisterHamBots(Ham_Spawn, "fw_PlayerSpawn_Post", 1)
-	RegisterHam(Ham_Killed, "player", "fw_PlayerKilled_Post", 1)
-	RegisterHamBots(Ham_Killed, "fw_PlayerKilled_Post", 1)
+	RegisterHamPlayer(Ham_Spawn, "fw_PlayerSpawn_Post", 1)
+	RegisterHamPlayer(Ham_Killed, "fw_PlayerKilled_Post", 1)
+
 	register_forward(FM_ClientDisconnect, "fw_ClientDisconnect_Post", 1)
 	
 	// To help players find ZP servers

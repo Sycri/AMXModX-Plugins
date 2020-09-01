@@ -13,7 +13,6 @@
 #include <fakemeta>
 #include <hamsandwich>
 #include <xs>
-#include <cs_ham_bots_api>
 #include <zp50_core>
 
 #define TASK_FLASHLIGHT 100
@@ -53,8 +52,8 @@ public plugin_init()
 	register_plugin("[ZP] Flashlight", ZP_VERSION_STRING, "ZP Dev Team")
 	
 	register_forward(FM_CmdStart, "fw_CmdStart")
-	RegisterHam(Ham_Killed, "player", "fw_PlayerKilled")
-	RegisterHamBots(Ham_Killed, "fw_PlayerKilled")
+
+	RegisterHamPlayer(Ham_Killed, "fw_PlayerKilled")
 	
 	g_MsgFlashlight = get_user_msgid("Flashlight")
 	g_MsgFlashBat = get_user_msgid("FlashBat")

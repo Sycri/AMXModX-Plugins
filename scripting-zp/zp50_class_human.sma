@@ -10,10 +10,10 @@
 ================================================================================*/
 
 #include <amxmodx>
+#include <cstrike>
 #include <fun>
 #include <fakemeta>
 #include <amx_settings_api>
-#include <cs_player_models_api>
 #include <cs_weap_models_api>
 #include <cs_maxspeed_api>
 #include <cs_weap_restrict_api>
@@ -322,12 +322,12 @@ public zp_fw_core_cure_post(id, attacker)
 		new index = random_num(0, ArraySize(class_models) - 1)
 		new player_model[32]
 		ArrayGetString(class_models, index, player_model, charsmax(player_model))
-		cs_set_player_model(id, player_model)
+		cs_set_user_model(id, player_model)
 	}
 	else
 	{
 		// No models registered for current class, use default model
-		cs_reset_player_model(id)
+		cs_reset_user_model(id)
 	}
 	
 	// Set custom knife model

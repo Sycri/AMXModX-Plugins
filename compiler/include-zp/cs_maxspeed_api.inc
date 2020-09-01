@@ -18,14 +18,14 @@
  * @param maxspeed		Custom maxspeed.
  * @param multiplier	Treat maxspeed as multiplier instead of absolute value.
  */
-native cs_set_player_maxspeed(id, Float:maxspeed, multiplier = false)
+native cs_set_player_maxspeed(id, Float:maxspeed, multiplier = false);
 
 /**
  * Resets a player's maxspeed to default CS maxspeed.
  *
  * @param id			Player index.
  */
-native cs_reset_player_maxspeed(id)
+native cs_reset_player_maxspeed(id);
 
 // Keep this always at the bottom of this file
 #include <cs_maxspeed_api_stocks>

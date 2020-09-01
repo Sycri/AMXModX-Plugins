@@ -16,4 +16,4 @@
  *
  * @param id		Player index.
  */
-native zp_item_zombie_madness_get(id)
+native zp_item_zombie_madness_get(id);

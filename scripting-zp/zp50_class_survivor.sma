@@ -16,9 +16,7 @@
 #include <hamsandwich>
 #include <amx_settings_api>
 #include <cs_maxspeed_api>
-#include <cs_player_models_api>
 #include <cs_weap_models_api>
-#include <cs_ham_bots_api>
 #include <zp50_core>
 
 // Settings file
@@ -79,8 +77,7 @@ public plugin_init()
 	RegisterHam(Ham_Touch, "weaponbox", "fw_TouchWeapon")
 	RegisterHam(Ham_Touch, "armoury_entity", "fw_TouchWeapon")
 	RegisterHam(Ham_Touch, "weapon_shield", "fw_TouchWeapon")
-	RegisterHam(Ham_Killed, "player", "fw_PlayerKilled")
-	RegisterHamBots(Ham_Killed, "fw_PlayerKilled")
+	RegisterHamPlayer(Ham_Killed, "fw_PlayerKilled")
 	register_forward(FM_ClientDisconnect, "fw_ClientDisconnect_Post", 1)
 	
 	cvar_survivor_health = register_cvar("zp_survivor_health", "0")
@@ -260,7 +257,7 @@ public zp_fw_core_cure_post(id, attacker)
 	// Apply survivor player model
 	new player_model[PLAYERMODEL_MAX_LENGTH]
 	ArrayGetString(g_models_survivor_player, random_num(0, ArraySize(g_models_survivor_player) - 1), player_model, charsmax(player_model))
-	cs_set_player_model(id, player_model)
+	cs_set_user_model(id, player_model)
 	
 	// Apply survivor weapon model
 	new weapon_name[32]

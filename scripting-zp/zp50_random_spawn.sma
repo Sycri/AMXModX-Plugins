@@ -14,7 +14,6 @@
 #include <cstrike>
 #include <fakemeta>
 #include <hamsandwich>
-#include <cs_ham_bots_api>
 #include <zp50_core_const>
 
 #define MAX_CSDM_SPAWNS 128
