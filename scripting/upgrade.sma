@@ -67,25 +67,25 @@
 *	v1.6 - Kristaps08 (Sycri) - 08/29/12
 *	 - Optimized the code a little bit again
 *
-*	v1.5 - Kristaps08 (Sycri)
+*	v1.5 - Kristaps08 (Sycri) - 08/28/12
 *	 - Fixed freezetime bug
 *	 - Optimized a little bit of the code
 *	 - Added description
 *
-*	v1.4 - Kristaps08 (Sycri)
+*	v1.4 - Kristaps08 (Sycri) - 08/24/12
 *	 - Optimized code
 *
-*	v1.3 - Kristaps08 (Sycri)
+*	v1.3 - Kristaps08 (Sycri) - 05/16/12
 *	 - Changed and cleaned up some code
 *	 - Added fakemeta
 *
-*	v1.2 - Kristaps08 (Sycri)
+*	v1.2 - Kristaps08 (Sycri) - 05/16/12
 *	 - Removed cmd_upgradehelp() because it was not needed
 *	 - Added automatic message that will display after some time
 *	 - Combined amx_give_upgrade and amx_take_upgrade commands together into amx_upgrade
 *	 - Added support for amx_show_activity
 *
-*	v1.1 - Kristaps08 (Sycri)
+*	v1.1 - Kristaps08 (Sycri) - 05/16/12
 *	 - Removed client_connect()
 *	 - Changed from CurWeapon event to Ham_Item_PreFrame
 *	 - Code changes and cleanup

@@ -34,7 +34,7 @@ native sh_get_vip_id();
  * Returns server flags for sh_blockvip cvar, can be used in heroes for custom VIP blocks.
  * (see sh_core_objectives_const.inc for flag types)
  *
- * @note	You are still responsible to check if user is vip, use id == sh_get_vip_id().
+ * @note	You are still responsible to check if a client is VIP, use id == sh_get_vip_id().
  * 			example usage: if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_CUSTOM) {//do something}
  *
  * @return	The flags currently set.

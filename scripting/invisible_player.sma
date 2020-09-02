@@ -62,23 +62,23 @@
 *	 - Addded a new translation
 *	 - Changed a tiny little bit of code
 *
-*	v1.7 - Kristaps08 (Sycri)
+*	v1.7 - Kristaps08 (Sycri) - 08/29/12
 *	 - Optimized code a tiny little bit
 *
-*	v1.6 - Kristaps08 (Sycri)
+*	v1.6 - Kristaps08 (Sycri) - 08/28/12
 *	 - Removed fun module
 *	 - Optimized a little bit the code
 *	 - Added description
 *
-*	v1.5 - Kristaps08 (Sycri)
+*	v1.5 - Kristaps08 (Sycri) - 08/24/12
 *	 - Optimized code
 *
-*	v1.4 - Kristaps08 (Sycri)
+*	v1.4 - Kristaps08 (Sycri) - 08/23/12
 *	 - Code changes and cleanup
 *	 - Added support for amx_show_activity
 *	 - Changed from hamsandwich to fakemeta
 *
-*	v1.3 - Kristaps08 (Sycri)
+*	v1.3 - Kristaps08 (Sycri) - 08/07/12
 *	 - Changed engine module to fun module
 *	 - Added command amx_check_invisibility to check if the player is invisible
 *	 - Added cvar to control how much will be invisible
@@ -86,7 +86,7 @@
 *	 - Commands amx_give_invisibility and command amx_remove_invisibility is changed to command amx_invisible
 *	 - Cleaned up some code
 *
-*	v1.2 - Kristaps08 (Sycri)
+*	v1.2 - Kristaps08 (Sycri) - 07/31/12
 *	 - Changed from (g_is_invisible[player]==false) to (!g_is_invisible[player])
 *
 *	v1.1 - Kristaps08 (Sycri) - 07/30/12

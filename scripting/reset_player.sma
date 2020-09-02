@@ -60,31 +60,31 @@
 *	 - Removed all the cvars except rp_version
 *	 - Changed the command amx_reset_player so the player could reset different parts of the player's stats
 *
-*	v1.7 - Kristaps08 (Sycri)
+*	v1.7 - Kristaps08 (Sycri) - 08/29/12
 *	 - Removed rp_again so admins could reset player all the time
 *	 - Optimized code again
 *
-*	v1.6 - Kristaps08 (Sycri)
+*	v1.6 - Kristaps08 (Sycri) - 08/28/12
 *	 - Added description
 *	 - Optimized a little bit of the code
 *
-*	v1.5 - Kristaps08 (Sycri)
+*	v1.5 - Kristaps08 (Sycri) - 08/24/12
 *	 - Optimized code
 *	 - Added get_cvar_pointer
 *
-*	v1.4 - Kristaps08 (Sycri)
+*	v1.4 - Kristaps08 (Sycri) - 05/16/12
 *	 - Added support for amx_show_activity
 *	 - Changed and cleaned up some code
 *
-*	v1.3 - Kristaps08 (Sycri)
+*	v1.3 - Kristaps08 (Sycri) - 05/16/12
 *	 - Code changes and cleanup
 *	 - Changed cvars from reset_player_ to rp_
 *
-*	v1.2 - Kristaps08 (Sycri)
+*	v1.2 - Kristaps08 (Sycri) - 05/16/12
 *	 - Changed from set_user_armor to cs_set_user_armor
 *	 - Changed from give_item to cs_set_user_bpammo
 *
-*	v1.1 - Kristaps08 (Sycri)
+*	v1.1 - Kristaps08 (Sycri) - 05/16/12
 *	 - Added reset_player_frags to reset frags for player
 *	 - Added reset_player_deaths to reset deaths for player
 *	 - Added reset_player_again to reset again the player in the same round

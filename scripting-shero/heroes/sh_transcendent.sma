@@ -39,8 +39,8 @@ public plugin_init()
 	gHeroID = sh_create_hero(gHeroName, pcvarLevel);
 	sh_set_hero_info(gHeroID, "Higher Level Existence", "Massive increase in lifeforce. Regular attacks are infused and defended with divinity");
 	sh_set_hero_hpap(gHeroID, pcvarHealth);
-	sh_set_hero_defmult(gHeroID, pcvarDefenseMult);
 	sh_set_hero_dmgmult(gHeroID, pcvarDamageMult);
+	sh_set_hero_defmult(gHeroID, pcvarDefenseMult);
 	
 	// REGISTER EVENTS THIS HERO WILL RESPOND TO!
 }

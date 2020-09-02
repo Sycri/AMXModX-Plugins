@@ -77,8 +77,8 @@
 *	v1.3.0 - Sycri (Kristaps08) - 09/02/20
 *	 - Added Ham_AddPlayerItem since Ham_Player_ResetMaxSpeed does not catch weapon pickups or purchases
 *	 - Added [SH] Core: Models to standardize the setting of player, view, and weapon models from hero plugins
-*	 - Added natives which allow the blocking of powers to give more compatibility with other plugins.
-*	 - Changed extradamage to use hamsandwhich Ham_TakeDamage.
+*	 - Added natives which allow the blocking of powers to give more compatibility with other plugins
+*	 - Changed sh_extra_damage to use hamsandwhich Ham_TakeDamage.
 *	 - Changed the function chatMessage so that it uses client_print_color
 *	 - Changed most cvars from get_pcvar_num to bind_pcvar_num so variables could be used directly
 *	 - Changed from RegisterHamFromEntity to RegisterHamPlayer for cleaner code

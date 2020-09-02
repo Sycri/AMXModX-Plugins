@@ -25,7 +25,7 @@
  * Sets hero's player model for the specified team.
  * Last selected hero by the client gets priority.
  *
- * @note		Max model name length is 32
+ * @note		Max model name length is 32.
  *
  * @param heroID	The index of the hero.
  * @param model		Model name.
@@ -38,7 +38,7 @@ native sh_set_hero_playermodel(heroID, const model[], const any:team);
  * Sets hero's view model for the specified cs/cz weapon.
  * Last selected hero by the client gets priority.
  *
- * @note		Max model path length is 128
+ * @note		Max model path length is 128.
  *
  * @param heroID	The index of the hero.
  * @param viewModel	Model path.
@@ -51,7 +51,7 @@ native sh_set_hero_viewmodel(heroID, const viewModel[], const weaponID);
  * Sets hero's weapon model for the specified cs/cz weapon.
  * Last selected hero by the client gets priority.
  *
- * @note		Max model path length is 128
+ * @note		Max model path length is 128.
  *
  * @param heroID	The index of the hero.
  * @param weaponModel	Model path.

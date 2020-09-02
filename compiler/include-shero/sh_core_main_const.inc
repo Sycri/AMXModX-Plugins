@@ -31,7 +31,7 @@ stock const SH_AUTHOR_STR[] =	"JTP10181/{HOJ}Batman/vittu/AssKicR/Sycri";
 #define SH_COOLDOWN_TASKID	572910
 
 // sh_hero_init(id, heroID, mode) modes
-#define SH_HERO_DROP	0	//Hero is dropped
+#define SH_HERO_DROP		0	//Hero is dropped
 #define SH_HERO_ADD		1	//Hero is added
 
 // sh_hero_key(id, heroID, key) keys
