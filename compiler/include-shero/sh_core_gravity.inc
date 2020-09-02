@@ -32,17 +32,26 @@
  * @param heroID	The index of the hero.
  * @param pcvarGravity	The pcvar value for minimum Gravity CVAR for the hero.
  * @param weapons	Bit-field of weapon CSW_ constant values to set gravity for, CSW_ALL_WEAPONS is for all weapons.
- * @noreturn
+ * @return		True, otherwise false if invalid hero.
  */
-native sh_set_hero_grav(heroID, pcvarGravity, weapons = CSW_ALL_WEAPONS);
+native sh_set_hero_grav(heroID, pcvarGravity, const weapons = CSW_ALL_WEAPONS);
 
 //------------
 
 /**
- * Reset client's min gravity according to heroes they have.
+ * Blocks the client's gravity powers.
+ *
+ * @param id		The index of the client.
+ * @param block		Whether to set or remove the block.
+ * @return		True, otherwise false if invalid client.
+ */
+native sh_block_hero_grav(id, bool:block = true);
+
+/**
+ * Resets client's min gravity according to heroes they have.
  * Useful incase a temporary value was set.
  *
  * @param id		The index of the client.
- * @noreturn
+ * @return		True, otherwise false if invalid client or SH not active.
  */
 native sh_reset_min_gravity(id);

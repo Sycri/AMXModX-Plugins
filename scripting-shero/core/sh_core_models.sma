@@ -94,72 +94,83 @@ public plugin_end()
 }
 //----------------------------------------------------------------------------------------------
 //native sh_set_hero_playermodel(heroID, const model[], const any:team)
-@Native_SetHeroPlayerModel()
+@Native_SetHeroPlayerModel(plugin_id, num_params)
 {
-	new heroIndex = get_param(1);
+	new heroID = get_param(1);
 
 	//Have to access sh_get_num_heroes() directly because doing this during plugin_init()
-	if (heroIndex < 0 || heroIndex >= sh_get_num_heroes())
-		return;
+	if (heroID < 0 || heroID >= sh_get_num_heroes()) {
+		log_error(AMX_ERR_NATIVE, "[SH] Invalid Hero ID (%d)", heroID);
+		return false;
+	}
 
 	new CsTeams:team = CsTeams:get_param(3);
 
-	if (team < CS_TEAM_T || team > CS_TEAM_CT)
-		return;
+	if (team < CS_TEAM_T || team > CS_TEAM_CT) {
+		log_error(AMX_ERR_NATIVE, "[SH] Invalid Team (%d)", team);
+		return false;
+	}
 
 	new playerModel[32];
 	get_array(2, playerModel, charsmax(playerModel));
 
-	sh_debug_message(0, 3, "Set Player Model -> HeroID: %d - Player Model: %s - Team: %d", heroIndex, playerModel, _:team);
+	sh_debug_message(0, 3, "Set Player Model -> HeroID: %d - Player Model: %s - Team: %d", heroID, playerModel, _:team);
 
-	ArrayPushCell(gPlayerModelHeroID, heroIndex);
+	ArrayPushCell(gPlayerModelHeroID, heroID);
 	ArrayPushCell(gPlayerModelTeam, team);
 	ArrayPushString(gPlayerModel, playerModel);
 	++gPlayerModelCount;
+	return true;
 }
 //----------------------------------------------------------------------------------------------
 //native sh_set_hero_viewmodel(heroID, const viewModel[], const weaponID)
-@Native_SetHeroViewModel()
+@Native_SetHeroViewModel(plugin_id, num_params)
 {
-	new heroIndex = get_param(1);
+	new heroID = get_param(1);
 
 	//Have to access sh_get_num_heroes() directly because doing this during plugin_init()
-	if (heroIndex < 0 || heroIndex >= sh_get_num_heroes())
-		return;
+	if (heroID < 0 || heroID >= sh_get_num_heroes()) {
+		log_error(AMX_ERR_NATIVE, "[SH] Invalid Hero ID (%d)", heroID);
+		return false;
+	}
 
 	new weaponID = get_param(3);
 
 	new viewModel[128];
 	get_array(2, viewModel, charsmax(viewModel));
 
-	sh_debug_message(0, 3, "Set View Model -> HeroID: %d - View Model: %s - Weapon: %d", heroIndex, viewModel, weaponID);
+	sh_debug_message(0, 3, "Set View Model -> HeroID: %d - View Model: %s - Weapon: %d", heroID, viewModel, weaponID);
 
-	ArrayPushCell(gViewModelHeroID, heroIndex);
+	ArrayPushCell(gViewModelHeroID, heroID);
 	ArrayPushCell(gViewModelWeapon, weaponID);
 	ArrayPushString(gViewModel, viewModel);
 	++gViewModelCount;
+	return true;
 }
 //----------------------------------------------------------------------------------------------
 //native sh_set_hero_weaponmodel(heroID, const weaponModel[], const weaponID)
-@Native_SetHeroWeaponModel()
+@Native_SetHeroWeaponModel(plugin_id, num_params)
 {
-	new heroIndex = get_param(1);
+	new heroID = get_param(1);
 
 	//Have to access sh_get_num_heroes() directly because doing this during plugin_init()
-	if (heroIndex < 0 || heroIndex >= sh_get_num_heroes())
-		return;
+	if (heroID < 0 || heroID >= sh_get_num_heroes()) {
+		log_error(AMX_ERR_NATIVE, "[SH] Invalid Hero ID (%d)", heroID);
+		return false;
+	}
 
 	new weaponID = get_param(3);
 
 	new weaponModel[128];
 	get_array(2, weaponModel, charsmax(weaponModel));
 
-	sh_debug_message(0, 3, "Set Weapon Model -> HeroID: %d - Weapon Model: %s - Weapon %d", heroIndex, weaponModel, weaponID);
+	sh_debug_message(0, 3, "Set Weapon Model -> HeroID: %d - Weapon Model: %s - Weapon %d", heroID, weaponModel, weaponID);
 
-	ArrayPushCell(gWeaponModelHeroID, heroIndex);
+	ArrayPushCell(gWeaponModelHeroID, heroID);
 	ArrayPushCell(gWeaponModelWeapon, weaponID);
 	ArrayPushString(gWeaponModel, weaponModel);
 	++gWeaponModelCount;
+	return true;
 }
 //----------------------------------------------------------------------------------------------
 public sh_hero_init(id, heroID, mode)
@@ -202,18 +213,18 @@ public sh_round_new()
 	}
 }
 //----------------------------------------------------------------------------------------------
-setPlayerModel(index, bool:resetIfNoHero)
+setPlayerModel(id, bool:resetIfNoHero)
 {
 	static playerModel[32];
 	playerModel[0] = '^0';
-	getPlayerModel(index, cs_get_user_team(index), playerModel, charsmax(playerModel));
+	getPlayerModel(id, cs_get_user_team(id), playerModel, charsmax(playerModel));
 
 	if (playerModel[0] != '^0') {
-		cs_set_user_model(index, playerModel);
-		gPlayerModelSet[index] = true;
+		cs_set_user_model(id, playerModel);
+		gPlayerModelSet[id] = true;
 	} else if (resetIfNoHero) {
-		cs_reset_user_model(index);
-		gPlayerModelSet[index] = false;
+		cs_reset_user_model(id);
+		gPlayerModelSet[id] = false;
 	}
 }
 //----------------------------------------------------------------------------------------------
@@ -230,30 +241,30 @@ setPlayerModel(index, bool:resetIfNoHero)
 	return HAM_IGNORED;
 }
 //----------------------------------------------------------------------------------------------
-switchModel(index, weaponID)
+switchModel(id, weaponID)
 {
-	if (cs_get_user_shield(index) && (CSW_ALL_PISTOLS & (1 << weaponID)))
+	if (cs_get_user_shield(id) && (CSW_ALL_PISTOLS & (1 << weaponID)))
 		return;
 
 	static viewModel[128], weaponModel[128];
 	viewModel[0] = '^0';
 	weaponModel[0] = '^0';
-	getViewModel(index, weaponID, viewModel, charsmax(viewModel));
-	getWeaponModel(index, weaponID, weaponModel, charsmax(weaponModel));
+	getViewModel(id, weaponID, viewModel, charsmax(viewModel));
+	getWeaponModel(id, weaponID, weaponModel, charsmax(weaponModel));
 
 	if (viewModel[0] != '^0')
-		set_pev(index, pev_viewmodel2, viewModel);
+		set_pev(id, pev_viewmodel2, viewModel);
 
 	if (weaponModel[0] != '^0')
-		set_pev(index, pev_weaponmodel2, weaponModel);
+		set_pev(id, pev_weaponmodel2, weaponModel);
 }
 //----------------------------------------------------------------------------------------------
-resetModel(index, weaponID)
+resetModel(id, weaponID)
 {
-	if (cs_get_user_shield(index) && (CSW_ALL_PISTOLS & (1 << weaponID)))
+	if (cs_get_user_shield(id) && (CSW_ALL_PISTOLS & (1 << weaponID)))
 		return;
 	
-	new weaponEnt = cs_get_user_weapon_entity(index);
+	new weaponEnt = cs_get_user_weapon_entity(id);
 	
 	// Let CS update weapon models
 	ExecuteHamB(Ham_Item_Deploy, weaponEnt);

@@ -76,7 +76,8 @@
 *	Changelog:
 *	v1.3.0 - Sycri (Kristaps08) - 09/02/20
 *	 - Added Ham_AddPlayerItem since Ham_Player_ResetMaxSpeed does not catch weapon pickups or purchases
-*    - Added [SH] Core: Models to standardize the setting of player, view, and weapon models from hero plugins
+*	 - Added [SH] Core: Models to standardize the setting of player, view, and weapon models from hero plugins
+*	 - Added natives which allow the blocking of powers to give more compatibility with other plugins.
 *	 - Changed extradamage to use hamsandwhich Ham_TakeDamage.
 *	 - Changed the function chatMessage so that it uses client_print_color
 *	 - Changed most cvars from get_pcvar_num to bind_pcvar_num so variables could be used directly
@@ -96,7 +97,7 @@
 *	 - Replaced event CurWeapon with forward Ham_Player_ResetMaxSpeed for more reliable speed change
 *	 - Replaced forward FM_Touch with Ham_Touch since the former is less efficient
 *	 - Replaced register_cvar with create_cvar
-*    - Replaced replace_all with replace_string since the latter is a native function
+*	 - Replaced replace_all with replace_string since the latter is a native function
 *	 - Replaced SH_MAXSLOTS with MAX_PLAYERS since the latter is in AMX Mod X core
 *	 - Replaced variable gServersMaxPlayers with MaxClients which is available in AMX Mod X since version 1.8.3
 *	 - Rewrote parts of the SuperHero Core and default heroes

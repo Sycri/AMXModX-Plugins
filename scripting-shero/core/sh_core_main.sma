@@ -34,7 +34,6 @@
 #include <hamsandwich>
 #include <sh_core_main>
 #include <sh_core_objectives>
-#include <sh_core_hpap>
 #include <sh_core_speed>
 
 #pragma semicolon 1

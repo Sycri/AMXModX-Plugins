@@ -22,6 +22,6 @@
  *
  * @param id		The index of the client.
  * @param howLong	The length of time in seconds godmode lasts.
- * @noreturn
+ * @return		True, otherwise false if a longer godmode already applied, invalid client, or SH not active.
  */
 native sh_set_godmode(id, Float:howLong);

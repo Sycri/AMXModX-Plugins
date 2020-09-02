@@ -68,15 +68,15 @@ public sh_hero_init(id, heroID, mode)
 		if (mode == SH_HERO_ADD) {
 			gShieldRestrict[id] = true;
 		} else {
-			new heroIndex, bool:restricted = false;
+			new heroID, bool:restricted = false;
 			new powerCount = sh_get_user_powers(id);
 			for (new i = 1; i <= powerCount; ++i) {
-				heroIndex = sh_get_user_hero(id, i);
+				heroID = sh_get_user_hero(id, i);
 				// Test crash guard
-				if (heroIndex < 0 || heroIndex >= gSuperHeroCount)
+				if (heroID < 0 || heroID >= gSuperHeroCount)
 					continue;
 
-				if (gHeroShieldRestrict[heroIndex]) {
+				if (gHeroShieldRestrict[heroID]) {
 					restricted = true;
 					break;
 				}
@@ -93,19 +93,22 @@ public sh_hero_init(id, heroID, mode)
 }
 //----------------------------------------------------------------------------------------------
 //native sh_set_hero_shield(heroID, bool:restricted = false)
-@Native_SetHeroShield()
+@Native_SetHeroShield(plugin_id, num_params)
 {
-	new heroIndex = get_param(1);
+	new heroID = get_param(1);
 	
 	//Have to access sh_get_num_heroes() directly because doing this during plugin_init()
-	if (heroIndex < 0 || heroIndex >= sh_get_num_heroes())
-		return;
+	if (heroID < 0 || heroID >= sh_get_num_heroes()) {
+		log_error(AMX_ERR_NATIVE, "[SH] Invalid Hero ID (%d)", heroID);
+		return false;
+	}
 		
 	new restricted = get_param(2); //Shield Restricted?
 	
-	sh_debug_message(0, 3, "Create Hero-> HeroID: %d - Shield Restricted: %s", heroIndex, restricted ? "TRUE" : "FALSE");
+	sh_debug_message(0, 3, "Create Hero-> HeroID: %d - Shield Restricted: %s", heroID, restricted ? "TRUE" : "FALSE");
 	
-	gHeroShieldRestrict[heroIndex] = restricted ? true : false;
+	gHeroShieldRestrict[heroID] = restricted ? true : false;
+	return true;
 }
 //----------------------------------------------------------------------------------------------
 @Forward_Shield_Touch_Pre(item, id)

@@ -26,6 +26,6 @@
  *
  * @param heroID	The index of the hero.
  * @param restricted	Set true to restict hero from allowing shield use, otherwise false.
- * @noreturn
+ * @return		True, otherwise false if invalid hero.
  */
 native sh_set_hero_shield(heroID, bool:restricted = false);

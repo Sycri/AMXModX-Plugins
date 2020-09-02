@@ -14,6 +14,7 @@
 #include <cstrike>
 #include <hamsandwich>
 #include <sh_core_main>
+#define LIBRARY_OBJECTIVES "sh_core_objectives"
 #include <sh_core_objectives>
 #include <sh_core_weapons_const>
 
@@ -22,6 +23,15 @@
 new gSuperHeroCount;
 
 new Float:gHeroMaxDamageMult[SH_MAXHEROS][CSW_LAST_WEAPON + 1];
+
+// Player bool variables (using bit-fields for lower memory footprint and better CPU performance)
+#define flag_get(%1,%2)			(%1 & (1 << (%2 & 31)))
+#define flag_get_boolean(%1,%2)	(flag_get(%1,%2) ? true : false)
+#define flag_set(%1,%2)			%1 |= (1 << (%2 & 31))
+#define flag_clear(%1,%2)		%1 &= ~(1 << (%2 & 31))
+
+new gBlockDamageMultiplier;
+new gBlockWeapons;
 
 new Float:gReloadTime[MAX_PLAYERS + 1];
 new bool:gMapBlockWeapons[CSW_LAST_WEAPON + 1]; //1-30 CSW_ constants
@@ -46,10 +56,31 @@ public plugin_natives()
 	register_library("sh_core_weapons");
 	
 	register_native("sh_set_hero_dmgmult", "@Native_SetHeroDamageMultiplier");
+	register_native("sh_block_hero_dmgmult", "@Native_BlockHeroDamageMultiplier");
+	register_native("sh_block_weapons", "@Native_BlockWeapons");
 	register_native("sh_drop_weapon", "@Native_DropWeapon");
 	register_native("sh_give_weapon", "@Native_GiveWeapon");
 	register_native("sh_give_item", "@Native_GiveItem");
 	register_native("sh_reload_ammo", "@Native_ReloadAmmo");
+
+	set_module_filter("module_filter");
+	set_native_filter("native_filter");
+}
+//----------------------------------------------------------------------------------------------
+public module_filter(const library[])
+{
+	if (equal(library, LIBRARY_OBJECTIVES))
+		return PLUGIN_HANDLED;
+	
+	return PLUGIN_CONTINUE;
+}
+//----------------------------------------------------------------------------------------------
+public native_filter(const name[], index, trap)
+{
+	if (!trap)
+		return PLUGIN_HANDLED;
+	
+	return PLUGIN_CONTINUE;
 }
 //----------------------------------------------------------------------------------------------
 public plugin_cfg()
@@ -157,48 +188,89 @@ giveWeaponConfig()
 }
 //----------------------------------------------------------------------------------------------
 //native sh_set_hero_dmgmult(heroID, pcvarDamage, const weaponID = 0)
-@Native_SetHeroDamageMultiplier()
+@Native_SetHeroDamageMultiplier(plugin_id, num_params)
 {
-	new heroIndex = get_param(1);
+	new heroID = get_param(1);
 
 	//Have to access sh_get_num_heroes() directly because doing this during plugin_init()
-	if (heroIndex < 0 || heroIndex >= sh_get_num_heroes())
-		return;
+	if (heroID < 0 || heroID >= sh_get_num_heroes()) {
+		log_error(AMX_ERR_NATIVE, "[SH] Invalid Hero ID (%d)", heroID);
+		return false;
+	}
 
 	new pcvarDamageMult = get_param(2);
 	new weaponID = get_param(3);
 
-	sh_debug_message(0, 3, "Set Damage Multiplier -> HeroID: %d - Multiplier: %.3f - Weapon: %d", heroIndex, get_pcvar_float(pcvarDamageMult), weaponID);
+	sh_debug_message(0, 3, "Set Damage Multiplier -> HeroID: %d - Multiplier: %.3f - Weapon: %d", heroID, get_pcvar_float(pcvarDamageMult), weaponID);
 
-	bind_pcvar_float(pcvarDamageMult, gHeroMaxDamageMult[heroIndex][weaponID]); // pCVAR expected!
+	bind_pcvar_float(pcvarDamageMult, gHeroMaxDamageMult[heroID][weaponID]); // pCVAR expected!
+	return true;
+}
+//----------------------------------------------------------------------------------------------
+//native sh_block_hero_dmgmult(id, bool:block = true)
+@Native_BlockHeroDamageMultiplier(plugin_id, num_params)
+{
+	new id = get_param(1);
+
+	if (!is_user_connected(id)) {
+		log_error(AMX_ERR_NATIVE, "[SH] Invalid Player (%d)", id);
+		return false;
+	}
+
+	if (get_param(2))
+		flag_set(gBlockDamageMultiplier, id);
+	else
+		flag_clear(gBlockDamageMultiplier, id);
+	return true;
+}
+//----------------------------------------------------------------------------------------------
+//native sh_block_weapons(id, bool:block = true)
+@Native_BlockWeapons(plugin_id, num_params)
+{
+	new id = get_param(1);
+
+	if (!is_user_connected(id)) {
+		log_error(AMX_ERR_NATIVE, "[SH] Invalid Player (%d)", id);
+		return false;
+	}
+
+	if (get_param(2))
+		flag_set(gBlockWeapons, id);
+	else
+		flag_clear(gBlockWeapons, id);
+	return true;
 }
 //----------------------------------------------------------------------------------------------
 //native sh_drop_weapon(id, weaponID, bool:remove = false)
-@Native_DropWeapon()
+@Native_DropWeapon(plugin_id, num_params)
 {
-	dropWeapon(get_param(1), get_param(2), get_param(3) ? true : false);
+	return dropWeapon(get_param(1), get_param(2), get_param(3) ? true : false);
 }
 //---------------------------------------------------------------------------------------------
 dropWeapon(id, weaponID, bool:remove)
 {
 	if (!sh_is_active())
-		return;
+		return false;
 
 	if (!is_user_alive(id))
-		return;
+		return false;
 
-	// If VIPs are not allowed other weapons, protect them from losing what they have
-	if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_WEAPONS)
-		return;
+	// If a player is not allowed other weapons, protect them from losing what they have
+	if (flag_get_boolean(gBlockWeapons, id))
+		return false;
 
 	if (!user_has_weapon(id, weaponID))
-		return;
+		return false;
 
 	new slot = sh_get_weapon_slot(weaponID);
 	if (slot == 1 || slot == 2 || slot == 5) {
 		//Don't drop/remove the main c4
-		if (weaponID == CSW_C4 && is_valid_ent(sh_get_c4_id()) && id == entity_get_edict2(sh_get_c4_id(), EV_ENT_owner))
-			return;
+		if (LibraryExists(LIBRARY_OBJECTIVES, LibType_Library)) {
+			new c4ID = sh_get_c4_id();
+			
+			if (weaponID == CSW_C4 && is_valid_ent(c4ID) && id == entity_get_edict2(c4ID, EV_ENT_owner))
+				return false;
+		}
 
 		static weaponName[32];
 		get_weaponname(weaponID, weaponName, charsmax(weaponName));
@@ -206,7 +278,7 @@ dropWeapon(id, weaponID, bool:remove)
 		engclient_cmd(id, "drop", weaponName);
 
 		if (!remove)
-			return;
+			return true;
 
 		new Float:weaponVel[3];
 		new weaponBox = -1;
@@ -224,11 +296,13 @@ dropWeapon(id, weaponID, bool:remove)
 			// Forcing a think cleanly removes weaponbox and it's contents
 			call_think(weaponBox);
 		}
+		return true;
 	}
+	return false;
 }
 //---------------------------------------------------------------------------------------------
 //native sh_give_weapon(id, weaponID, bool:switchTo = false)
-@Native_GiveWeapon()
+@Native_GiveWeapon(plugin_id, num_params)
 {
 	return giveWeapon(get_param(1), get_param(2), get_param(3) ? true : false);
 }
@@ -241,7 +315,7 @@ giveWeapon(id, weaponID, bool:switchTo)
 	if (!is_user_alive(id))
 		return 0;
 
-	if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_WEAPONS)
+	if (flag_get_boolean(gBlockWeapons, id))
 		return 0;
 
 	if (weaponID < CSW_P228 || weaponID > CSW_P90)
@@ -267,7 +341,7 @@ giveWeapon(id, weaponID, bool:switchTo)
 }
 //---------------------------------------------------------------------------------------------
 //native sh_give_item(id, const itemName[], bool:switchTo = false)
-@Native_GiveItem()
+@Native_GiveItem(plugin_id, num_params)
 {
 	if (!sh_is_active())
 		return 0;
@@ -281,7 +355,7 @@ giveWeapon(id, weaponID, bool:switchTo)
 	get_array(2, itemName, charsmax(itemName));
 
 	if (equal(itemName, "weapon", 6)) {
-		if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_WEAPONS)
+		if (flag_get_boolean(gBlockWeapons, id))
 			return 0;
 
 		new weaponID = get_weaponid(itemName);
@@ -303,17 +377,17 @@ giveWeapon(id, weaponID, bool:switchTo)
 }
 //----------------------------------------------------------------------------------------------
 //native sh_reload_ammo(id, mode = 0)
-@Native_ReloadAmmo()
+@Native_ReloadAmmo(plugin_id, num_params)
 {
 	new id = get_param(1);
 
 	if (!is_user_alive(id))
-		return;
+		return false;
 
 	// re-entrency check
 	new Float:gametime = get_gametime();
 	if (gametime - gReloadTime[id] < 0.5)
-		return;
+		return false;
 	gReloadTime[id] = gametime;
 
 	new clip, ammo;
@@ -321,7 +395,7 @@ giveWeapon(id, weaponID, bool:switchTo)
 	new wpnSlot = sh_get_weapon_slot(wpnID);
 
 	if (wpnSlot != 1 && wpnSlot != 2)
-		return;
+		return false;
 
 	new mode = get_param(2);
 
@@ -330,31 +404,34 @@ giveWeapon(id, weaponID, bool:switchTo)
 		mode = CvarReloadMode;
 
 		if (!mode)
-			return;
+			return false;
 	}
 
 	switch (mode) {
 		// No reload, reset max clip (most common)
 		case 1: {
 			if (clip != 0)
-				return;
+				return false;
 
 			new weaponEnt = cs_get_user_weapon_entity(id);
 			if (!weaponEnt)
-				return;
+				return false;
 
 			cs_set_weapon_ammo(weaponEnt, sh_get_max_clipammo(wpnID));
+			return true;
 		}
 		// Requires reload, but reset max backpack ammo
 		case 2: {
 			new maxbpammo = sh_get_max_bpammo(wpnID);
-			if (ammo < maxbpammo)
+			if (ammo < maxbpammo) {
 				cs_set_user_bpammo(id, wpnID, maxbpammo);
+				return true;
+			}
 		}
 		// Drop weapon and get a new one with full clip
 		case 3: {
 			if (clip != 0)
-				return;
+				return false;
 
 			new idSilence, idBurst;
 			if (wpnID == CSW_M4A1 || wpnID == CSW_USP) {
@@ -389,8 +466,11 @@ giveWeapon(id, weaponID, bool:switchTo)
 				cs_set_weapon_silen(entityID, idSilence, 0);
 			else if (idBurst)
 				cs_set_weapon_burst(entityID, idBurst);
+
+			return true;
 		}
 	}
+	return false;
 }
 //----------------------------------------------------------------------------------------------
 @Forward_Player_TakeDamage_Pre(victim, inflictor, attacker, Float:damage, damagebits)
@@ -404,7 +484,7 @@ giveWeapon(id, weaponID, bool:switchTo)
 	// if (victim != attacker && cs_get_user_team(victim) == cs_get_user_team(attacker) && !CvarFreeForAll)
 		// return HAM_IGNORED;
 
-	if (attacker == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_EXTRADMG)
+	if (flag_get_boolean(gBlockDamageMultiplier, attacker))
 		return HAM_IGNORED;
 
 	new weaponID;
@@ -430,24 +510,24 @@ giveWeapon(id, weaponID, bool:switchTo)
 //----------------------------------------------------------------------------------------------
 Float:getMaxDamageMult(id, weaponID)
 {
-	if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_EXTRADMG)
+	if (flag_get_boolean(gBlockDamageMultiplier, id))
 		return 1.0;
 
 	static Float:returnDamageMult, Float:heroDamageMult, i;
-	static playerPowerCount, heroIndex;
+	static playerPowerCount, heroID;
 	returnDamageMult = 1.0;
 	playerPowerCount = sh_get_user_powers(id);
 
 	for (i = 1; i <= playerPowerCount; ++i) {
-		heroIndex = sh_get_user_hero(id, i);
+		heroID = sh_get_user_hero(id, i);
 
-		if (-1 < heroIndex < gSuperHeroCount) {
+		if (-1 < heroID < gSuperHeroCount) {
 			// Check hero for all weapons wildcard first
-			heroDamageMult = gHeroMaxDamageMult[heroIndex][0];
+			heroDamageMult = gHeroMaxDamageMult[heroID][0];
 
 			if (heroDamageMult <= 1.0) {
 				// Check hero for weapon that was passed in
-				heroDamageMult = gHeroMaxDamageMult[heroIndex][weaponID];
+				heroDamageMult = gHeroMaxDamageMult[heroID][weaponID];
 
 				if (heroDamageMult <= 1.0)
 					continue;

@@ -13,12 +13,25 @@
 #include <csx>
 #include <cstrike>
 #include <sh_core_main>
+#define LIBRARY_HPAP "sh_core_hpap"
+#include <sh_core_hpap>
+#define LIBRARY_SPEED "sh_core_speed"
+#include <sh_core_speed>
+#define LIBRARY_GRAVITY "sh_core_gravity"
+#include <sh_core_gravity>
+#define LIBRARY_WEAPONS "sh_core_weapons"
+#include <sh_core_weapons>
+#define LIBRARY_EXTRADMG "sh_core_extradamage"
+#include <sh_core_extradamage>
+#include <sh_core_objectives_const>
 
 #pragma semicolon 1
 
+#define is_user_valid(%1) (1 <= %1 <= MaxClients)
+
 new gNumHostages = 0;
-new gXpBonusC4ID = -1;
-new gXpBonusVIP;
+new gXPBonusC4ID = -1;
+new gXPBonusVIP;
 
 new CvarObjectiveXP, CvarBlockVIP[8];
 new CvarMinPlayersXP;
@@ -59,38 +72,111 @@ public plugin_natives()
 	register_native("sh_get_c4_id", "@Native_GetC4_ID");
 	register_native("sh_get_vip_id", "@Native_GetVIP_ID");
 	register_native("sh_vip_flags", "@Native_VIPFlags");
+
+	set_module_filter("module_filter");
+	set_native_filter("native_filter");
+}
+//----------------------------------------------------------------------------------------------
+public module_filter(const library[])
+{
+	if (equal(library, LIBRARY_HPAP) || equal(library, LIBRARY_SPEED) || equal(library, LIBRARY_GRAVITY)
+	|| equal(library, LIBRARY_WEAPONS) || equal(library, LIBRARY_EXTRADMG))
+		return PLUGIN_HANDLED;
+	
+	return PLUGIN_CONTINUE;
+}
+//----------------------------------------------------------------------------------------------
+public native_filter(const name[], index, trap)
+{
+	if (!trap)
+		return PLUGIN_HANDLED;
+	
+	return PLUGIN_CONTINUE;
 }
 //----------------------------------------------------------------------------------------------
 //native sh_get_c4_id()
-@Native_GetC4_ID()
+@Native_GetC4_ID(plugin_id, num_params)
 {
-	return gXpBonusC4ID;
+	return gXPBonusC4ID;
 }
 //----------------------------------------------------------------------------------------------
 //native sh_get_vip_id()
-@Native_GetVIP_ID()
+@Native_GetVIP_ID(plugin_id, num_params)
 {
-	return gXpBonusVIP;
+	return gXPBonusVIP;
 }
 //----------------------------------------------------------------------------------------------
 //native sh_vip_flags()
-@Native_VIPFlags()
+@Native_VIPFlags(plugin_id, num_params)
 {
 	return read_flags(CvarBlockVIP);
+}
+//----------------------------------------------------------------------------------------------
+public sh_client_spawn(id, bool:newRound)
+{
+	if (!newRound)
+		return;
+	
+	static flags[MAX_PLAYERS];
+
+	if (gXPBonusVIP == id) {
+		//Reset block in case flags change during rounds when a player is repeatedly the VIP
+		resetBlock(id, flags[id], false);
+		flags[id] = read_flags(CvarBlockVIP);
+		resetBlock(id, flags[id], true);
+	} else {
+		if (!flags[id])
+			return;
+
+		resetBlock(id, flags[id], false);
+		flags[id] = 0;
+	}
+}
+//----------------------------------------------------------------------------------------------
+resetBlock(id, flags, bool:set)
+{
+	if (LibraryExists(LIBRARY_WEAPONS, LibType_Library) && flags & VIP_BLOCK_WEAPONS)
+		sh_block_weapons(id, set);
+
+	if (LibraryExists(LIBRARY_HPAP, LibType_Library)) {
+		if (flags & VIP_BLOCK_HEALTH) {
+			sh_block_add_hp(id, set);
+			sh_block_hero_hp(id, set);
+		}
+
+		if (flags & VIP_BLOCK_ARMOR) {
+			sh_block_add_ap(id, set);
+			sh_block_hero_ap(id, set, 200);
+		}
+	}
+
+	if (LibraryExists(LIBRARY_SPEED, LibType_Library) && flags & VIP_BLOCK_SPEED)
+		sh_block_hero_speed(id, set);
+
+	if (LibraryExists(LIBRARY_GRAVITY, LibType_Library) && flags & VIP_BLOCK_GRAVITY)
+		sh_block_hero_grav(id, set);
+
+	if (flags & VIP_BLOCK_EXTRADMG) {
+		if (LibraryExists(LIBRARY_WEAPONS, LibType_Library))
+			sh_block_hero_dmgmult(id, set);
+
+		if (LibraryExists(LIBRARY_EXTRADMG, LibType_Library))
+			sh_block_extradamage(id, set);
+	}
 }
 //----------------------------------------------------------------------------------------------
 @LogEvent_BombHolderSpawned()
 {
 	new id = getLoguserIndex();
 
-	if (id < 1 || id > MaxClients)
+	if (!is_user_valid(id))
 		return;
 
 	// Find the Index of the bomb entity and save to be used as the one that gives xp
 	new ent = -1;
 	while ((ent = cs_find_ent_by_owner(ent, "weapon_c4", id)) != 0) {
 		// set ent to XP bomb
-		gXpBonusC4ID = ent;
+		gXPBonusC4ID = ent;
 		break;
 	}
 }
@@ -100,10 +186,10 @@ public bomb_planted(planter)
 	if (!sh_is_active() || !CvarObjectiveXP)
 		return;
 	
-	if (!is_user_connected(planter) || !is_valid_ent(gXpBonusC4ID))
+	if (!is_user_connected(planter) || !is_valid_ent(gXPBonusC4ID))
 		return;
 
-	if (planter != entity_get_edict2(gXpBonusC4ID, EV_ENT_owner))
+	if (planter != entity_get_edict2(gXPBonusC4ID, EV_ENT_owner))
 		return;
 
 	if (cs_get_user_team(planter) != CS_TEAM_T)
@@ -116,7 +202,7 @@ public bomb_planted(planter)
 		return;
 
 	// Only give this out once per round
-	gXpBonusC4ID = -1;
+	gXPBonusC4ID = -1;
 	
 	sh_set_user_xp(planter, CvarObjectiveXP, true);
 	sh_chat_message(planter, _, "You got %d XP for planting the bomb", CvarObjectiveXP);
@@ -124,7 +210,7 @@ public bomb_planted(planter)
 //----------------------------------------------------------------------------------------------
 public bomb_defused(defuser)
 {
-	// Need to make sure gXpBonusC4ID was the bomb defused?
+	// Need to make sure gXPBonusC4ID was the bomb defused?
 	if (!sh_is_active() || !CvarObjectiveXP)
 		return;
 	
@@ -179,7 +265,7 @@ public bomb_explode(planter, defuser)
 
 	new id = getLoguserIndex();
 
-	if (id < 1 || id > MaxClients)
+	if (!is_user_valid(id))
 		return;
 
 	sh_set_user_xp(id, -CvarObjectiveXP, true);
@@ -283,7 +369,7 @@ public bomb_explode(planter, defuser)
 	for (new i = 0; i < playerCount; ++i) {
 		player = players[i];
 
-		if (player == gXpBonusVIP || (is_user_alive(player) && cs_get_user_team(player) == CS_TEAM_CT)) {
+		if (player == gXPBonusVIP || (is_user_alive(player) && cs_get_user_team(player) == CS_TEAM_CT)) {
 			sh_set_user_xp(player, XPtoGive, true);
 			sh_chat_message(player, _, "Your team got %d XP for a successful VIP esacpe", XPtoGive);
 		}
@@ -293,7 +379,7 @@ public bomb_explode(planter, defuser)
 @LogEvent_VIPUserSpawned()
 {
 	// Save if user is a vip here instead of checking cs_get_user_vip all thru the code
-	gXpBonusVIP = getLoguserIndex();
+	gXPBonusVIP = getLoguserIndex();
 }
 //----------------------------------------------------------------------------------------------
 @LogEvent_VIPUserEscaped()
@@ -306,7 +392,7 @@ public bomb_explode(planter, defuser)
 	if (!is_user_connected(id))
 		return;
 
-	if (id != gXpBonusVIP)
+	if (id != gXPBonusVIP)
 		return;
 
 	if (cs_get_user_team(id) != CS_TEAM_CT)

@@ -36,11 +36,20 @@
  * @param heroID	The index of the hero.
  * @param pcvarSpeed	The pcvar value for maximum Speed CVAR for the hero.
  * @param weapons	Bit-field of weapon CSW_ constant values to set speed for, CSW_ALL_WEAPONS is for all weapons.
- * @noreturn
+ * @return		True, otherwise false if invalid hero.
  */
-native sh_set_hero_speed(heroID, pcvarSpeed, weapons = CSW_ALL_WEAPONS);
+native sh_set_hero_speed(heroID, pcvarSpeed, const weapons = CSW_ALL_WEAPONS);
 
 //------------
+
+/**
+ * Blocks the client's speed powers.
+ *
+ * @param id		The index of the client.
+ * @param block		Whether to set or remove the block.
+ * @return		True, otherwise false if invalid client.
+ */
+native sh_block_hero_speed(id, bool:block = true);
 
 /**
  * Speed stuns client for time specified. Bind powers are not usable when stunned.
@@ -50,7 +59,7 @@ native sh_set_hero_speed(heroID, pcvarSpeed, weapons = CSW_ALL_WEAPONS);
  * @param id		The index of the client.
  * @param howLong	The length of time in seconds the stun lasts.
  * @param speed		The speed of the client when stunned.
- * @noreturn
+ * @return		True, otherwise false if a longer stun already applied or invalid client.
  */
 native sh_set_stun(id, Float:howLong, Float:speed = 1.0);
 
@@ -63,11 +72,11 @@ native sh_set_stun(id, Float:howLong, Float:speed = 1.0);
 native bool:sh_get_stun(id);
 
 /**
- * Reset client's max speed according to heroes they have.
+ * Resets client's max speed according to heroes they have.
  * Useful incase a temporary value was set.
  *
- * @param id		    The index of the client.
- * @noreturn
+ * @param id		The index of the client.
+ * @return		True, otherwise false if invalid client or SH not active.
  */
 native sh_reset_max_speed(id);
 

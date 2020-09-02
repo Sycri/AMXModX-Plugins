@@ -39,6 +39,7 @@ UberGunner_teamglow 1		//Glow in a color based on player's team when hero in use
 #include <sh_core_weapons>
 
 #if defined USE_PLAYER_MODEL || defined USE_WEAPON_MODEL
+	#include <cstrike>
 	#include <sh_core_models>
 #endif
 

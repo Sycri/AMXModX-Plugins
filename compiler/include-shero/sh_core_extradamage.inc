@@ -35,8 +35,17 @@ forward sh_client_damage(victim, attacker, damage, damagebits);
  *        NATIVES         *
  **************************/
 
+/**
+ * Blocks the client's extra damage (sh_extra_damage) powers.
+ *
+ * @param id		The index of the client.
+ * @param block		Whether to set or remove the block.
+ * @return		True on success, otherwise false if invalid client.
+ */
+native sh_block_extradamage(id, bool:block = true);
+
  /**
- * Cause non-default extra damage.
+ * Causes non-default extra damage.
  * Use this for non-default damage to correctly send damage messages and handle XP.
  *
  * @note		Set dmgFFmsg to false for looping extra damage, to avoid team attack chat spam.
@@ -52,6 +61,6 @@ forward sh_client_damage(victim, attacker, damage, damagebits);
  * @param dmgStun		Set True to do damage stun on victim, otherwise False.
  * @param dmgFFmsg		Set True to show friendly fire chat message "John Doe attacked a teammate", otherwise False.
  * @param dmgOrigin		Origin of damage bits direction (red flash indicators).
- * @noreturn
+ * @return		True on success, otherwise false.
  */
 native sh_extra_damage(victim, attacker, damage, const wpnDescription[], headshot = 0, dmgMode = SH_DMG_MULT, bool:dmgStun = false, bool:dmgFFmsg = true, const Float:dmgOrigin[3] = {0.0,0.0,0.0});

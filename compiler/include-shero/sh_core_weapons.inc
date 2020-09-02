@@ -33,11 +33,29 @@
  * @param heroID	The index of the hero.
  * @param pcvarWpnMult	The pcvar value of the damage multiplier CVAR for the specified weaponID.
  * @param weaponID	The CSW_ constant of the weapon to set damage multiplier for, 0 is for all weapons. (see cstrike_const.inc)
- * @noreturn
+ * @return		True, otherwise false if invalid hero.
  */
 native sh_set_hero_dmgmult(heroID, pcvarWpnMult, const weaponID = 0);
 
 //------------
+
+/**
+ * Blocks the client's damage multiplication powers.
+ *
+ * @param id		The index of the client.
+ * @param block		Whether to set or remove the block.
+ * @return		True, otherwise false if invalid client.
+ */
+native sh_block_hero_dmgmult(id, bool:block = true);
+
+/**
+ * Blocks the client from receiving and dropping weapons using sh_drop_weapon(), sh_give_weapon(), and sh_give_item().
+ *
+ * @param id		The index of the client.
+ * @param block		Whether to set or remove the block.
+ * @return		True, otherwise false if invalid client.
+ */
+native sh_block_weapons(id, bool:block = true);
 
 /**
  * Forces client to drop weapon if they have it in inventory.
@@ -45,7 +63,7 @@ native sh_set_hero_dmgmult(heroID, pcvarWpnMult, const weaponID = 0);
  * @param id		The index of the client.
  * @param weaponID	The CSW_ index of the weapon. (see cstrike_const.inc)
  * @param remove	Set True to remove the weapon from world on drop, otherwise False to drop it like normal.
- * @noreturn
+ * @return		True on success, otherwise false.
  */
 native sh_drop_weapon(id, weaponID, bool:remove = false);
 
@@ -57,8 +75,8 @@ native sh_drop_weapon(id, weaponID, bool:remove = false);
  *
  * @param id		The index of the client.
  * @param weaponID	The CSW_ index of the weapon. (see cstrike_const.inc)
- * @param switchTo	Set True to force client to switch to given weapon, otherwise False.
- * @noreturn
+ * @param switchTo	Whether to force client to switch to given weapon.
+ * @return		Item entity index on success, otherwise 0.
  */
 native sh_give_weapon(id, weaponID, bool:switchTo = false);
 
@@ -70,8 +88,8 @@ native sh_give_weapon(id, weaponID, bool:switchTo = false);
  *
  * @param id		The index of the client.
  * @param itemName	The "item_*", "ammo_*", or "weapon_*" name of the desired item.
- * @param switchTo	Set True to force client to switch to given item if it's a weapon, otherwise False.
- * @noreturn
+ * @param switchTo	Whether to force client to switch to given item if it's a weapon.
+ * @return		Item entity index on success, otherwise 0.
  */
 native sh_give_item(id, const itemName[], bool:switchTo = false);
 
@@ -85,7 +103,7 @@ native sh_give_item(id, const itemName[], bool:switchTo = false);
  *					1 - continuous shooting, no reload
  *					2 - fill the backpack (must reload)
  *					3 - drop the gun and get a new one with full clip
- * @noreturn
+ * @return		True on success, otherwise false.
  */
 native sh_reload_ammo(id, mode = 0);
 

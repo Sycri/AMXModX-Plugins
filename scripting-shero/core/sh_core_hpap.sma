@@ -12,17 +12,31 @@
 #include <fun>
 #include <cstrike>
 #include <sh_core_main>
-#include <sh_core_objectives>
 
 #pragma semicolon 1
+
+#define is_user_valid(%1) (1 <= %1 <= MaxClients)
 
 new gSuperHeroCount;
 
 new gHeroMaxHealth[SH_MAXHEROS];
 new gHeroMaxArmor[SH_MAXHEROS];
 
+// Player bool variables (using bit-fields for lower memory footprint and better CPU performance)
+#define flag_get(%1,%2)			(%1 & (1 << (%2 & 31)))
+#define flag_get_boolean(%1,%2)	(flag_get(%1,%2) ? true : false)
+#define flag_set(%1,%2)			%1 |= (1 << (%2 & 31))
+#define flag_clear(%1,%2)		%1 &= ~(1 << (%2 & 31))
+
+new gBlockHealth;
+new gBlockArmor;
+new gBlockAddHP;
+new gBlockAddAP;
+
 new gMaxHealth[MAX_PLAYERS + 1];
 new gMaxArmor[MAX_PLAYERS + 1];
+new gTempHealth[MAX_PLAYERS + 1];
+new gTempArmor[MAX_PLAYERS + 1];
 
 //----------------------------------------------------------------------------------------------
 public plugin_init()
@@ -38,6 +52,15 @@ public plugin_natives()
 	register_library("sh_core_hpap");
 	
 	register_native("sh_set_hero_hpap", "@Native_SetHeroHpAp");
+
+	register_native("sh_add_hp", "@Native_AddHP");
+	register_native("sh_add_ap", "@Native_AddAP");
+
+	register_native("sh_block_add_hp", "@Native_BlockAddHP");
+	register_native("sh_block_add_ap", "@Native_BlockAddAP");
+	register_native("sh_block_hero_hp", "@Native_BlockHeroHP");
+	register_native("sh_block_hero_ap", "@Native_BlockHeroAP");
+
 	register_native("sh_get_max_hp", "@Native_GetMaxHP");
 	register_native("sh_get_max_ap", "@Native_GetMaxAP");
 }
@@ -45,6 +68,14 @@ public plugin_natives()
 public plugin_cfg()
 {
 	gSuperHeroCount = sh_get_num_heroes();
+}
+//----------------------------------------------------------------------------------------------
+public client_disconnected(id)
+{
+	flag_clear(gBlockHealth, id);
+	flag_clear(gBlockArmor, id);
+	flag_clear(gBlockAddHP, id);
+	flag_clear(gBlockAddAP, id);
 }
 //----------------------------------------------------------------------------------------------
 public sh_hero_init(id, heroID, mode)
@@ -93,46 +124,198 @@ public sh_client_spawn(id)
 }
 //----------------------------------------------------------------------------------------------
 //native sh_set_hero_hpap(heroID, pcvarHealth = 0, pcvarArmor = 0)
-@Native_SetHeroHpAp()
+@Native_SetHeroHpAp(plugin_id, num_params)
 {
-	new heroIndex = get_param(1);
+	new heroID = get_param(1);
 
 	//Have to access sh_get_num_heroes() directly because doing this during plugin_init()
-	if (heroIndex < 0 || heroIndex >= sh_get_num_heroes())
-		return;
+	if (heroID < 0 || heroID >= sh_get_num_heroes()) {
+		log_error(AMX_ERR_NATIVE, "[SH] Invalid Hero ID (%d)", heroID);
+		return false;
+	}
 
 	new pcvarMaxHealth = get_param(2);
 	new pcvarMaxArmor = get_param(3);
 
-	sh_debug_message(0, 3, "Set Max HP/AP -> HeroID: %d - %d - %d", heroIndex, pcvarMaxHealth ? get_pcvar_num(pcvarMaxHealth) : 0, pcvarMaxArmor ? get_pcvar_num(pcvarMaxArmor) : 0);
+	sh_debug_message(0, 3, "Set Max HP/AP -> HeroID: %d - %d - %d", heroID, pcvarMaxHealth ? get_pcvar_num(pcvarMaxHealth) : 0, pcvarMaxArmor ? get_pcvar_num(pcvarMaxArmor) : 0);
 
 	// Avoid setting if 0 because backward compatibility method would overwrite value
 	if (pcvarMaxHealth != 0)
-		bind_pcvar_num(pcvarMaxHealth, gHeroMaxHealth[heroIndex]);
+		bind_pcvar_num(pcvarMaxHealth, gHeroMaxHealth[heroID]);
 	if (pcvarMaxArmor != 0)
-		bind_pcvar_num(pcvarMaxArmor, gHeroMaxArmor[heroIndex]);
+		bind_pcvar_num(pcvarMaxArmor, gHeroMaxArmor[heroID]);
+	
+	return true;
+}
+//----------------------------------------------------------------------------------------------
+//native sh_add_hp(id, hitPoints, maxHealth = 0)
+@Native_AddHP(plugin_id, num_params)
+{
+	new id = get_param(1);
+
+	if (!is_user_alive(id)) {
+		log_error(AMX_ERR_NATIVE, "[SH] Invalid Player (%d)", id);
+		return 0;
+	}
+
+	if (flag_get_boolean(gBlockAddHP, id))
+		return 0;
+
+	new hitPoints = get_param(2);
+
+	if (hitPoints == 0)
+		return 0;
+
+	new maxHealth = get_param(3);
+
+	if (maxHealth == 0)
+		maxHealth = gMaxHealth[id];
+
+	new currentHealth = get_user_health(id);
+
+	if (currentHealth < maxHealth) {
+		new newHealth = min((currentHealth + hitPoints), maxHealth);
+		set_user_health(id, newHealth);
+		return newHealth - currentHealth;
+	}
+
+	return 0;
+}
+//----------------------------------------------------------------------------------------------
+//native sh_add_ap(id, armorPoints, maxArmor = 0)
+@Native_AddAP(plugin_id, num_params)
+{
+	new id = get_param(1);
+
+	if (!is_user_alive(id)) {
+		log_error(AMX_ERR_NATIVE, "[SH] Invalid Player (%d)", id);
+		return 0;
+	}
+
+	if (flag_get_boolean(gBlockAddAP, id))
+		return 0;
+
+	new armorPoints = get_param(2);
+
+	if (armorPoints == 0)
+		return 0;
+
+	new maxArmor = get_param(3);
+
+	if (maxArmor == 0)
+		maxArmor = gMaxArmor[id];
+
+	new CsArmorType:armorType;
+	new currentArmor = cs_get_user_armor(id, armorType);
+
+	if (currentArmor < maxArmor) {
+		if (!currentArmor)
+			armorType = CS_ARMOR_VESTHELM;
+
+		new newArmor = min((currentArmor + armorPoints), maxArmor);
+		cs_set_user_armor(id, newArmor, armorType);
+		return newArmor - currentArmor;
+	}
+
+	return 0;
+}
+//----------------------------------------------------------------------------------------------
+//native sh_block_add_hp(id, bool:block = true)
+@Native_BlockAddHP(plugin_id, num_params)
+{
+	new id = get_param(1);
+
+	if (!is_user_connected(id)) {
+		log_error(AMX_ERR_NATIVE, "[SH] Invalid Player (%d)", id);
+		return false;
+	}
+
+	if (get_param(2))
+		flag_set(gBlockAddHP, id);
+	else
+		flag_clear(gBlockAddHP, id);
+	return true;
+}
+//----------------------------------------------------------------------------------------------
+//native sh_block_add_ap(id, bool:block = true)
+@Native_BlockAddAP(plugin_id, num_params)
+{
+	new id = get_param(1);
+
+	if (!is_user_connected(id)) {
+		log_error(AMX_ERR_NATIVE, "[SH] Invalid Player (%d)", id);
+		return false;
+	}
+
+	if (get_param(2))
+		flag_set(gBlockAddAP, id);
+	else
+		flag_clear(gBlockAddAP, id);
+	return true;
+}
+//----------------------------------------------------------------------------------------------
+//native sh_block_hero_hp(id, bool:block = true, maxHealth = 0)
+@Native_BlockHeroHP(plugin_id, num_params)
+{
+	new id = get_param(1);
+
+	if (!is_user_connected(id)) {
+		log_error(AMX_ERR_NATIVE, "[SH] Invalid Player (%d)", id);
+		return false;
+	}
+
+	if (get_param(2)) {
+		flag_set(gBlockHealth, id);
+		gTempHealth[id] = max(0, get_param(3));
+	} else {
+		flag_clear(gBlockHealth, id);
+	}
+	return true;
+}
+//----------------------------------------------------------------------------------------------
+//native sh_block_hero_ap(id, bool:block = true, maxArmor = 0)
+@Native_BlockHeroAP(plugin_id, num_params)
+{
+	new id = get_param(1);
+
+	if (!is_user_connected(id)) {
+		log_error(AMX_ERR_NATIVE, "[SH] Invalid Player (%d)", id);
+		return false;
+	}
+
+	if (get_param(2)) {
+		flag_set(gBlockArmor, id);
+		gTempArmor[id] = max(0, get_param(3));
+	} else {
+		flag_clear(gBlockArmor, id);
+	}
+	return true;
 }
 //----------------------------------------------------------------------------------------------
 //native sh_get_max_hp(id)
-@Native_GetMaxHP()
+@Native_GetMaxHP(plugin_id, num_params)
 {
 	new id = get_param(1);
 
 	//stupid check - but checking prevents crashes
-	if (id < 1 || id > MaxClients)
+	if (!is_user_valid(id)) {
+		log_error(AMX_ERR_NATIVE, "[SH] Invalid Player (%d)", id);
 		return 0;
+	}
 
 	return gMaxHealth[id];
 }
 //----------------------------------------------------------------------------------------------
 //native sh_get_max_ap(id)
-@Native_GetMaxAP()
+@Native_GetMaxAP(plugin_id, num_params)
 {
 	new id = get_param(1);
 
 	//stupid check - but checking prevents crashes
-	if (id < 1 || id > MaxClients)
+	if (!is_user_valid(id)) {
+		log_error(AMX_ERR_NATIVE, "[SH] Invalid Player (%d)", id);
 		return 0;
+	}
 
 	return gMaxArmor[id];
 }
@@ -193,23 +376,29 @@ setArmorPowers(id, bool:resetArmor)
 //----------------------------------------------------------------------------------------------
 getMaxHealth(id)
 {
-	static returnHealth, i;
+	static returnHealth;
+
+	if (flag_get_boolean(gBlockHealth, id)) {
+		returnHealth = gTempHealth[id] == 0 ? 100 : gTempHealth[id];
+
+		// Other plugins might use this, even maps
+		entity_set_float(id, EV_FL_max_health, float(returnHealth));
+		return gMaxHealth[id] = returnHealth;
+	}
+
+	static i, playerPowerCount, heroID, heroHealth;
 	returnHealth = 100;
+	playerPowerCount = sh_get_user_powers(id);
 
-	if (!(id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_HEALTH)) {
-		static heroIndex, playerPowerCount, heroHealth;
-		playerPowerCount = sh_get_user_powers(id);
+	for (i = 1; i <= playerPowerCount; ++i) {
+		heroID = sh_get_user_hero(id, i);
 
-		for (i = 1; i <= playerPowerCount; ++i) {
-			heroIndex = sh_get_user_hero(id, i);
-			
-			if (-1 < heroIndex < gSuperHeroCount) {
-				heroHealth = gHeroMaxHealth[heroIndex];
-				if (!heroHealth)
-					continue;
+		if (-1 < heroID < gSuperHeroCount) {
+			heroHealth = gHeroMaxHealth[heroID];
+			if (!heroHealth)
+				continue;
 
-				returnHealth = max(returnHealth, heroHealth);
-			}
+			returnHealth = max(returnHealth, heroHealth);
 		}
 	}
 	
@@ -221,18 +410,18 @@ getMaxHealth(id)
 //----------------------------------------------------------------------------------------------
 getMaxArmor(id)
 {
-	if (id == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_ARMOR)
-		return gMaxArmor[id] = 200;
+	if (flag_get_boolean(gBlockArmor, id))
+		return gMaxArmor[id] = gTempArmor[id];
 		
-	static heroIndex, returnArmor, i, playerPowerCount, heroArmor;
+	static i, playerPowerCount, returnArmor, heroID, heroArmor;
 	returnArmor = 0;
 	playerPowerCount = sh_get_user_powers(id);
 	
 	for (i = 1; i <= playerPowerCount; ++i) {
-		heroIndex = sh_get_user_hero(id, i);
+		heroID = sh_get_user_hero(id, i);
 
-		if (-1 < heroIndex < gSuperHeroCount) {
-			heroArmor = gHeroMaxArmor[heroIndex];
+		if (-1 < heroID < gSuperHeroCount) {
+			heroArmor = gHeroMaxArmor[heroID];
 			if (!heroArmor)
 				continue;
 

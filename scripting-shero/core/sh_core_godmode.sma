@@ -51,15 +51,17 @@ public sh_client_spawn(id)
 }
 //----------------------------------------------------------------------------------------------
 //native sh_set_godmode(id, Float:howLong)
-@Native_SetGodmode()
+@Native_SetGodmode(plugin_id, num_params)
 {
 	if (!sh_is_active())
-		return;
+		return false;
 
 	new id = get_param(1);
 
-	if (!is_user_alive(id))
-		return;
+	if (!is_user_alive(id)) {
+		log_error(AMX_ERR_NATIVE, "[SH] Invalid Player (%d)", id);
+		return false;
+	}
 
 	new Float:howLong = get_param_f(2);
 
@@ -68,7 +70,9 @@ public sh_client_spawn(id)
 		sh_set_rendering(id, 0, 0, 128, 16, kRenderFxGlowShell); // Remove the godmode glow, make heroes set it??
 		set_user_godmode(id, 1);
 		gPlayerGodTimer[id] = floatround(howLong);
+		return true;
 	}
+	return false;
 }
 //----------------------------------------------------------------------------------------------
 @Task_GodmodeCheck()

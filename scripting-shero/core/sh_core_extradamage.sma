@@ -13,10 +13,17 @@
 #include <cstrike>
 #include <hamsandwich>
 #include <sh_core_main>
-#include <sh_core_objectives>
 #include <sh_core_extradamage_const>
 
 #pragma semicolon 1
+
+// Player bool variables (using bit-fields for lower memory footprint and better CPU performance)
+#define flag_get(%1,%2)			(%1 & (1 << (%2 & 31)))
+#define flag_get_boolean(%1,%2)	(flag_get(%1,%2) ? true : false)
+#define flag_set(%1,%2)			%1 |= (1 << (%2 & 31))
+#define flag_clear(%1,%2)		%1 &= ~(1 << (%2 & 31))
+
+new gBlockExtraDamage;
 
 new gmsgTextMsg;
 
@@ -46,7 +53,30 @@ public plugin_natives()
 {
 	register_library("sh_core_extradamage");
 
+	register_native("sh_block_extradamage", "@Native_BlockExtraDamage");
 	register_native("sh_extra_damage", "@Native_ExtraDamage");
+}
+//----------------------------------------------------------------------------------------------
+public client_disconnected(id)
+{
+	flag_clear(gBlockExtraDamage, id);
+}
+//----------------------------------------------------------------------------------------------
+//native sh_block_extradamage(id, bool:block = true)
+@Native_BlockExtraDamage(plugin_id, num_params)
+{
+	new id = get_param(1);
+
+	if (!is_user_connected(id)) {
+		log_error(AMX_ERR_NATIVE, "[SH] Invalid Player (%d)", id);
+		return false;
+	}
+
+	if (get_param(2))
+		flag_set(gBlockExtraDamage, id);
+	else
+		flag_clear(gBlockExtraDamage, id);
+	return true;
 }
 //----------------------------------------------------------------------------------------------
 //native sh_extra_damage(victim, attacker, damage, const wpnDescription[], headshot = 0, dmgMode = SH_DMG_MULT, bool:dmgStun = false, bool:dmgFFmsg = true, const dmgOrigin[3] = {0,0,0});
@@ -55,15 +85,15 @@ public plugin_natives()
 	new victim = get_param(1);
 
 	if (!is_user_alive(victim) || get_user_godmode(victim))
-		return;
+		return false;
 
 	new attacker = get_param(2);
 
 	if (!is_user_connected(attacker))
-		return;
+		return false;
 
-	if (attacker == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_EXTRADMG)
-		return;
+	if (flag_get_boolean(gBlockExtraDamage, attacker))
+		return false;
 
 	new Float:damage = float(get_param(3));
 
@@ -87,7 +117,7 @@ public plugin_natives()
 
 	new ent = cs_create_entity("info_target");
 	if (!ent)
-		return;
+		return false;
 
 	new wpnDescription[32];
 	get_string(4, wpnDescription, charsmax(wpnDescription));
@@ -150,6 +180,7 @@ public plugin_natives()
 	}
 
 	engfunc(EngFunc_RemoveEntity, ent);
+	return true;
 }
 //----------------------------------------------------------------------------------------------
 @Forward_Player_TakeDamage_Post(victim, inflictor, attacker, Float:damage, damagebits)

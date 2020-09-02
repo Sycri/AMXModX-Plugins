@@ -39,6 +39,7 @@ neo_teamglow 0			//Glow in a color based on player's team when hero in use (0=no
 #include <sh_core_gravity>
 
 #if defined USE_PLAYER_MODEL
+	#include <cstrike>
 	#include <sh_core_models>
 #endif
 
@@ -136,7 +137,7 @@ public sh_hero_init(id, heroID, mode)
 	if (gHeroID != heroID)
 		return;
 	
-	if(is_user_alive(id))
+	if (is_user_alive(id))
 		stop_flying(id);
 		
 	switch (mode) {
@@ -271,8 +272,10 @@ start_flying(id)
 //----------------------------------------------------------------------------------------------
 stop_flying(id)
 {
-	sh_reset_min_gravity(id);
-	sh_reset_max_speed(id);
+	if (is_user_alive(id)) {
+		sh_reset_min_gravity(id);
+		sh_reset_max_speed(id);
+	}
 	
 	gIsFlying[id] = false;
 	remove_task(id + 100);

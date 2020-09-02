@@ -85,6 +85,10 @@ masterchief_teamglow 0		//Glow in a color based on player's team when hero in us
 	#include <sh_core_models>
 #endif
 
+#if PLAYER_MODEL == 1
+	#include <cstrike>
+#endif
+
 #if defined GIVE_WEAPON
 	#include <sh_core_shieldrestrict>
 #endif

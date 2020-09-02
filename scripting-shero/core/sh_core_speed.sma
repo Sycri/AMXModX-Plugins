@@ -13,7 +13,6 @@
 #include <cstrike>
 #include <hamsandwich>
 #include <sh_core_main>
-#include <sh_core_objectives>
 
 #pragma semicolon 1
 
@@ -24,6 +23,14 @@ new gSuperHeroCount;
 
 new Float:gHeroMaxSpeed[SH_MAXHEROS];
 new gHeroSpeedWeapons[SH_MAXHEROS]; // bit-field of weapons
+
+// Player bool variables (using bit-fields for lower memory footprint and better CPU performance)
+#define flag_get(%1,%2)			(%1 & (1 << (%2 & 31)))
+#define flag_get_boolean(%1,%2)	(flag_get(%1,%2) ? true : false)
+#define flag_set(%1,%2)			%1 |= (1 << (%2 & 31))
+#define flag_clear(%1,%2)		%1 &= ~(1 << (%2 & 31))
+
+new gBlockSpeed;
 
 new gPlayerStunTimer[MAX_PLAYERS + 1];
 new Float:gPlayerStunSpeed[MAX_PLAYERS + 1];
@@ -50,6 +57,7 @@ public plugin_natives()
 	register_library("sh_core_speed");
 	
 	register_native("sh_set_hero_speed", "@Native_SetHeroSpeed");
+	register_native("sh_block_hero_speed", "@Native_BlockHeroSpeed");
 	register_native("sh_set_stun", "@Native_SetStun");
 	register_native("sh_get_stun", "@Native_GetStun");
 	register_native("sh_reset_max_speed", "@Native_ResetMaxSpeed");
@@ -71,6 +79,8 @@ public client_putinserver(id)
 public client_disconnected(id)
 {
 	gPlayerStunTimer[id] = -1;
+
+	flag_clear(gBlockSpeed, id);
 }
 //----------------------------------------------------------------------------------------------
 public sh_hero_init(id, heroID)
@@ -84,33 +94,55 @@ public sh_client_spawn(id)
 	gPlayerStunTimer[id] = -1;
 }
 //----------------------------------------------------------------------------------------------
-//native sh_set_hero_speed(heroID, pcvarSpeed, const weapons[] = {0}, numofwpns = 1)
-@Native_SetHeroSpeed()
+//native sh_set_hero_speed(heroID, pcvarSpeed, const weapons = CSW_ALL_WEAPONS)
+@Native_SetHeroSpeed(plugin_id, num_params)
 {
-	new heroIndex = get_param(1);
+	new heroID = get_param(1);
 
 	//Have to access sh_get_num_heroes() directly because doing this during plugin_init()
-	if (heroIndex < 0 || heroIndex >= sh_get_num_heroes())
-		return;
+	if (heroID < 0 || heroID >= sh_get_num_heroes()) {
+		log_error(AMX_ERR_NATIVE, "[SH] Invalid Hero ID (%d)", heroID);
+		return false;
+	}
 
 	new weapons = get_param(3);
 
-	bind_pcvar_float(get_param(2), gHeroMaxSpeed[heroIndex]); // pCVAR expected!
-	gHeroSpeedWeapons[heroIndex] = weapons; // Bit-field expected!
+	bind_pcvar_float(get_param(2), gHeroMaxSpeed[heroID]); // pCVAR expected!
+	gHeroSpeedWeapons[heroID] = weapons; // Bit-field expected!
 
-	sh_debug_message(0, 3, "Set Max Speed -> HeroID: %d - Speed: %.3f - Weapon(s): %s", heroIndex, gHeroMaxSpeed[heroIndex], weapons);
+	sh_debug_message(0, 3, "Set Max Speed -> HeroID: %d - Speed: %.3f - Weapon(s): %s", heroID, gHeroMaxSpeed[heroID], weapons);
+	return true;
+}
+//----------------------------------------------------------------------------------------------
+//native sh_block_hero_speed(id, bool:block = true)
+@Native_BlockHeroSpeed(plugin_id, num_params)
+{
+	new id = get_param(1);
+
+	if (!is_user_connected(id)) {
+		log_error(AMX_ERR_NATIVE, "[SH] Invalid Player (%d)", id);
+		return false;
+	}
+
+	if (get_param(2))
+		flag_set(gBlockSpeed, id);
+	else
+		flag_clear(gBlockSpeed, id);
+	return true;
 }
 //----------------------------------------------------------------------------------------------
 //native sh_set_stun(id, Float:howLong, Float:speed = 0.0)
-@Native_SetStun()
+@Native_SetStun(plugin_id, num_params)
 {
 	if (!sh_is_active())
-		return;
+		return false;
 
 	new id = get_param(1);
 
-	if (!is_user_alive(id))
-		return;
+	if (!is_user_alive(id)) {
+		log_error(AMX_ERR_NATIVE, "[SH] Invalid Player (%d)", id);
+		return false;
+	}
 
 	new Float:howLong = get_param_f(2);
 
@@ -120,35 +152,42 @@ public sh_client_spawn(id)
 		gPlayerStunTimer[id] = floatround(howLong);
 		gPlayerStunSpeed[id] = speed;
 		set_user_maxspeed(id, speed);
+		return true;
 	}
+	return false;
 }
 //----------------------------------------------------------------------------------------------
 //native sh_get_stun(id)
-bool:@Native_GetStun()
+bool:@Native_GetStun(plugin_id, num_params)
 {
 	if (!sh_is_active())
 		return false;
 
 	new id = get_param(1);
 
-	if (!is_user_alive(id))
+	if (!is_user_alive(id)) {
+		log_error(AMX_ERR_NATIVE, "[SH] Invalid Player (%d)", id);
 		return false;
+	}
 
 	return gPlayerStunTimer[id] > 0 ? true : false;
 }
 //----------------------------------------------------------------------------------------------
 //native sh_reset_max_speed(id)
-@Native_ResetMaxSpeed()
+@Native_ResetMaxSpeed(plugin_id, num_params)
 {
 	if (!sh_is_active())
-		return;
+		return false;
 
 	new id = get_param(1);
 
-	if (!is_user_alive(id))
-		return;
+	if (!is_user_alive(id)) {
+		log_error(AMX_ERR_NATIVE, "[SH] Invalid Player (%d)", id);
+		return false;
+	}
 
 	ExecuteHamB(Ham_Player_ResetMaxSpeed, id);
+	return true;
 }
 //----------------------------------------------------------------------------------------------
 @Event_HLTV()
@@ -173,43 +212,43 @@ bool:@Native_GetStun()
 	return HAM_IGNORED;
 }
 //----------------------------------------------------------------------------------------------
-setSpeedPowers(index)
+setSpeedPowers(id)
 {
 	if (!sh_is_active())
 		return;
 
-	if (!is_user_alive(index) || gFreezeTime || !sh_user_is_loaded(index))
+	if (!is_user_alive(id) || gFreezeTime || !sh_user_is_loaded(id))
 		return;
 
-	if (gPlayerStunTimer[index] > 0) {
+	if (gPlayerStunTimer[id] > 0) {
 		static Float:stunSpeed;
-		stunSpeed = gPlayerStunSpeed[index];
+		stunSpeed = gPlayerStunSpeed[id];
 
-		set_user_maxspeed(index, stunSpeed);
-		sh_debug_message(index, 5, "Setting Stun Speed To %f", stunSpeed);
+		set_user_maxspeed(id, stunSpeed);
+		sh_debug_message(id, 5, "Setting Stun Speed To %f", stunSpeed);
 		return;
 	}
 
-	if (index == sh_get_vip_id() && sh_vip_flags() & VIP_BLOCK_SPEED)
+	if (flag_get_boolean(gBlockSpeed, id))
 		return;
 
-	if (cs_get_user_zoom(index) != CS_SET_NO_ZOOM)
+	if (cs_get_user_zoom(id) != CS_SET_NO_ZOOM)
 		return;
 
 	static Float:heroSpeed;
-	heroSpeed = getMaxSpeed(index, cs_get_user_weapon(index));
+	heroSpeed = getMaxSpeed(id, cs_get_user_weapon(id));
 
 	if (heroSpeed == -1.0)
 		return;
 
 	static Float:oldSpeed;
-	oldSpeed = get_user_maxspeed(index);
+	oldSpeed = get_user_maxspeed(id);
 
-	sh_debug_message(index, 10, "Checking Speeds - Old: %f - New: %f", oldSpeed, heroSpeed);
+	sh_debug_message(id, 10, "Checking Speeds - Old: %f - New: %f", oldSpeed, heroSpeed);
 
 	if (oldSpeed != heroSpeed) {
-		set_user_maxspeed(index, heroSpeed);
-		sh_debug_message(index, 5, "Setting Speed To %f", heroSpeed);
+		set_user_maxspeed(id, heroSpeed);
+		sh_debug_message(id, 5, "Setting Speed To %f", heroSpeed);
 	}
 }
 //----------------------------------------------------------------------------------------------
@@ -217,22 +256,22 @@ Float:getMaxSpeed(id, weapon)
 {
 	static heroName[25];
 	static Float:returnSpeed, Float:heroSpeed, i;
-	static playerPowerCount, heroIndex;
+	static playerPowerCount, heroID;
 	returnSpeed = -1.0;
 	playerPowerCount = sh_get_user_powers(id);
 
 	for (i = 1; i <= playerPowerCount; ++i) {
-		heroIndex = sh_get_user_hero(id, i);
+		heroID = sh_get_user_hero(id, i);
 		
-		if (-1 < heroIndex < gSuperHeroCount) {
-			heroSpeed = gHeroMaxSpeed[heroIndex];
+		if (-1 < heroID < gSuperHeroCount) {
+			heroSpeed = gHeroMaxSpeed[heroID];
 			if (heroSpeed <= 0.0)
 				continue;
 
-			sh_get_hero_name(heroIndex, heroName, charsmax(heroName));
-			sh_debug_message(id, 5, "Looking for Speed Functions - %s, %d, %d", heroName, gHeroSpeedWeapons[heroIndex], weapon);
+			sh_get_hero_name(heroID, heroName, charsmax(heroName));
+			sh_debug_message(id, 5, "Looking for Speed Functions - %s, %d, %d", heroName, gHeroSpeedWeapons[heroID], weapon);
 
-			if (gHeroSpeedWeapons[heroIndex] & (1 << weapon))
+			if (gHeroSpeedWeapons[heroID] & (1 << weapon))
 				returnSpeed = floatmax(returnSpeed, heroSpeed);
 		}
 	}
