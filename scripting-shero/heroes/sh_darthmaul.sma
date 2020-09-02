@@ -11,6 +11,9 @@ darth_knifemult 2.70		//multiplier for knife damage...
 */
 
 /*
+* v1.5 - Sycri - 9/1/20
+*      - Moved over model changing to a SuperHero Core plugin.
+*
 * v1.4 - vittu - 3/10/11
 *      - Changed model change method to use Ham_Item_Deploy instead of the CurWeapon event.
 *
@@ -44,15 +47,13 @@ darth_knifemult 2.70		//multiplier for knife damage...
 
 #include <amxmodx>
 #include <amxmisc>
-#include <fakemeta>
-#include <hamsandwich>
 #include <sh_core_main>
 #include <sh_core_hpap>
 #include <sh_core_speed>
 #include <sh_core_weapons>
 
 #if defined USE_WEAPON_MODEL
-	#include <cstrike>
+	#include <sh_core_models>
 #endif
 
 #pragma semicolon 1
@@ -87,11 +88,11 @@ public plugin_init()
 	sh_set_hero_info(gHeroID, "Sith Lightsaber & Regen", "Get a Sith Double Bladed Lightsaber with more Damage and Speed, also regenerate HP");
 	sh_set_hero_speed(gHeroID, pcvarKnifeSpeed, 1 << CSW_KNIFE);
 	sh_set_hero_dmgmult(gHeroID, pcvarKnifeMult, CSW_KNIFE);
-
 #if defined USE_WEAPON_MODEL
-	// REGISTER EVENTS THIS HERO WILL RESPOND TO!
-	if (gModelLoaded)
-		RegisterHam(Ham_Item_Deploy, "weapon_knife", "@Forward_Knife_Deploy_Post", 1);
+	if (gModelLoaded) {
+		sh_set_hero_viewmodel(gHeroID, gModel_V_Knife, CSW_KNIFE);
+		sh_set_hero_weaponmodel(gHeroID, gModel_P_Knife, CSW_KNIFE);
+	}
 #endif
 
 	// HEAL LOOP
@@ -125,65 +126,10 @@ public sh_hero_init(id, heroID, mode)
 	if (gHeroID != heroID)
 		return;
 
-	switch (mode) {
-		case SH_HERO_ADD: {
-			gHasDarthMaul[id] = true;
-#if defined USE_WEAPON_MODEL
-			if (gModelLoaded && get_user_weapon(id) == CSW_KNIFE)
-				switch_model(id);
-#endif
-		}
-		case SH_HERO_DROP: {
-			gHasDarthMaul[id] = false;
-#if defined USE_WEAPON_MODEL
-			if (gModelLoaded && get_user_weapon(id) == CSW_KNIFE)
-				reset_model(id);
-#endif
-		}
-	}
+	gHasDarthMaul[id] = mode ? true : false;
 
 	sh_debug_message(id, 1, "%s %s", gHeroName, mode ? "ADDED" : "DROPPED");
 }
-//----------------------------------------------------------------------------------------------
-#if defined USE_WEAPON_MODEL
-@Forward_Knife_Deploy_Post(weapon_ent)
-{
-	if (!sh_is_active())
-		return HAM_IGNORED;
-
-	// Get weapon's owner
-	new owner = get_ent_data_entity(weapon_ent, "CBasePlayerItem", "m_pPlayer");
-	
-	switch_model(owner);
-	return HAM_IGNORED;
-}
-//----------------------------------------------------------------------------------------------
-switch_model(index)
-{
-	if (!is_user_alive(index) || !gHasDarthMaul[index])
-		return;
-
-	if (cs_get_user_shield(index))
-		return;
-	
-	set_pev(index, pev_viewmodel2, gModel_V_Knife);
-	set_pev(index, pev_weaponmodel2, gModel_P_Knife);
-}
-//----------------------------------------------------------------------------------------------
-reset_model(index)
-{
-	if (!is_user_alive(index))
-		return;
-
-	if (cs_get_user_shield(index))
-		return;
-	
-	new weaponEnt = cs_get_user_weapon_entity(index);
-	
-	// Let CS update weapon models
-	ExecuteHamB(Ham_Item_Deploy, weaponEnt);
-}
-#endif
 //----------------------------------------------------------------------------------------------
 @Task_DarthLoop()
 {

@@ -19,10 +19,10 @@ veronica_rldmode 0			//Endless ammo mode: 0-server default, 1-no reload, 2-reloa
 //---------- User Changeable Defines --------//
 
 
-// Comment out to not use the M4A1 model
+// Comment out to not use the AK47 model
 #define USE_WEAPON_MODEL
 
-// Comment out to not give a free M4A1
+// Comment out to not give a free AK47
 #define GIVE_WEAPON
 
 
@@ -38,6 +38,10 @@ veronica_rldmode 0			//Endless ammo mode: 0-server default, 1-no reload, 2-reloa
 #include <sh_core_weapons>
 #include <sh_core_extradamage>
 #include <sh_core_shieldrestrict>
+
+#if defined USE_WEAPON_MODEL
+	#include <sh_core_models>
+#endif
 
 #pragma semicolon 1
 
@@ -86,6 +90,10 @@ public plugin_init()
 	sh_set_hero_dmgmult(gHeroID, pcvarAKMult, CSW_AK47);
 #if defined GIVE_WEAPON
 	sh_set_hero_shield(gHeroID, true);
+#endif
+#if defined USE_WEAPON_MODEL
+	if (gModelLoaded)
+		sh_set_hero_viewmodel(gHeroID, gModel_V_AK47, CSW_AK47);
 #endif
 
 	// REGISTER EVENTS THIS HERO WILL RESPOND TO!
@@ -139,19 +147,11 @@ public sh_hero_init(id, heroID, mode)
 #if defined GIVE_WEAPON
 			sh_give_weapon(id, CSW_AK47);
 #endif
-#if defined USE_WEAPON_MODEL
-			if (gModelLoaded && is_user_alive(id) && get_user_weapon(id) == CSW_AK47)
-				switch_model(id);
-#endif
 		}
 		case SH_HERO_DROP: {
 			gHasVeronica[id] = false;
 #if defined GIVE_WEAPON
 			sh_drop_weapon(id, CSW_AK47, true);
-#endif
-#if !defined GIVE_WEAPON && defined USE_WEAPON_MODEL
-			if (gModelLoaded && get_user_weapon(id) == CSW_AK47)
-				reset_model(id);
 #endif
 		}
 	}
@@ -329,7 +329,6 @@ send_weapon_anim(id, animation)
 	emit_sound(ptr, CHAN_WEAPON, gSoundExplode, VOL_NORM, ATTN_NORM, 0, PITCH_NORM);
 
 	remove_entity(ptr);
-
 	return PLUGIN_CONTINUE;
 }
 //----------------------------------------------------------------------------------------------
@@ -403,40 +402,12 @@ stock set_velocity_from_origin(ent, Float:origin[3], Float:speed)
 	// Get weapon's owner
 	new owner = get_ent_data_entity(weapon_ent, "CBasePlayerItem", "m_pPlayer");
 	
-	if (is_user_alive(owner) && gHasVeronica[owner]) {
-		ammo_hud(owner, 1);
-#if defined USE_WEAPON_MODEL
-		switch_model(owner);
-#endif
-	}
+	if (!is_user_alive(owner) || !gHasVeronica[owner])
+		return HAM_IGNORED;
+	
+	ammo_hud(owner, 1);
 	return HAM_IGNORED;
 }
-//----------------------------------------------------------------------------------------------
-#if defined USE_WEAPON_MODEL
-switch_model(index)
-{
-	if (cs_get_user_shield(index))
-		return;
-	
-	set_pev(index, pev_viewmodel2, gModel_V_AK47);
-}
-//----------------------------------------------------------------------------------------------
-#if !defined GIVE_WEAPON
-reset_model(index)
-{
-	if (!is_user_alive(index))
-		return;
-
-	if (cs_get_user_shield(index))
-		return;
-	
-	new weaponEnt = cs_get_user_weapon_entity(index);
-	
-	// Let CS update weapon models
-	ExecuteHamB(Ham_Item_Deploy, weaponEnt);
-}
-#endif
-#endif
 //----------------------------------------------------------------------------------------------
 ammo_hud(id, show)
 {

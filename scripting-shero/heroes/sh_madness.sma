@@ -33,14 +33,12 @@ madness_rldmode 0		//Endless ammo mode: 0-server default, 1-no reload, 2-reload,
 //------- Do not edit below this point ------//
 
 #include <amxmodx>
-#include <fakemeta>
-#include <hamsandwich>
 #include <sh_core_main>
 #include <sh_core_hpap>
 #include <sh_core_weapons>
 
 #if defined USE_WEAPON_MODEL
-	#include <cstrike>
+	#include <sh_core_models>
 #endif
 
 #if defined GIVE_WEAPON
@@ -82,14 +80,14 @@ public plugin_init()
 #if defined GIVE_WEAPON
 	sh_set_hero_shield(gHeroID, true);
 #endif
-	
+#if defined USE_WEAPON_MODEL
+	if (gModelLoaded)
+		sh_set_hero_viewmodel(gHeroID, gModel_V_M3, CSW_M3);
+#endif
+
 	// REGISTER EVENTS THIS HERO WILL RESPOND TO!
 	// read_data(2) == CSW_M3 = 2=21
 	register_event_ex("CurWeapon", "@Event_CurWeapon", RegisterEvent_Single | RegisterEvent_OnlyAlive, "1=1", "2=21", "3=0");
-#if defined USE_WEAPON_MODEL
-	if (gModelLoaded)
-		RegisterHam(Ham_Item_Deploy, "weapon_m3", "@Forward_M3_Deploy_Post", 1);
-#endif
 }
 //----------------------------------------------------------------------------------------------
 #if defined USE_WEAPON_MODEL
@@ -116,19 +114,11 @@ public sh_hero_init(id, heroID, mode)
 #if defined GIVE_WEAPON
 			sh_give_weapon(id, CSW_M3);
 #endif
-#if defined USE_WEAPON_MODEL
-			if (gModelLoaded && get_user_weapon(id) == CSW_M3)
-				switch_model(id);
-#endif
 		}
 		case SH_HERO_DROP: {
 			gHasMadness[id] = false;
 #if defined GIVE_WEAPON
 			sh_drop_weapon(id, CSW_M3, true);
-#endif
-#if !defined GIVE_WEAPON && defined USE_WEAPON_MODEL
-			if (gModelLoaded && get_user_weapon(id) == CSW_M3)
-				reset_model(id);
 #endif
 		}
 	}
@@ -153,39 +143,4 @@ public sh_client_spawn(id)
 	
 	sh_reload_ammo(id, CvarReloadMode);
 }
-//----------------------------------------------------------------------------------------------
-#if defined USE_WEAPON_MODEL
-@Forward_M3_Deploy_Post(weapon_ent)
-{
-	if (!sh_is_active())
-		return HAM_IGNORED;
-
-	// Get weapon's owner
-	new owner = get_ent_data_entity(weapon_ent, "CBasePlayerItem", "m_pPlayer");
-	
-	switch_model(owner);
-	return HAM_IGNORED;
-}
-//----------------------------------------------------------------------------------------------
-switch_model(index)
-{
-	if (!is_user_alive(index) || !gHasMadness[index])
-		return;
-	
-	set_pev(index, pev_viewmodel2, gModel_V_M3);
-}
-//----------------------------------------------------------------------------------------------
-#if !defined GIVE_WEAPON
-reset_model(index)
-{
-	if (!is_user_alive(index))
-		return;
-	
-	new weaponEnt = cs_get_user_weapon_entity(index);
-	
-	// Let CS update weapon models
-	ExecuteHamB(Ham_Item_Deploy, weaponEnt);
-}
-#endif
-#endif
 //----------------------------------------------------------------------------------------------

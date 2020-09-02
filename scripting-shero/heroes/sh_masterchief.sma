@@ -75,8 +75,6 @@ masterchief_teamglow 0		//Glow in a color based on player's team when hero in us
 
 #include <amxmodx>
 #include <amxmisc>
-#include <fakemeta>
-#include <hamsandwich>
 #include <sh_core_main>
 #include <sh_core_hpap>
 #include <sh_core_speed>
@@ -84,7 +82,7 @@ masterchief_teamglow 0		//Glow in a color based on player's team when hero in us
 #include <sh_core_weapons>
 
 #if PLAYER_MODEL > 0 || defined USE_WEAPON_MODEL
-	#include <cstrike>
+	#include <sh_core_models>
 #endif
 
 #if defined GIVE_WEAPON
@@ -102,9 +100,9 @@ new bool:gHasMasterChief[MAX_PLAYERS + 1];
 new CvarReloadMode;
 
 #if PLAYER_MODEL > 0
-	new bool:gModelPlayerSet[MAX_PLAYERS + 1];
+	new bool:gMasterChiefMorphed[MAX_PLAYERS + 1];
 	new bool:gModelPlayerLoaded;
-	new gmsgSync;
+	new gHudSync;
 	new const gMasterChiefSound[] = "items/suitchargeno1.wav";
 
 	#if PLAYER_MODEL == 1
@@ -154,14 +152,27 @@ public plugin_init()
 #if defined GIVE_WEAPON
 	sh_set_hero_shield(gHeroID, true);
 #endif
+#if PLAYER_MODEL == 1
+	if (gModelPlayerLoaded) {
+		sh_set_hero_playermodel(gHeroID, gModelPlayer_Name, CS_TEAM_CT);
+		sh_set_hero_playermodel(gHeroID, gModelPlayer_Name, CS_TEAM_T);
+	}
+#elseif PLAYER_MODEL == 2
+	if (gModelPlayerLoaded) {
+		sh_set_hero_playermodel(gHeroID, gModelPlayer_Name[1], CS_TEAM_CT);
+		sh_set_hero_playermodel(gHeroID, gModelPlayer_Name[0], CS_TEAM_T);
+	}
+#endif
+#if defined USE_WEAPON_MODEL
+	if (gModelWeaponLoaded) {
+		sh_set_hero_viewmodel(gHeroID, gModel_V_P90, CSW_P90);
+		sh_set_hero_weaponmodel(gHeroID, gModel_P_P90, CSW_P90);
+	}
+#endif
 
 	// REGISTER EVENTS THIS HERO WILL RESPOND TO!
 	// read_data(2) == CSW_P90 = 2=30
 	register_event_ex("CurWeapon", "@Event_CurWeapon", RegisterEvent_Single | RegisterEvent_OnlyAlive, "1=1", "2=30", "3=0");
-#if defined USE_WEAPON_MODEL
-	if (gModelWeaponLoaded)
-		RegisterHam(Ham_Item_Deploy, "weapon_p90", "@Forward_P90_Deploy_Post", 1);
-#endif
 
 	// GLOW LOOP
 #if PLAYER_MODEL == 1
@@ -169,7 +180,7 @@ public plugin_init()
 #endif
 
 #if PLAYER_MODEL > 0
-	gmsgSync = CreateHudSyncObj();
+	gHudSync = CreateHudSyncObj();
 #endif
 }
 //----------------------------------------------------------------------------------------------
@@ -233,23 +244,15 @@ public sh_hero_init(id, heroID, mode)
 #if defined GIVE_WEAPON
 			sh_give_weapon(id, CSW_P90);
 #endif
-#if defined USE_WEAPON_MODEL
-			if (gModelWeaponLoaded && get_user_weapon(id) == CSW_P90)
-				switch_model(id);
-#endif
 #if PLAYER_MODEL > 0
 			if (gModelPlayerLoaded)
-				set_task(1.1, "@Task_Morph", id);
+				masterchief_morph(id);
 #endif
 		}
 		case SH_HERO_DROP: {
 			gHasMasterChief[id] = false;
 #if defined GIVE_WEAPON
 			sh_drop_weapon(id, CSW_P90, true);
-#endif
-#if !defined GIVE_WEAPON && defined USE_WEAPON_MODEL
-			if (gModelWeaponLoaded && get_user_weapon(id) == CSW_P90)
-				reset_model(id);
 #endif
 #if PLAYER_MODEL > 0
 			if (gModelPlayerLoaded)
@@ -271,7 +274,7 @@ public sh_client_spawn(id) {
 #endif
 #if PLAYER_MODEL > 0
 	if (gModelPlayerLoaded)
-		set_task(1.1, "@Task_Morph", id);
+		masterchief_morph(id);
 #endif
 }
 #endif
@@ -284,46 +287,10 @@ public sh_client_spawn(id) {
 	sh_reload_ammo(id, CvarReloadMode);
 }
 //----------------------------------------------------------------------------------------------
-#if defined USE_WEAPON_MODEL
-@Forward_P90_Deploy_Post(weapon_ent)
-{
-	if (!sh_is_active())
-		return HAM_IGNORED;
-
-	// Get weapon's owner
-	new owner = get_ent_data_entity(weapon_ent, "CBasePlayerItem", "m_pPlayer");
-	
-	switch_model(owner);
-	return HAM_IGNORED;
-}
-//----------------------------------------------------------------------------------------------
-switch_model(index)
-{
-	if (!is_user_alive(index) || !gHasMasterChief[index])
-		return;
-	
-	set_pev(index, pev_viewmodel2, gModel_V_P90);
-	set_pev(index, pev_weaponmodel2, gModel_P_P90);
-}
-//----------------------------------------------------------------------------------------------
-#if !defined GIVE_WEAPON
-reset_model(index)
-{
-	if (!is_user_alive(index))
-		return;
-	
-	new weaponEnt = cs_get_user_weapon_entity(index);
-	
-	// Let CS update weapon models
-	ExecuteHamB(Ham_Item_Deploy, weaponEnt);
-}
-#endif
-#endif
-//----------------------------------------------------------------------------------------------
 #if PLAYER_MODEL > 0
 public client_disconnected(id)
 {
-	gModelPlayerSet[id] = false;
+	gMasterChiefMorphed[id] = false;
 }
 //----------------------------------------------------------------------------------------------
 public sh_client_death(id)
@@ -335,48 +302,36 @@ public sh_client_death(id)
 		masterchief_unmorph(id);
 }
 //----------------------------------------------------------------------------------------------
-@Task_Morph(id)
+masterchief_morph(index)
 {
-	if (gModelPlayerSet[id] || !is_user_alive(id) || !gHasMasterChief[id])
+	if (gMasterChiefMorphed[index] || !is_user_alive(index) || !gHasMasterChief[index])
 		return;
 	
-#if PLAYER_MODEL == 1
-	cs_set_user_model(id, gModelPlayer_Name);
-#elseif PLAYER_MODEL == 2
-	switch (cs_get_user_team(id)) {
-		case CS_TEAM_T: cs_set_user_model(id, gModelPlayer_Name[0]);
-		case CS_TEAM_CT: cs_set_user_model(id, gModelPlayer_Name[1]);
-		default: return;
-	}
-#endif
-	
-	masterchief_sound(id);
+	masterchief_sound(index);
 	
 	set_hudmessage(50, 205, 50, -1.0, 0.40, 2, 0.02, 4.0, 0.01, 0.1, -1);
-	ShowSyncHudMsg(id, gmsgSync, "%s - Spartan-117 reporting for duty", gHeroName);
+	ShowSyncHudMsg(index, gHudSync, "%s - Spartan-117 reporting for duty", gHeroName);
 
-	gModelPlayerSet[id] = true;
+	gMasterChiefMorphed[index] = true;
 }
 //----------------------------------------------------------------------------------------------
 masterchief_unmorph(index)
 {
-	if (gModelPlayerSet[index] && is_user_connected(index)) {
-		if (is_user_alive(index)) {
-			set_hudmessage(50, 205, 50, -1.0, 0.40, 2, 0.02, 4.0, 0.01, 0.1, -1);
-			ShowSyncHudMsg(index, gmsgSync, "%s - MODE OFF, you returned to normal self", gHeroName);
-		}
-		
-		cs_reset_user_model(index);
-		
-		masterchief_sound(index);
-		
-		gModelPlayerSet[index] = false;
-		
-#if PLAYER_MODEL == 1
-		if (CvarTeamGlow)
-			sh_set_rendering(index);
-#endif
+	if (!gMasterChiefMorphed[index] || !is_user_connected(index))
+		return;
+	
+	if (is_user_alive(index)) {
+		set_hudmessage(50, 205, 50, -1.0, 0.40, 2, 0.02, 4.0, 0.01, 0.1, -1);
+		ShowSyncHudMsg(index, gHudSync, "%s - MODE OFF, you returned to normal self", gHeroName);
 	}
+
+	masterchief_sound(index);
+
+	gMasterChiefMorphed[index] = false;
+#if PLAYER_MODEL == 1
+	if (CvarTeamGlow)
+		sh_set_rendering(index);
+#endif
 }
 //----------------------------------------------------------------------------------------------
 masterchief_sound(index)

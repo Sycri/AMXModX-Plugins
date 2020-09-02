@@ -32,8 +32,6 @@ UberGunner_teamglow 1		//Glow in a color based on player's team when hero in use
 
 #include <amxmodx>
 #include <amxmisc>
-#include <fakemeta>
-#include <hamsandwich>
 #include <sh_core_main>
 #include <sh_core_hpap>
 #include <sh_core_speed>
@@ -41,7 +39,7 @@ UberGunner_teamglow 1		//Glow in a color based on player's team when hero in use
 #include <sh_core_weapons>
 
 #if defined USE_PLAYER_MODEL || defined USE_WEAPON_MODEL
-	#include <cstrike>
+	#include <sh_core_models>
 #endif
 
 #if defined GIVE_WEAPON
@@ -59,9 +57,9 @@ new bool:gHasUberGunner[MAX_PLAYERS + 1];
 new CvarReloadMode;
 
 #if defined USE_PLAYER_MODEL
-	new bool:gModelPlayerSet[MAX_PLAYERS + 1];
+	new bool:gUberGunnerMorphed[MAX_PLAYERS + 1];
 	new bool:gModelPlayerLoaded;
-	new gmsgSync;
+	new gHudSync;
 	new const gUberGunnerSound[] = "items/suitchargeno1.wav";
 	new const gModelPlayer[] = "models/player/UberGunner/UberGunner.mdl";
 	new const gModelPlayer_Name[] = "UberGunner";
@@ -100,20 +98,26 @@ public plugin_init()
 #if defined GIVE_WEAPON
 	sh_set_hero_shield(gHeroID, true);
 #endif
-	
+#if defined USE_PLAYER_MODEL
+	if (gModelPlayerLoaded) {
+		sh_set_hero_playermodel(gHeroID, gModelPlayer_Name, CS_TEAM_CT);
+		sh_set_hero_playermodel(gHeroID, gModelPlayer_Name, CS_TEAM_T);
+	}
+#endif
+#if defined USE_WEAPON_MODEL
+	if (gModelWeaponLoaded)
+		sh_set_hero_viewmodel(gHeroID, gModel_V_M4A1, CSW_M4A1);
+#endif
+
 	// REGISTER EVENTS THIS HERO WILL RESPOND TO!
 	// read_data(2) == CSW_M4A1 = 2=22
 	register_event_ex("CurWeapon", "@Event_CurWeapon", RegisterEvent_Single | RegisterEvent_OnlyAlive, "1=1", "2=22", "3=0");
-#if defined USE_WEAPON_MODEL
-	if (gModelWeaponLoaded)
-		RegisterHam(Ham_Item_Deploy, "weapon_m4a1", "@Forward_M4A1_Deploy_Post", 1);
-#endif
 
 	// GLOW LOOP
 #if defined USE_PLAYER_MODEL
 	set_task_ex(1.0, "@Task_GlowLoop", _, _, _, SetTask_Repeat);
 
-	gmsgSync = CreateHudSyncObj();
+	gHudSync = CreateHudSyncObj();
 #endif
 }
 //----------------------------------------------------------------------------------------------
@@ -154,23 +158,15 @@ public sh_hero_init(id, heroID, mode)
 #if defined GIVE_WEAPON
 			sh_give_weapon(id, CSW_M4A1);
 #endif
-#if defined USE_WEAPON_MODEL
-			if (gModelWeaponLoaded && get_user_weapon(id) == CSW_M4A1)
-				switch_model(id);
-#endif
 #if defined USE_PLAYER_MODEL
 			if (gModelPlayerLoaded)
-				set_task(1.0, "@Task_Morph", id);
+				ubergunner_morph(id);
 #endif
 		}
 		case SH_HERO_DROP: {
 			gHasUberGunner[id] = false;
 #if defined GIVE_WEAPON
 			sh_drop_weapon(id, CSW_M4A1, true);
-#endif
-#if !defined GIVE_WEAPON && defined USE_WEAPON_MODEL
-			if (gModelWeaponLoaded && get_user_weapon(id) == CSW_M4A1)
-				reset_model(id);
 #endif
 #if defined USE_PLAYER_MODEL
 			if (gModelPlayerLoaded)
@@ -194,7 +190,7 @@ public sh_client_spawn(id)
 
 #if defined USE_PLAYER_MODEL
 	if (gModelPlayerLoaded)
-		set_task(1.0, "@Task_Morph", id);
+		ubergunner_morph(id);
 #endif
 }
 #endif
@@ -207,45 +203,10 @@ public sh_client_spawn(id)
 	sh_reload_ammo(id, CvarReloadMode);
 }
 //----------------------------------------------------------------------------------------------
-#if defined USE_WEAPON_MODEL
-@Forward_M4A1_Deploy_Post(weapon_ent)
-{
-	if (!sh_is_active())
-		return HAM_IGNORED;
-
-	// Get weapon's owner
-	new owner = get_ent_data_entity(weapon_ent, "CBasePlayerItem", "m_pPlayer");
-	
-	switch_model(owner);
-	return HAM_IGNORED;
-}
-//----------------------------------------------------------------------------------------------
-switch_model(index)
-{
-	if (!is_user_alive(index) || !gHasUberGunner[index])
-		return;
-	
-	set_pev(index, pev_viewmodel2, gModel_V_M4A1);
-}
-//----------------------------------------------------------------------------------------------
-#if !defined GIVE_WEAPON
-reset_model(index)
-{
-	if (!is_user_alive(index))
-		return;
-	
-	new weaponEnt = cs_get_user_weapon_entity(index);
-	
-	// Let CS update weapon models
-	ExecuteHamB(Ham_Item_Deploy, weaponEnt);
-}
-#endif
-#endif
-//----------------------------------------------------------------------------------------------
 #if defined USE_PLAYER_MODEL
 public client_disconnected(id)
 {
-	gModelPlayerSet[id] = false;
+	gUberGunnerMorphed[id] = false;
 }
 //----------------------------------------------------------------------------------------------
 public sh_client_death(id)
@@ -256,38 +217,35 @@ public sh_client_death(id)
 	ubergunner_unmorph(id);
 }
 //----------------------------------------------------------------------------------------------
-@Task_Morph(id)
+ubergunner_morph(index)
 {
-	if (gModelPlayerSet[id] || !is_user_alive(id) || !gHasUberGunner[id])
+	if (gUberGunnerMorphed[index] || !is_user_alive(index) || !gHasUberGunner[index])
 		return;
 	
-	cs_set_user_model(id, gModelPlayer_Name);
-	
-	ubergunner_sound(id);
+	ubergunner_sound(index);
 	
 	set_hudmessage(50, 205, 50, -1.0, 0.40, 2, 0.02, 4.0, 0.01, 0.1, -1);
-	ShowSyncHudMsg(id, gmsgSync, "UberGunner - Getting Ready 2 Own!");
+	ShowSyncHudMsg(index, gHudSync, "UberGunner - Getting Ready 2 Own!");
 
-	gModelPlayerSet[id] = true;
+	gUberGunnerMorphed[index] = true;
 }
 //----------------------------------------------------------------------------------------------
 ubergunner_unmorph(index)
 {
-	if (gModelPlayerSet[index] && is_user_connected(index)) {
-		if(is_user_alive(index)) {
-			set_hudmessage(50, 205, 50, -1.0, 0.40, 2, 0.02, 4.0, 0.01, 0.1, -1);
-			ShowSyncHudMsg(index, gmsgSync, "UberGunner - MODE OFF, you returned to normal self.");
-		}
-		
-		cs_reset_user_model(index);
-		
-		ubergunner_sound(index);
-
-		gModelPlayerSet[index] = false;
-
-		if (CvarTeamGlow)
-			sh_set_rendering(index);
+	if (!gUberGunnerMorphed[index] || !is_user_connected(index))
+		return;
+	
+	if(is_user_alive(index)) {
+		set_hudmessage(50, 205, 50, -1.0, 0.40, 2, 0.02, 4.0, 0.01, 0.1, -1);
+		ShowSyncHudMsg(index, gHudSync, "UberGunner - MODE OFF, you returned to normal self.");
 	}
+		
+	ubergunner_sound(index);
+
+	gUberGunnerMorphed[index] = false;
+
+	if (CvarTeamGlow)
+		sh_set_rendering(index);
 }
 //----------------------------------------------------------------------------------------------
 ubergunner_sound(index)

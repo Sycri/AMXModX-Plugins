@@ -39,7 +39,7 @@ neo_teamglow 0			//Glow in a color based on player's team when hero in use (0=no
 #include <sh_core_gravity>
 
 #if defined USE_PLAYER_MODEL
-	#include <cstrike>
+	#include <sh_core_models>
 #endif
 
 #pragma semicolon 1
@@ -48,7 +48,7 @@ neo_teamglow 0			//Glow in a color based on player's team when hero in use (0=no
 new gHeroID;
 new const gHeroName[] = "Neo";
 
-new bool:gHasNeoPowers[MAX_PLAYERS + 1];
+new bool:gHasNeo[MAX_PLAYERS + 1];
 new bool:gIsFlying[MAX_PLAYERS + 1];
 
 #if defined SHOW_BULLETS
@@ -59,9 +59,9 @@ new bool:gIsFlying[MAX_PLAYERS + 1];
 new CvarFlySpeed, CvarFlyBeforeFTime, CvarFlyToggle;
 
 #if defined USE_PLAYER_MODEL
-	new bool:gModelPlayerSet[MAX_PLAYERS + 1];
+	new bool:gNeoMorphed[MAX_PLAYERS + 1];
 	new bool:gModelPlayerLoaded;
-	new gmsgSync;
+	new gHudSync;
 	new const gModelPlayer[] = "models/player/Neo/Neo.mdl";
 	new const gModelPlayer_Name[] = "Neo";
 	new CvarTeamGlow;
@@ -92,19 +92,24 @@ public plugin_init()
 	sh_set_hero_speed(gHeroID, pcvarSpeed);
 	sh_set_hero_grav(gHeroID, pcvarGravity);
 	sh_set_hero_bind(gHeroID);
+#if defined USE_PLAYER_MODEL
+	if (gModelPlayerLoaded) {
+		sh_set_hero_playermodel(gHeroID, gModelPlayer_Name, CS_TEAM_CT);
+		sh_set_hero_playermodel(gHeroID, gModelPlayer_Name, CS_TEAM_T);
+	}
+#endif
 	
 	// REGISTER EVENTS THIS HERO WILL RESPOND TO!
 #if defined SHOW_BULLETS
 	register_event_ex("CurWeapon", "@Event_CurWeapon", RegisterEvent_Single | RegisterEvent_OnlyAlive, "1=1", "3>0");
 #endif
-
 	register_forward(FM_CmdStart, "@Forward_CmdStart");
 
 	// GLOW LOOP
 #if defined USE_PLAYER_MODEL
 	set_task_ex(1.0, "@Task_GlowLoop", _, _, _, SetTask_Repeat);
 
-	gmsgSync = CreateHudSyncObj();
+	gHudSync = CreateHudSyncObj();
 #endif
 }
 //----------------------------------------------------------------------------------------------
@@ -122,7 +127,7 @@ public plugin_precache()
 //----------------------------------------------------------------------------------------------
 public client_disconnected(id)
 {
-	gModelPlayerSet[id] = false;
+	gNeoMorphed[id] = false;
 }
 #endif
 //----------------------------------------------------------------------------------------------
@@ -136,14 +141,14 @@ public sh_hero_init(id, heroID, mode)
 		
 	switch (mode) {
 		case SH_HERO_ADD: {
-			gHasNeoPowers[id] = true;
+			gHasNeo[id] = true;
 #if defined USE_PLAYER_MODEL
 			if (gModelPlayerLoaded)
-				set_task(1.2, "@Task_Morph", id);
+				neo_morph(id);
 #endif
 		}
 		case SH_HERO_DROP: {
-			gHasNeoPowers[id] = false;
+			gHasNeo[id] = false;
 #if defined USE_PLAYER_MODEL
 			if (gModelPlayerLoaded)
 				neo_unmorph(id);
@@ -156,20 +161,20 @@ public sh_hero_init(id, heroID, mode)
 //----------------------------------------------------------------------------------------------
 public sh_client_spawn(id)
 {
-	if (!gHasNeoPowers[id])
+	if (!gHasNeo[id])
 		return;
 	
 	stop_flying(id);
 	
 #if defined USE_PLAYER_MODEL
 	if (gModelPlayerLoaded)
-		set_task(1.2, "@Task_Morph", id);
+		neo_morph(id);
 #endif
 }
 //----------------------------------------------------------------------------------------------
 public sh_client_death(id)
 {
-	if (is_user_alive(id) || !gHasNeoPowers[id])
+	if (is_user_alive(id) || !gHasNeo[id])
 		return;
 	
 	stop_flying(id);
@@ -181,34 +186,31 @@ public sh_client_death(id)
 }
 //----------------------------------------------------------------------------------------------
 #if defined USE_PLAYER_MODEL
-@Task_Morph(id)
+neo_morph(index)
 {
-	if (gModelPlayerSet[id] || !is_user_alive(id) || !gHasNeoPowers[id])
+	if (gNeoMorphed[index] || !is_user_alive(index) || !gHasNeo[index])
 		return;
 	
-	cs_set_user_model(id, gModelPlayer_Name);
-	
 	set_hudmessage(50, 205, 50, -1.0, 0.40, 2, 0.02, 4.0, 0.01, 0.1, -1);
-	ShowSyncHudMsg(id, gmsgSync, "You are now %s", gHeroName);
+	ShowSyncHudMsg(index, gHudSync, "You are now %s", gHeroName);
 	
-	gModelPlayerSet[id] = true;
+	gNeoMorphed[index] = true;
 }
 //----------------------------------------------------------------------------------------------
 neo_unmorph(index)
 {
-	if (gModelPlayerSet[index] && is_user_connected(index)) {
-		if (is_user_alive(index)) {
-			set_hudmessage(50, 205, 50, -1.0, 0.40, 2, 0.02, 4.0, 0.01, 0.1, -1);
-			ShowSyncHudMsg(index, gmsgSync, "You are not %s anymore", gHeroName);
-		}
-		
-		cs_reset_user_model(index);
-		
-		gModelPlayerSet[index] = false;
-
-		if (CvarTeamGlow)
-			sh_set_rendering(index);
+	if (!gNeoMorphed[index] || !is_user_connected(index))
+		return;
+	
+	if (is_user_alive(index)) {
+		set_hudmessage(50, 205, 50, -1.0, 0.40, 2, 0.02, 4.0, 0.01, 0.1, -1);
+		ShowSyncHudMsg(index, gHudSync, "You are not %s anymore", gHeroName);
 	}
+		
+	gNeoMorphed[index] = false;
+
+	if (CvarTeamGlow)
+		sh_set_rendering(index);
 }
 //----------------------------------------------------------------------------------------------
 @Task_GlowLoop()
@@ -222,7 +224,7 @@ neo_unmorph(index)
 	for (i = 0; i < playerCount; ++i) {
 		player = players[i];
 
-		if (gHasNeoPowers[player]) {
+		if (gHasNeo[player]) {
 			switch (cs_get_user_team(player)) {
 				case CS_TEAM_T: sh_set_rendering(player, 100, 0, 0, 16, kRenderFxGlowShell);
 				case CS_TEAM_CT: sh_set_rendering(player, 0, 0, 100, 16, kRenderFxGlowShell);
@@ -331,7 +333,7 @@ stop_flying(id)
 		for (i = 0; i < playerCount; ++i) {
 			player = players[i];
 			
-			if (gHasNeoPowers[player])
+			if (gHasNeo[player])
 				draw_bullets(player, team, origin, velocityVec);
 		}
 	}

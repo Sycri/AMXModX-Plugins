@@ -25,15 +25,13 @@ wolv_knifemult 1.35			//Multiplier for knife damage
 
 #include <amxmodx>
 #include <amxmisc>
-#include <fakemeta>
-#include <hamsandwich>
 #include <sh_core_main>
 #include <sh_core_hpap>
 #include <sh_core_speed>
 #include <sh_core_weapons>
 
 #if defined USE_WEAPON_MODEL
-	#include <cstrike>
+	#include <sh_core_models>
 #endif
 
 #pragma semicolon 1
@@ -67,11 +65,9 @@ public plugin_init()
 	sh_set_hero_info(gHeroID, "Auto-Heal & Claws", "Auto-Heal, Extra Knife Damage and Speed Boost");
 	sh_set_hero_speed(gHeroID, pcvarSpeed, 1 << CSW_KNIFE);
 	sh_set_hero_dmgmult(gHeroID, pcvarKnifeMult, CSW_KNIFE);
-
 #if defined USE_WEAPON_MODEL
-	// REGISTER EVENTS THIS HERO WILL RESPOND TO!
 	if (gModelLoaded)
-		RegisterHam(Ham_Item_Deploy, "weapon_knife", "@Forward_Knife_Deploy_Post", 1);
+		sh_set_hero_viewmodel(gHeroID, gModel_V_Knife, CSW_KNIFE);
 #endif
 
 	// HEAL LOOP
@@ -97,64 +93,10 @@ public sh_hero_init(id, heroID, mode)
 	if (gHeroID != heroID)
 		return;
 
-	switch(mode) {
-		case SH_HERO_ADD: {
-			gHasWolverine[id] = true;
-#if defined USE_WEAPON_MODEL
-			if (gModelLoaded && get_user_weapon(id) == CSW_KNIFE)
-				switch_model(id);
-#endif
-		}
-		case SH_HERO_DROP: {
-			gHasWolverine[id] = false;
-#if defined USE_WEAPON_MODEL
-			if (gModelLoaded && get_user_weapon(id) == CSW_KNIFE)
-				reset_model(id);
-#endif
-		}
-	}
+	gHasWolverine[id] = mode ? true : false;
 
 	sh_debug_message(id, 1, "%s %s", gHeroName, mode ? "ADDED" : "DROPPED");
 }
-//----------------------------------------------------------------------------------------------
-#if defined USE_WEAPON_MODEL
-@Forward_Knife_Deploy_Post(weapon_ent)
-{
-	if (!sh_is_active())
-		return HAM_IGNORED;
-
-	// Get weapon's owner
-	new owner = get_ent_data_entity(weapon_ent, "CBasePlayerItem", "m_pPlayer");
-	
-	switch_model(owner);
-	return HAM_IGNORED;
-}
-//----------------------------------------------------------------------------------------------
-switch_model(index)
-{
-	if (!is_user_alive(index) || !gHasWolverine[index])
-		return;
-
-	if (cs_get_user_shield(index))
-		return;
-	
-	set_pev(index, pev_viewmodel2, gModel_V_Knife);
-}
-//----------------------------------------------------------------------------------------------
-reset_model(index)
-{
-	if (!is_user_alive(index))
-		return;
-
-	if (cs_get_user_shield(index))
-		return;
-	
-	new weaponEnt = cs_get_user_weapon_entity(index);
-	
-	// Let CS update weapon models
-	ExecuteHamB(Ham_Item_Deploy, weaponEnt);
-}
-#endif
 //----------------------------------------------------------------------------------------------
 @Task_WolvLoop()
 {
