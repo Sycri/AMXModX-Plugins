@@ -22,9 +22,9 @@
  * @note		Use this instead of client_damage() to avoid problems with recursion when using sh_extra_damage().
  * 				Extra damage from sh_extra_damage() will not be catched with this unlike client_damage().
  *
- * @param victim		The index of the victim.
- * @param attacker		The index of the attacker.
- * @param damage		The amount of damage received after CS armor/friendlyfire calculations.
+ * @param victim	The index of the victim.
+ * @param attacker	The index of the attacker.
+ * @param damage	The amount of damage received after CS armor/friendlyfire calculations.
  * @param damagebits	The type of damage done. (see hlsdk_const.inc for DMG_ constants)
  * @noreturn
  */
@@ -61,6 +61,6 @@ native sh_block_extradamage(id, bool:block = true);
  * @param dmgStun		Set True to do damage stun on victim, otherwise False.
  * @param dmgFFmsg		Set True to show friendly fire chat message "John Doe attacked a teammate", otherwise False.
  * @param dmgOrigin		Origin of damage bits direction (red flash indicators).
- * @return		True on success, otherwise false.
+ * @return			True on success, otherwise false.
  */
 native sh_extra_damage(victim, attacker, damage, const wpnDescription[], headshot = 0, dmgMode = SH_DMG_MULT, bool:dmgStun = false, bool:dmgFFmsg = true, const Float:dmgOrigin[3] = {0.0,0.0,0.0});

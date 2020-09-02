@@ -22,22 +22,23 @@
 
 new gSuperHeroCount;
 
+new Float:gHeroMinDefenseMult[SH_MAXHEROS][CSW_LAST_WEAPON + 1];
 new Float:gHeroMaxDamageMult[SH_MAXHEROS][CSW_LAST_WEAPON + 1];
 
 // Player bool variables (using bit-fields for lower memory footprint and better CPU performance)
 #define flag_get(%1,%2)			(%1 & (1 << (%2 & 31)))
-#define flag_get_boolean(%1,%2)	(flag_get(%1,%2) ? true : false)
+#define flag_get_boolean(%1,%2)		(flag_get(%1,%2) ? true : false)
 #define flag_set(%1,%2)			%1 |= (1 << (%2 & 31))
 #define flag_clear(%1,%2)		%1 &= ~(1 << (%2 & 31))
 
+new gBlockDefenseMultiplier;
 new gBlockDamageMultiplier;
 new gBlockWeapons;
 
 new Float:gReloadTime[MAX_PLAYERS + 1];
-new bool:gMapBlockWeapons[CSW_LAST_WEAPON + 1]; //1-30 CSW_ constants
+new gMapBlockWeapons; //1-30 CSW_ bit-field
 
 new CvarReloadMode;
-new CvarDebugMessages;
 
 //----------------------------------------------------------------------------------------------
 public plugin_init()
@@ -47,8 +48,6 @@ public plugin_init()
 	RegisterHamPlayer(Ham_TakeDamage, "@Forward_Player_TakeDamage_Pre");
 
 	bind_pcvar_num(create_cvar("sh_reloadmode", "1"), CvarReloadMode);
-	
-	bind_pcvar_num(get_cvar_pointer("sh_debug_messages"), CvarDebugMessages);
 }
 //----------------------------------------------------------------------------------------------
 public plugin_natives()
@@ -56,7 +55,9 @@ public plugin_natives()
 	register_library("sh_core_weapons");
 	
 	register_native("sh_set_hero_dmgmult", "@Native_SetHeroDamageMultiplier");
+	register_native("sh_set_hero_defmult", "@Native_SetHeroDefenseMultiplier");
 	register_native("sh_block_hero_dmgmult", "@Native_BlockHeroDamageMultiplier");
+	register_native("sh_block_hero_defmult", "@Native_BlockHeroDefenseMultiplier");
 	register_native("sh_block_weapons", "@Native_BlockWeapons");
 	register_native("sh_drop_weapon", "@Native_DropWeapon");
 	register_native("sh_give_weapon", "@Native_GiveWeapon");
@@ -121,7 +122,7 @@ giveWeaponConfig()
 
 	new data[512], mapName[32], blockMapName[32];
 	new blockWeapons[512], weapon[16], weaponName[32];
-	new checkLength, i, weaponID;
+	new checkLength, weaponID;
 
 	get_mapname(mapName, charsmax(mapName));
 
@@ -138,11 +139,10 @@ giveWeaponConfig()
 
 		//all maps or check for something more specific?
 		if (blockMapName[0] != '*') {
-
 			//How much of the map name do we check?
 			checkLength = strlen(blockMapName);
 
-			if (blockMapName[checkLength-1] == '*')
+			if (blockMapName[checkLength - 1] == '*')
 				--checkLength;
 			else //Largest length between the 2, do this because of above check
 				checkLength = max(checkLength, strlen(mapName));
@@ -159,14 +159,23 @@ giveWeaponConfig()
 		strtolower(blockWeapons);
 
 		while (blockWeapons[0] != '^0') {
-			//trim any spaces left over especially from strtok
-			trim(blockWeapons);
-			strtok(blockWeapons, weapon, charsmax(weapon), blockWeapons, 415, ',', 1);
+			strtok2(blockWeapons, weapon, charsmax(weapon), blockWeapons, charsmax(blockWeapons), ',', TRIM_FULL);
 
 			if (equal(weapon, "all")) {
 				//Set all 1-30 CSW_ constants
-				for (i = CSW_P228; i <= CSW_P90; ++i)
-					gMapBlockWeapons[i] = gMapBlockWeapons[i] ? false : true;
+				gMapBlockWeapons ^= CSW_ALL_WEAPONS;
+			} else if (equal(weapon, "pistols")) {
+				gMapBlockWeapons ^= CSW_ALL_PISTOLS;
+			} else if (equal(weapon, "shotguns")) {
+				gMapBlockWeapons ^= CSW_ALL_SHOTGUNS;
+			} else if (equal(weapon, "smgs")) {
+				gMapBlockWeapons ^= CSW_ALL_SMGS;
+			} else if (equal(weapon, "rifles")) {
+				gMapBlockWeapons ^= CSW_ALL_RIFLES;
+			} else if (equal(weapon, "sniperrifles")) {
+				gMapBlockWeapons ^= CSW_ALL_SNIPERRIFLES;
+			} else if (equal(weapon, "grenades")) {
+				gMapBlockWeapons ^= CSW_ALL_GRENADES;
 			} else {
 				//Set named weapon
 				formatex(weaponName, charsmax(weaponName), "weapon_%s", weapon);
@@ -177,7 +186,7 @@ giveWeaponConfig()
 					continue;
 				}
 
-				gMapBlockWeapons[weaponID] = gMapBlockWeapons[weaponID] ? false : true;
+				gMapBlockWeapons ^= (1 << weaponID);
 			}
 		}
 
@@ -207,6 +216,26 @@ giveWeaponConfig()
 	return true;
 }
 //----------------------------------------------------------------------------------------------
+//native sh_set_hero_defmult(heroID, pcvarDefense, const weaponID = 0)
+@Native_SetHeroDefenseMultiplier(plugin_id, num_params)
+{
+	new heroID = get_param(1);
+
+	//Have to access sh_get_num_heroes() directly because doing this during plugin_init()
+	if (heroID < 0 || heroID >= sh_get_num_heroes()) {
+		log_error(AMX_ERR_NATIVE, "[SH] Invalid Hero ID (%d)", heroID);
+		return false;
+	}
+
+	new pcvarDefenseMult = get_param(2);
+	new weaponID = get_param(3);
+
+	sh_debug_message(0, 3, "Set Defense Multiplier -> HeroID: %d - Multiplier: %.3f - Weapon: %d", heroID, get_pcvar_float(pcvarDefenseMult), weaponID);
+
+	bind_pcvar_float(pcvarDefenseMult, gHeroMinDefenseMult[heroID][weaponID]); // pCVAR expected!
+	return true;
+}
+//----------------------------------------------------------------------------------------------
 //native sh_block_hero_dmgmult(id, bool:block = true)
 @Native_BlockHeroDamageMultiplier(plugin_id, num_params)
 {
@@ -221,6 +250,23 @@ giveWeaponConfig()
 		flag_set(gBlockDamageMultiplier, id);
 	else
 		flag_clear(gBlockDamageMultiplier, id);
+	return true;
+}
+//----------------------------------------------------------------------------------------------
+//native sh_block_hero_defmult(id, bool:block = true)
+@Native_BlockHeroDefenseMultiplier(plugin_id, num_params)
+{
+	new id = get_param(1);
+
+	if (!is_user_connected(id)) {
+		log_error(AMX_ERR_NATIVE, "[SH] Invalid Player (%d)", id);
+		return false;
+	}
+
+	if (get_param(2))
+		flag_set(gBlockDefenseMultiplier, id);
+	else
+		flag_clear(gBlockDefenseMultiplier, id);
 	return true;
 }
 //----------------------------------------------------------------------------------------------
@@ -321,7 +367,7 @@ giveWeapon(id, weaponID, bool:switchTo)
 	if (weaponID < CSW_P228 || weaponID > CSW_P90)
 		return 0;
 
-	if (gMapBlockWeapons[weaponID])
+	if (gMapBlockWeapons & (1 << weaponID))
 		return 0;
 
 	if (!user_has_weapon(id, weaponID)) {
@@ -361,7 +407,7 @@ giveWeapon(id, weaponID, bool:switchTo)
 		new weaponID = get_weaponid(itemName);
 		if (weaponID) {
 			//It's a weapon see if it is blocked or user already has it
-			if (gMapBlockWeapons[weaponID] || user_has_weapon(id, weaponID))
+			if (gMapBlockWeapons & (1 << weaponID) || user_has_weapon(id, weaponID))
 				return 0;
 		}
 
@@ -484,9 +530,6 @@ giveWeapon(id, weaponID, bool:switchTo)
 	// if (victim != attacker && cs_get_user_team(victim) == cs_get_user_team(attacker) && !CvarFreeForAll)
 		// return HAM_IGNORED;
 
-	if (flag_get_boolean(gBlockDamageMultiplier, attacker))
-		return HAM_IGNORED;
-
 	new weaponID;
 	if (damagebits & DMG_GRENADE)
 		weaponID = CSW_HEGRENADE;
@@ -498,13 +541,13 @@ giveWeapon(id, weaponID, bool:switchTo)
 	if (!weaponID)
 		return HAM_IGNORED;
 
-	new Float:dmgmult = getMaxDamageMult(attacker, weaponID);
+	if (!flag_get_boolean(gBlockDamageMultiplier, attacker))
+		damage *= getMaxDamageMult(attacker, weaponID);
 
-	//Damage is not increased damage
-	if (dmgmult <= 1.0)
-		return HAM_IGNORED;
+	if (!flag_get_boolean(gBlockDefenseMultiplier, attacker))
+		damage *= getMinDamageMult(attacker, weaponID);
 
-	SetHamParamFloat(4, damage * dmgmult);
+	SetHamParamFloat(4, damage);
 	return HAM_HANDLED;
 }
 //----------------------------------------------------------------------------------------------
@@ -538,6 +581,38 @@ Float:getMaxDamageMult(id, weaponID)
 	}
 
 	return returnDamageMult;
+}
+//----------------------------------------------------------------------------------------------
+Float:getMinDamageMult(id, weaponID)
+{
+	if (flag_get_boolean(gBlockDefenseMultiplier, id))
+		return 1.0;
+
+	static Float:returnDefenseMult, Float:heroDefenseMult, i;
+	static playerPowerCount, heroID;
+	returnDefenseMult = 1.0;
+	playerPowerCount = sh_get_user_powers(id);
+
+	for (i = 1; i <= playerPowerCount; ++i) {
+		heroID = sh_get_user_hero(id, i);
+
+		if (-1 < heroID < gSuperHeroCount) {
+			// Check hero for all weapons wildcard first
+			heroDefenseMult = gHeroMinDefenseMult[heroID][0];
+
+			if (heroDefenseMult >= 1.0) {
+				// Check hero for weapon that was passed in
+				heroDefenseMult = gHeroMinDefenseMult[heroID][weaponID];
+
+				if (heroDefenseMult >= 1.0)
+					continue;
+			}
+
+			returnDefenseMult = floatmax(returnDefenseMult, heroDefenseMult);
+		}
+	}
+
+	return returnDefenseMult;
 }
 //----------------------------------------------------------------------------------------------
 createGiveWeaponConfig(const wpnBlockFile[])

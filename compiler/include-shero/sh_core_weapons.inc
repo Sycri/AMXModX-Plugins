@@ -23,6 +23,21 @@
 // IMPORTANT: Make sure these are set AFTER cvars are registered
 
 /**
+ * Sets hero's defense multiplier for the specified cs/cz weapon. (Optional)
+ * Multipliers do not stack, values from user's heroes are compared and lowest is applied.
+ * If multiple weapons required, native must be called separately for each weapon.
+ *
+ * @note		A Multiplier value of 1.0 or above is ignored.
+ *				Multiplier is applied before armor reduces damage.
+ *
+ * @param heroID	The index of the hero.
+ * @param pcvarDefMult	The pcvar value of the defense multiplier CVAR for the specified weaponID.
+ * @param weaponID	The CSW_ constant of the weapon to set defense multiplier for, 0 is for all weapons. (see cstrike_const.inc)
+ * @return		True, otherwise false if invalid hero.
+ */
+native sh_set_hero_defmult(heroID, pcvarDefMult, const weaponID = 0);
+
+/**
  * Sets hero's damage multiplier for the specified cs/cz weapon. (Optional)
  * Multipliers do not stack, values from user's heroes are compared and greatest is applied.
  * If multiple weapons required, native must be called separately for each weapon.
@@ -31,13 +46,22 @@
  *				Multiplier is applied before armor reduces damage.
  *
  * @param heroID	The index of the hero.
- * @param pcvarWpnMult	The pcvar value of the damage multiplier CVAR for the specified weaponID.
+ * @param pcvarDmgMult	The pcvar value of the damage multiplier CVAR for the specified weaponID.
  * @param weaponID	The CSW_ constant of the weapon to set damage multiplier for, 0 is for all weapons. (see cstrike_const.inc)
  * @return		True, otherwise false if invalid hero.
  */
-native sh_set_hero_dmgmult(heroID, pcvarWpnMult, const weaponID = 0);
+native sh_set_hero_dmgmult(heroID, pcvarDmgMult, const weaponID = 0);
 
 //------------
+
+/**
+ * Blocks the client's defense multiplication powers.
+ *
+ * @param id		The index of the client.
+ * @param block		Whether to set or remove the block.
+ * @return		True, otherwise false if invalid client.
+ */
+native sh_block_hero_defmult(id, bool:block = true);
 
 /**
  * Blocks the client's damage multiplication powers.

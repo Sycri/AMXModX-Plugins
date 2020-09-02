@@ -24,7 +24,7 @@ new gHeroMaxArmor[SH_MAXHEROS];
 
 // Player bool variables (using bit-fields for lower memory footprint and better CPU performance)
 #define flag_get(%1,%2)			(%1 & (1 << (%2 & 31)))
-#define flag_get_boolean(%1,%2)	(flag_get(%1,%2) ? true : false)
+#define flag_get_boolean(%1,%2)		(flag_get(%1,%2) ? true : false)
 #define flag_set(%1,%2)			%1 |= (1 << (%2 & 31))
 #define flag_clear(%1,%2)		%1 &= ~(1 << (%2 & 31))
 

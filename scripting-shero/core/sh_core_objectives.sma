@@ -157,8 +157,10 @@ resetBlock(id, flags, bool:set)
 		sh_block_hero_grav(id, set);
 
 	if (flags & VIP_BLOCK_EXTRADMG) {
-		if (LibraryExists(LIBRARY_WEAPONS, LibType_Library))
+		if (LibraryExists(LIBRARY_WEAPONS, LibType_Library)) {
 			sh_block_hero_dmgmult(id, set);
+			sh_block_hero_defmult(id, set);
+		}
 
 		if (LibraryExists(LIBRARY_EXTRADMG, LibType_Library))
 			sh_block_extradamage(id, set);

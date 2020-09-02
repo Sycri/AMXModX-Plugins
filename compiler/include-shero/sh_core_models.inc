@@ -28,8 +28,8 @@
  * @note		Max model name length is 32
  *
  * @param heroID	The index of the hero.
- * @param model	Model name.
- * @param team	Either CS_TEAM_T (Terrorists) or CS_TEAM_CT (Counter-Terrorists). (see cstrike_const.inc)
+ * @param model		Model name.
+ * @param team		Either CS_TEAM_T (Terrorists) or CS_TEAM_CT (Counter-Terrorists). (see cstrike_const.inc)
  * @return		True, otherwise false if invalid hero or team.
  */
 native sh_set_hero_playermodel(heroID, const model[], const any:team);

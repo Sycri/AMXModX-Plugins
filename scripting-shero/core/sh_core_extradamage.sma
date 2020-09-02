@@ -19,7 +19,7 @@
 
 // Player bool variables (using bit-fields for lower memory footprint and better CPU performance)
 #define flag_get(%1,%2)			(%1 & (1 << (%2 & 31)))
-#define flag_get_boolean(%1,%2)	(flag_get(%1,%2) ? true : false)
+#define flag_get_boolean(%1,%2)		(flag_get(%1,%2) ? true : false)
 #define flag_set(%1,%2)			%1 |= (1 << (%2 & 31))
 #define flag_clear(%1,%2)		%1 &= ~(1 << (%2 & 31))
 
@@ -189,6 +189,9 @@ public client_disconnected(id)
 		return HAM_IGNORED;
 
 	if (!is_user_alive(victim) || !is_user_connected(attacker))
+		return HAM_IGNORED;
+
+	if (cs_get_user_team(victim) == cs_get_user_team(attacker) && !sh_friendlyfire_on() && !CvarServerFreeForAll)
 		return HAM_IGNORED;
 
 	static Float:trueDamage;
