@@ -1,4 +1,4 @@
 [en]
 ADMIN_RESET_PLAYER_1 = ADMIN: reset %s
 ADMIN_RESET_PLAYER_2 = ADMIN %s: reset %s
-RESET_PLAYER_CMD_INFO = <target> <money> <weapons> <health> <armor> <frags> <deaths> - Reset player's stats
+RESET_PLAYER_CMD_INFO = <target> <flags> - Reset stats^na - money^nb - weapons^nc - health^nd - armor^ne - frags^nf - deaths

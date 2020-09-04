@@ -32,22 +32,30 @@
 *				******** AMX Mod X 1.90 and above Only ********
 *
 *	Description:
-*		An admin can reset players items, money, health, armor, deaths, and/or frags
+*		An admin can reset players' money, weapons, health, armor, deaths, and/or frags
 *
 *	CVARs:
 *		None
 *
 *	Admin Commands:
-*		amx_reset_player <target> <money> <weapons> <health> <armor> <frags> <deaths> - Reset player's stats
+*		amx_reset_player <target> <flags> - Reset stats
+*		a - money
+*		b - weapons
+*		c - health
+*		d - armor
+*		e - frags
+*		f - deaths
 *
 *	Credits:
 *		- ConnorMcLeod: For his suggestions
 *
 *	Changelog:
-*	v1.9 - Sycri - 08/20/20
+*	v1.9 - Sycri - 09/04/20
 *	 - Added multilingual support to the description of the command amx_reset_player
 *	 - Added FCVAR_SPONLY to cvar rp_version to make it unchangeable
 *	 - Changed the required admin level of the command amx_reset_player from ADMIN_BAN to ADMIN_SLAY
+*	 - Changed to use a flag-based system for checking what to reset
+*	 - Fixed frags not updating immediately on the scoreboard if deaths are also not reset
 *	 - Fixed the command amx_reset_player only checking the first toggle
 *	 - Forced usage of semicolons for better clarity
 *	 - Replaced amx_show_activity checking with show_activity_key
@@ -106,6 +114,8 @@ new const PLUGIN_VERSION[] = "1.9";
 
 new const ResetPlayerCommand[] = "amx_reset_player";
 
+new gmsgScoreInfo;
+
 new CvarStartMoney;
 
 public plugin_init()
@@ -115,6 +125,8 @@ public plugin_init()
 	
 	register_concmd(ResetPlayerCommand, "@ConsoleCommand_ResetPlayer", ADMIN_SLAY, "RESET_PLAYER_CMD_INFO", .info_ml = true);
 
+	gmsgScoreInfo = get_user_msgid("ScoreInfo");
+
 	bind_pcvar_num(get_cvar_pointer("mp_startmoney"), CvarStartMoney);
 	
 	create_cvar("rp_version", PLUGIN_VERSION, FCVAR_SERVER | FCVAR_SPONLY);
@@ -122,27 +134,25 @@ public plugin_init()
 
 @ConsoleCommand_ResetPlayer(id, level, cid)
 {
-	if (!cmd_access(id, level, cid, 7))
+	if (!cmd_access(id, level, cid, 3))
 		return PLUGIN_HANDLED;
 	
-	new arg[32];
-	read_argv(1, arg, charsmax(arg));
+	new arg1[32];
+	read_argv(1, arg1, charsmax(arg1));
 	
-	new player = cmd_target(id, arg, CMDTARGET_OBEY_IMMUNITY | CMDTARGET_ALLOW_SELF);
-	if (!player) 
+	new player = cmd_target(id, arg1, CMDTARGET_OBEY_IMMUNITY | CMDTARGET_ALLOW_SELF);
+	if (!player)
 		return PLUGIN_HANDLED;
-	
-	new name[32], admin[32];
-	get_user_name(player, name, charsmax(name));
-	get_user_name(id, admin, charsmax(admin));
 
-	show_activity_key("ADMIN_RESET_PLAYER_1", "ADMIN_RESET_PLAYER_2", admin, name);
+	new arg2[7];
+	read_argv(2, arg2, charsmax(arg2));
+	new flags = read_flags(arg2);
 	
-	if (read_argv_int(2) == 1) // Money
+	if (flags & 1) // Money
 		cs_set_user_money(player, CvarStartMoney);
 	
 	if (is_user_alive(player)) {
-		if (read_argv_int(3) == 1) { // Weapons
+		if (flags & 2) { // Weapons
 			strip_user_weapons(player);
 			give_item(player, "weapon_knife");
 
@@ -158,17 +168,33 @@ public plugin_init()
 			}
 		}
 	
-		if (read_argv_int(4) == 1) // Health
+		if (flags & 4) // Health
 			set_user_health(player, pev(player, pev_max_health));
 	
-		if (read_argv_int(5) == 1) // Armor
+		if (flags & 8) // Armor
 			cs_set_user_armor(player, 0, CS_ARMOR_NONE);
 	}
 	
-	if (read_argv_int(6) == 1) // Frags
+	if (flags & 16) { // Frags
 		set_user_frags(player, 0);
+
+		if (!(flags & 32)) { // Update scoreboard only if deaths are not reset
+			emessage_begin(MSG_BROADCAST, gmsgScoreInfo);
+			ewrite_byte(player); // id
+			ewrite_short(0); // frags
+			ewrite_short(cs_get_user_deaths(player)); // deaths
+			ewrite_short(0); // class?
+			ewrite_short(_:cs_get_user_team(player)); // team
+			emessage_end();
+		}
+	}
 	
-	if (read_argv_int(7) == 1) // Deaths
+	if (flags & 32) // Deaths
 		cs_set_user_deaths(player, 0);
+
+	new name[32], admin[32];
+	get_user_name(player, name, charsmax(name));
+	get_user_name(id, admin, charsmax(admin));
+	show_activity_key("ADMIN_RESET_PLAYER_1", "ADMIN_RESET_PLAYER_2", admin, name);
 	return PLUGIN_HANDLED;
 }

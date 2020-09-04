@@ -78,11 +78,11 @@
 *	 - Added Ham_AddPlayerItem since Ham_Player_ResetMaxSpeed does not catch weapon pickups or purchases
 *	 - Added [SH] Core: Models to standardize the setting of player, view, and weapon models from hero plugins
 *	 - Added natives which allow the blocking of powers to give more compatibility with other plugins
-*	 - Changed sh_extra_damage to use hamsandwhich Ham_TakeDamage.
+*	 - Changed sh_extra_damage to use hamsandwhich Ham_TakeDamage
 *	 - Changed the function chatMessage so that it uses client_print_color
 *	 - Changed most cvars from get_pcvar_num to bind_pcvar_num so variables could be used directly
 *	 - Changed from RegisterHamFromEntity to RegisterHamPlayer for cleaner code
-*	 - Completed setting gravity based on current weapon.
+*	 - Completed setting gravity based on current weapon
 *	 - Forced usage of semicolons for better clarity
 *	 - Removed all previous backwards compatibility
 *	 - Removed code that uses old syntax for MySQL 3.23
@@ -127,7 +127,7 @@
 *	 - Converted fully to new file system over inefficient write_file methods
 *	 - Added new natives, renamed old, and added some extra options that were not in old
 *	 - Added optional modes for reload that can be controlled server wide
-*	 - Added VIP support, bonus xp for vip assassination/rescue.
+*	 - Added VIP support, bonus xp for vip assassination/rescue
 *	 - Added optional blocks for VIP: power key usage, sh give weapons, ect.
 *	 - Added cvar for amount of players required to be in server for mercy/hostage/bomb/vip XP
 *	 - Added config file to disable sh giving of specified weapon based on map
@@ -231,7 +231,7 @@
 *	 - Fixed small bug in playerskills console output
 *	 - Fixed version CVAR so it will change when upgrading without a server restart
 *	 - Plugin tries to make SQL tables if they don't exist already
-*	 - Fixed bug if superhero is disabled no one could chat.
+*	 - Fixed bug if superhero is disabled no one could chat
 *	 - Tweaked the speed system to make it spam less on AMXModX
 *	 - Made the admin commands idiot proof
 *	 - Made use of plugin_cfg() stock instead of a task
@@ -288,7 +288,7 @@
 *	 - Found a way to reset speed without forcing a weapon switch
 *	 - Fixed bugs with menu resetting to page 1 while you are in it
 *	 - Made it so powers are not disabled (for freezetime) until the first person spawns
-*	 - Changed function of debug cvar, it is now the debugging level.
+*	 - Changed function of debug cvar, it is now the debugging level
 *
 *	v1.17.2 - JTP10181 - 08/17/04
 *	 - Fixed runtime errors if you exceed the MAXHEROS amount
@@ -328,8 +328,8 @@
 *	 - Redid the damage function in the inc file, blocking death messages with vexd and updating scoreboard properly
 *	 - Fixed bug with clearpowers when menu was on screen, it would be stale and not refresh
 *	 - Added function to adjust the servers sv_maxspeed so speed increasing heroes can work properly
-*	 - Redid the layout for most of the stock heroes so its more standardized.
-*	 - Removed xtrafun from all heroes possible to better support amx 0.9.9.
+*	 - Redid the layout for most of the stock heroes so its more standardized
+*	 - Removed xtrafun from all heroes possible to better support amx 0.9.9
 *
 *	v1.17 - JTP10181 - 07/27/04
 *	 - Updated all motd box output to be more easy to follow
@@ -357,14 +357,14 @@
 *	REV 1.13.2 - unabomber radius change, bomberman, cyclops slightly, anubis
 *	REV 1.13.1 - changed xavier, rolled in aquaman
 *	REV 1.12b - reviewing xtrafun based heroes: ironman, skeletor, spiderman, xavier ( make sure user is alive b4 getting origin on new_round), nightcrawler, windwalker
-*				Going to try and eliminate xtrafun calls on new joiners to see if can elimnate the crashes.
+*				Going to try and eliminate xtrafun calls on new joiners to see if can elimnate the crashes
 *	REV 1.12a - fixed loadXP bug - ppl losing XP - various small checks
 *	REV 1.11b  - not using max_players() function any longer - test...
 *	REV 1.11a - Made hero levels a number instead of reading cvars..., changes cleanXP to make a little better
 *	REV 1.10f - take out playerpowerflags..., gaurded key presses by gPlayerBinds instead of gPlayerPowers
 *	REV 1.10d - make bomb/hostage, speed, health, armor, gravity turned into vars instead of cvar reads
 *	REV 1.10c - refined speed hack bug fix, FIXED playerskills 4096 vs 2048 copy problem
-*				changed batman and hob to zeus with weapons.  Batman no longer gets defuse packs.
+*				changed batman and hob to zeus with weapons. Batman no longer gets defuse packs
 *	REVE 1.10b
 *	REV  1.10a
 *	REV 1.09 - commented out client_connect code (should be done on disconnect), make sure user is alive on newRound(),
@@ -386,23 +386,23 @@
 *
 *  To-Do:
 *
-*	- Admin menu for giving XP / levels / etc. Also for resetting and other admin commands. (separate plugin).
-*	- Config file to make heroes only available to certain access flags.
-*	- Create a Block weapon fire/sound/animation for laser type heroes instead of having them switch to knife.
-*	- Look into blocking power key use native maybe by user / hero id.
-*	- Find different method to indicate sh_set_godmode (remove forced blue glow).
-*	- CVAR for old style XP modding - how fast to level ("slow", "medium", "fast", "normal", "long").
-*	- Make superhero IDs start at 1 not 0.
-*	- Get rid of binaries tables in mysql.
-*	- Make command to autogenerate ini up to X levels.
-*	- Save sh bans using flag into saved data instead of the ban file (possible issue with nvault, and that data must be saved then).
-*	- Make use of multilingual support for "core" messages only.
-*	- Remove all use of set_user_info, find a better method to tell when a power is in use (possibly native so hero can say it's in use).
-*	- Run a check to make sure no menu is open before opening powers menu.
-*	- Add chosen hero child page to menu to verify hero choice, but mainly to add hero info there instead of using hud messages for powerHelp info.
-*	- Clean up any issues with the say commands.
-*	- Possibly use threading only for mysql saving at round end (may require too much recoding).
-*	- Convert the read_file usage in superheromysql.inc to use new file natives.
+*	- Admin menu for giving XP / levels / etc. Also for resetting and other admin commands. (separate plugin)
+*	- Config file to make heroes only available to certain access flags
+*	- Create a Block weapon fire/sound/animation for laser type heroes instead of having them switch to knife
+*	- Look into blocking power key use native maybe by user / hero id
+*	- Find different method to indicate sh_set_godmode (remove forced blue glow)
+*	- CVAR for old style XP modding - how fast to level ("slow", "medium", "fast", "normal", "long")
+*	- Make superhero IDs start at 1 not 0
+*	- Get rid of binaries tables in mysql
+*	- Make command to autogenerate ini up to X levels
+*	- Save sh bans using flag into saved data instead of the ban file (possible issue with nvault, and that data must be saved then)
+*	- Make use of multilingual support for "core" messages only
+*	- Remove all use of set_user_info, find a better method to tell when a power is in use (possibly native so hero can say it's in use)
+*	- Run a check to make sure no menu is open before opening powers menu
+*	- Add chosen hero child page to menu to verify hero choice, but mainly to add hero info there instead of using hud messages for powerHelp info
+*	- Clean up any issues with the say commands
+*	- Possibly use threading only for mysql saving at round end (may require too much recoding)
+*	- Convert the read_file usage in superheromysql.inc to use new file natives
 *	- Add check to skip power key if pressed too fast to stop aliasing multiple power keys at the same time.
 *	- Make sh more csdm/respawn friendly, remove reliance on round ending
 * 	- Make restricting bonus xp bomb tracking optional
