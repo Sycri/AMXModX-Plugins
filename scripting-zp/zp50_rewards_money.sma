@@ -19,7 +19,6 @@
 #define LIBRARY_SURVIVOR "zp50_class_survivor"
 #include <zp50_class_survivor>
 
-#define MAXPLAYERS 32
 #define CS_MONEY_LIMIT 16000
 #define NO_DATA -1
 
@@ -30,12 +29,12 @@ const OFFSET_CSMONEY = 115
 new g_GameRestarting
 new g_MsgMoney, g_MsgMoneyBlockStatus
 
-new g_MoneyAtRoundStart[MAXPLAYERS+1] = { NO_DATA , ...}
-new g_MoneyRewarded[MAXPLAYERS+1] = { NO_DATA , ...}
-new g_MoneyBeforeKill[MAXPLAYERS+1]
+new g_MoneyAtRoundStart[MAX_PLAYERS + 1] = { NO_DATA , ...}
+new g_MoneyRewarded[MAX_PLAYERS + 1] = { NO_DATA , ...}
+new g_MoneyBeforeKill[MAX_PLAYERS + 1]
 
-new Float:g_DamageDealtToZombies[MAXPLAYERS+1]
-new Float:g_DamageDealtToHumans[MAXPLAYERS+1]
+new Float:g_DamageDealtToZombies[MAX_PLAYERS + 1]
+new Float:g_DamageDealtToHumans[MAX_PLAYERS + 1]
 
 new cvar_money_winner, cvar_money_loser
 new cvar_money_damage, cvar_money_zombie_damaged_hp, cvar_money_human_damaged_hp

@@ -32,8 +32,6 @@ new const ZP_SETTINGS_FILE[] = "zombieplague.ini"
 // Models
 new g_model_vknife_human[MODEL_MAX_LENGTH] = "models/v_knife.mdl"
 
-#define MAXPLAYERS 32
-
 #define HUMANS_DEFAULT_NAME "Human"
 #define HUMANS_DEFAULT_DESCRIPTION "Default"
 #define HUMANS_DEFAULT_HEALTH 100
@@ -42,7 +40,7 @@ new g_model_vknife_human[MODEL_MAX_LENGTH] = "models/v_knife.mdl"
 
 // For class list menu handlers
 #define MENU_PAGE_CLASS g_menu_data[id]
-new g_menu_data[MAXPLAYERS+1]
+new g_menu_data[MAX_PLAYERS + 1]
 
 enum _:TOTAL_FORWARDS
 {
@@ -61,8 +59,8 @@ new Array:g_HumanClassSpeed
 new Array:g_HumanClassGravity
 new Array:g_HumanClassModelsFile
 new Array:g_HumanClassModelsHandle
-new g_HumanClass[MAXPLAYERS+1]
-new g_HumanClassNext[MAXPLAYERS+1]
+new g_HumanClass[MAX_PLAYERS + 1]
+new g_HumanClassNext[MAX_PLAYERS + 1]
 new g_AdditionalMenuText[32]
 
 public plugin_init()

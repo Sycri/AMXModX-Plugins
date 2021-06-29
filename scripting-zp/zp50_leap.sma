@@ -18,10 +18,8 @@
 #define LIBRARY_SURVIVOR "zp50_class_survivor"
 #include <zp50_class_survivor>
 
-#define MAXPLAYERS 32
-
 new g_GameModeInfectionID
-new Float:g_LeapLastTime[MAXPLAYERS+1]
+new Float:g_LeapLastTime[MAX_PLAYERS + 1]
 
 new cvar_leap_zombie, cvar_leap_zombie_force, cvar_leap_zombie_height, cvar_leap_zombie_cooldown
 new cvar_leap_nemesis, cvar_leap_nemesis_force, cvar_leap_nemesis_height, cvar_leap_nemesis_cooldown

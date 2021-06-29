@@ -16,8 +16,6 @@
 #include <hamsandwich>
 #include <zp50_core_const>
 
-#define MAXPLAYERS 32
-
 // Custom Forwards
 enum _:TOTAL_FORWARDS
 {

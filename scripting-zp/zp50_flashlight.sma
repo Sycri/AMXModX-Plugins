@@ -28,8 +28,6 @@ const IMPULSE_FLASHLIGHT = 100
 
 new const g_sound_flashlight[] = "items/flashlight1.wav"
 
-#define MAXPLAYERS 32
-
 #define flag_get(%1,%2) (%1 & (1 << (%2 & 31)))
 #define flag_get_boolean(%1,%2) (flag_get(%1,%2) ? true : false)
 #define flag_set(%1,%2) %1 |= (1 << (%2 & 31))
@@ -38,8 +36,8 @@ new const g_sound_flashlight[] = "items/flashlight1.wav"
 new g_MsgFlashlight, g_MsgFlashBat
 
 new g_FlashlightActive
-new g_FlashlightCharge[MAXPLAYERS+1]
-new Float:g_FlashlightLastTime[MAXPLAYERS+1]
+new g_FlashlightCharge[MAX_PLAYERS + 1]
+new Float:g_FlashlightLastTime[MAX_PLAYERS + 1]
 
 new cvar_flashlight_starting_charge
 new cvar_flashlight_custom, cvar_flashlight_radius

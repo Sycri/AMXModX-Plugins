@@ -18,10 +18,8 @@
 #include <zp50_class_survivor>
 #include <zp50_ammopacks>
 
-#define MAXPLAYERS 32
-
-new Float:g_DamageDealtToZombies[MAXPLAYERS+1]
-new Float:g_DamageDealtToHumans[MAXPLAYERS+1]
+new Float:g_DamageDealtToZombies[MAX_PLAYERS + 1]
+new Float:g_DamageDealtToHumans[MAX_PLAYERS + 1]
 
 new cvar_ammop_winner, cvar_ammop_loser
 new cvar_ammop_damage, cvar_ammop_zombie_damaged_hp, cvar_ammop_human_damaged_hp

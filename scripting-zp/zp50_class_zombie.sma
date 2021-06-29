@@ -24,8 +24,6 @@
 // Zombie Classes file
 new const ZP_ZOMBIECLASSES_FILE[] = "zp_zombieclasses.ini"
 
-#define MAXPLAYERS 32
-
 #define ZOMBIES_DEFAULT_NAME "Zombie"
 #define ZOMBIES_DEFAULT_DESCRIPTION "Default"
 #define ZOMBIES_DEFAULT_HEALTH 1800
@@ -41,7 +39,7 @@ const ZOMBIE_DEFAULT_ALLOWED_WEAPON = CSW_KNIFE
 
 // For class list menu handlers
 #define MENU_PAGE_CLASS g_menu_data[id]
-new g_menu_data[MAXPLAYERS+1]
+new g_menu_data[MAX_PLAYERS + 1]
 
 enum _:TOTAL_FORWARDS
 {
@@ -64,8 +62,8 @@ new Array:g_ZombieClassModelsFile
 new Array:g_ZombieClassModelsHandle
 new Array:g_ZombieClassClawsFile
 new Array:g_ZombieClassClawsHandle
-new g_ZombieClass[MAXPLAYERS+1]
-new g_ZombieClassNext[MAXPLAYERS+1]
+new g_ZombieClass[MAX_PLAYERS + 1]
+new g_ZombieClassNext[MAX_PLAYERS + 1]
 new g_AdditionalMenuText[32]
 
 public plugin_init()

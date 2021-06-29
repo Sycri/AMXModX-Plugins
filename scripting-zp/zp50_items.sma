@@ -19,11 +19,9 @@
 // Extra Items file
 new const ZP_EXTRAITEMS_FILE[] = "zp_extraitems.ini"
 
-#define MAXPLAYERS 32
-
 // For item list menu handlers
 #define MENU_PAGE_ITEMS g_menu_data[id]
-new g_menu_data[MAXPLAYERS+1]
+new g_menu_data[MAX_PLAYERS + 1]
 
 enum _:TOTAL_FORWARDS
 {

@@ -47,8 +47,6 @@ new Array:g_sound_grenade_frost_break
 #define TASK_FROST_REMOVE 100
 #define ID_FROST_REMOVE (taskid - TASK_FROST_REMOVE)
 
-#define MAXPLAYERS 32
-
 #define flag_get(%1,%2) (%1 & (1 << (%2 & 31)))
 #define flag_get_boolean(%1,%2) (flag_get(%1,%2) ? true : false)
 #define flag_set(%1,%2) %1 |= (1 << (%2 & 31))
@@ -80,11 +78,11 @@ new g_Forwards[TOTAL_FORWARDS]
 new g_ForwardResult
 
 new g_IsFrozen
-new Float:g_FrozenGravity[MAXPLAYERS+1]
-new g_FrozenRenderingFx[MAXPLAYERS+1]
-new Float:g_FrozenRenderingColor[MAXPLAYERS+1][3]
-new g_FrozenRenderingRender[MAXPLAYERS+1]
-new Float:g_FrozenRenderingAmount[MAXPLAYERS+1]
+new Float:g_FrozenGravity[MAX_PLAYERS + 1]
+new g_FrozenRenderingFx[MAX_PLAYERS + 1]
+new Float:g_FrozenRenderingColor[MAX_PLAYERS + 1][3]
+new g_FrozenRenderingRender[MAX_PLAYERS + 1]
+new Float:g_FrozenRenderingAmount[MAX_PLAYERS + 1]
 
 new g_MsgDamage, g_MsgScreenFade
 new g_trailSpr, g_exploSpr, g_glassSpr

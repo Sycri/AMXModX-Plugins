@@ -53,8 +53,6 @@ const NADE_TYPE_NAPALM = 2222
 #define TASK_BURN 100
 #define ID_BURN (taskid - TASK_BURN)
 
-#define MAXPLAYERS 32
-
 // Custom Forwards
 enum _:TOTAL_FORWARDS
 {
@@ -63,7 +61,7 @@ enum _:TOTAL_FORWARDS
 new g_Forwards[TOTAL_FORWARDS]
 new g_ForwardResult
 
-new g_BurningDuration[MAXPLAYERS+1]
+new g_BurningDuration[MAX_PLAYERS + 1]
 
 new g_MsgDamage
 new g_trailSpr, g_exploSpr, g_flameSpr, g_smokeSpr
