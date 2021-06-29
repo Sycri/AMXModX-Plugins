@@ -1,9 +1,11 @@
-- Version: 5.0.9 (Aug 31, 2020)
+- Version: 5.0.9 (Aug 31, 2021)
 * Changed the function zp_colored_print so that it uses client_print_color
 * Removed [CS] Ham Hooks for Bots API since AMX Mod X 1.9.0 includes a similar thing by default
 * Removed [CS] Player Models API since AMX Mod X 1.9.0 fixed SVC_BAD errors for model setting
 * Removed backwards compatibility in includes for AMX Mod X versions older than 1.7.5
+* Removed fix for AMXX custom menus
 * Replaced deprecated forward client_disconnect with client_disconnected
+* Replaced constant MAXPLAYERS with MAX_PLAYERS which is available in AMX MOD X since version 1.8.3
 * Replaced variable g_MaxPlayers with MaxClients which is available in AMX Mod X since version 1.8.3
 * Replaced get_user_weapons with user_has_weapon to fix runtime error in cs_weap_restrict_api
 * Replaced %L with %l where appropriate for cleaner code
