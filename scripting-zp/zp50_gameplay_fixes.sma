@@ -147,7 +147,7 @@ public clcmd_changeteam(id)
 	// Block suicides by choosing a different team
 	if (get_pcvar_num(cvar_block_suicide) && g_GameModeStarted && is_user_alive(id))
 	{
-		zp_colored_print(id, "%L", id, "CANT_CHANGE_TEAM")
+		zp_colored_print(id, "%l", "CANT_CHANGE_TEAM")
 		return PLUGIN_HANDLED;
 	}
 	
@@ -302,7 +302,7 @@ public client_disconnect(leaving_player)
 			
 			new name[32]
 			get_user_name(id, name, charsmax(name))
-			zp_colored_print(0, "%L", LANG_PLAYER, "LAST_ZOMBIE_LEFT", name)
+			zp_colored_print(0, "%l", "LAST_ZOMBIE_LEFT", name)
 			
 			if (LibraryExists(LIBRARY_NEMESIS, LibType_Library) && zp_class_nemesis_get(leaving_player))
 			{
@@ -326,7 +326,7 @@ public client_disconnect(leaving_player)
 			
 			new name[32]
 			get_user_name(id, name, charsmax(name))
-			zp_colored_print(0, "%L", LANG_PLAYER, "LAST_HUMAN_LEFT", name)
+			zp_colored_print(0, "%l", "LAST_HUMAN_LEFT", name)
 			
 			if (LibraryExists(LIBRARY_SURVIVOR, LibType_Library) && zp_class_survivor_get(leaving_player))
 			{

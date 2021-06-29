@@ -96,7 +96,7 @@ public event_round_start()
 public task_welcome_msg()
 {
 	zp_colored_print(0, "==== ^x04Zombie Plague %s^x01 ====", ZP_VERSION_STR_LONG)
-	zp_colored_print(0, "%L", LANG_PLAYER, "NOTICE_INFO1")
+	zp_colored_print(0, "%l", "NOTICE_INFO1")
 }
 
 public clcmd_chooseteam(id)
@@ -129,52 +129,54 @@ show_menu_main(id)
 	
 	// Title
 	len += formatex(menu[len], charsmax(menu) - len, "\yZombie Plague %s^n^n", ZP_VERSION_STR_LONG)
+
+	SetGlobalTransTarget(id)
 	
 	// 1. Buy menu
 	if (LibraryExists(LIBRARY_BUYMENUS, LibType_Library) && (get_pcvar_num(cvar_buy_custom_primary)
 	|| get_pcvar_num(cvar_buy_custom_secondary) || get_pcvar_num(cvar_buy_custom_grenades)) && is_user_alive(id))
-		len += formatex(menu[len], charsmax(menu) - len, "\r1.\w %L^n", id, "MENU_BUY")
+		len += formatex(menu[len], charsmax(menu) - len, "\r1.\w %l^n", "MENU_BUY")
 	else
-		len += formatex(menu[len], charsmax(menu) - len, "\d1. %L^n", id, "MENU_BUY")
+		len += formatex(menu[len], charsmax(menu) - len, "\d1. %l^n", "MENU_BUY")
 	
 	// 2. Extra Items
 	if (LibraryExists(LIBRARY_ITEMS, LibType_Library) && is_user_alive(id))
-		len += formatex(menu[len], charsmax(menu) - len, "\r2.\w %L^n", id, "MENU_EXTRABUY")
+		len += formatex(menu[len], charsmax(menu) - len, "\r2.\w %l^n", "MENU_EXTRABUY")
 	else
-		len += formatex(menu[len], charsmax(menu) - len, "\d2. %L^n", id, "MENU_EXTRABUY")
+		len += formatex(menu[len], charsmax(menu) - len, "\d2. %l^n", "MENU_EXTRABUY")
 	
 	// 3. Zombie class
 	if (LibraryExists(LIBRARY_ZOMBIECLASSES, LibType_Library) && zp_class_zombie_get_count() > 1)
-		len += formatex(menu[len], charsmax(menu) - len, "\r3.\w %L^n", id, "MENU_ZCLASS")
+		len += formatex(menu[len], charsmax(menu) - len, "\r3.\w %l^n", "MENU_ZCLASS")
 	else
-		len += formatex(menu[len], charsmax(menu) - len, "\d3. %L^n", id, "MENU_ZCLASS")
+		len += formatex(menu[len], charsmax(menu) - len, "\d3. %l^n", "MENU_ZCLASS")
 	
 	// 4. Human class
 	if (LibraryExists(LIBRARY_HUMANCLASSES, LibType_Library) && zp_class_human_get_count() > 1)
-		len += formatex(menu[len], charsmax(menu) - len, "\r4.\w %L^n", id, "MENU_HCLASS")
+		len += formatex(menu[len], charsmax(menu) - len, "\r4.\w %l^n", "MENU_HCLASS")
 	else
-		len += formatex(menu[len], charsmax(menu) - len, "\d4. %L^n", id, "MENU_HCLASS")
+		len += formatex(menu[len], charsmax(menu) - len, "\d4. %l^n", "MENU_HCLASS")
 	
 	// 5. Unstuck
 	if (LibraryExists(LIBRARY_RANDOMSPAWN, LibType_Library) && is_user_alive(id))
-		len += formatex(menu[len], charsmax(menu) - len, "\r5.\w %L^n", id, "MENU_UNSTUCK")
+		len += formatex(menu[len], charsmax(menu) - len, "\r5.\w %l^n", "MENU_UNSTUCK")
 	else
-		len += formatex(menu[len], charsmax(menu) - len, "\d5. %L^n", id, "MENU_UNSTUCK")
+		len += formatex(menu[len], charsmax(menu) - len, "\d5. %l^n", "MENU_UNSTUCK")
 	
 	// 6. Help
-	len += formatex(menu[len], charsmax(menu) - len, "\r6.\w %L^n^n", id, "MENU_INFO")
+	len += formatex(menu[len], charsmax(menu) - len, "\r6.\w %l^n^n", "MENU_INFO")
 	
 	// 7. Choose Team
-	len += formatex(menu[len], charsmax(menu) - len, "\r7.\w %L^n^n", id, "MENU_CHOOSE_TEAM")
+	len += formatex(menu[len], charsmax(menu) - len, "\r7.\w %l^n^n", "MENU_CHOOSE_TEAM")
 	
 	// 9. Admin menu
 	if (LibraryExists(LIBRARY_ADMIN_MENU, LibType_Library) && is_user_admin(id))
-		len += formatex(menu[len], charsmax(menu) - len, "\r9.\w %L", id, "MENU_ADMIN")
+		len += formatex(menu[len], charsmax(menu) - len, "\r9.\w %l", "MENU_ADMIN")
 	else
-		len += formatex(menu[len], charsmax(menu) - len, "\d9. %L", id, "MENU_ADMIN")
+		len += formatex(menu[len], charsmax(menu) - len, "\d9. %l", "MENU_ADMIN")
 	
 	// 0. Exit
-	len += formatex(menu[len], charsmax(menu) - len, "^n^n\r0.\w %L", id, "MENU_EXIT")
+	len += formatex(menu[len], charsmax(menu) - len, "^n^n\r0.\w %l", "MENU_EXIT")
 	
 	show_menu(id, KEYSMENU, menu, -1, "Main Menu")
 }
@@ -198,10 +200,10 @@ public menu_main(id, key)
 				if (is_user_alive(id))
 					zp_buy_menus_show(id)
 				else
-					zp_colored_print(id, "%L", id, "CANT_BUY_WEAPONS_DEAD")
+					zp_colored_print(id, "%l", "CANT_BUY_WEAPONS_DEAD")
 			}
 			else
-				zp_colored_print(id, "%L", id, "CUSTOM_BUY_DISABLED")
+				zp_colored_print(id, "%l", "CUSTOM_BUY_DISABLED")
 		}
 		case 1: // Extra Items
 		{
@@ -212,24 +214,24 @@ public menu_main(id, key)
 				if (is_user_alive(id))
 					zp_items_show_menu(id)
 				else
-					zp_colored_print(id, "%L", id, "CANT_BUY_ITEMS_DEAD")
+					zp_colored_print(id, "%l", "CANT_BUY_ITEMS_DEAD")
 			}
 			else
-				zp_colored_print(id, "%L", id, "CMD_NOT_EXTRAS")
+				zp_colored_print(id, "%l", "CMD_NOT_EXTRAS")
 		}
 		case 2: // Zombie Classes
 		{
 			if (LibraryExists(LIBRARY_ZOMBIECLASSES, LibType_Library) && zp_class_zombie_get_count() > 1)
 				zp_class_zombie_show_menu(id)
 			else
-				zp_colored_print(id, "%L", id, "CMD_NOT_ZCLASSES")
+				zp_colored_print(id, "%l", "CMD_NOT_ZCLASSES")
 		}
 		case 3: // Human Classes
 		{
 			if (LibraryExists(LIBRARY_HUMANCLASSES, LibType_Library) && zp_class_human_get_count() > 1)
 				zp_class_human_show_menu(id)
 			else
-				zp_colored_print(id, "%L", id, "CMD_NOT_HCLASSES")
+				zp_colored_print(id, "%l", "CMD_NOT_HCLASSES")
 		}
 		case 4:
 		{
@@ -245,10 +247,10 @@ public menu_main(id, key)
 						zp_random_spawn_do(id, false) // regular spawn
 				}
 				else
-					zp_colored_print(id, "%L", id, "CMD_NOT_STUCK")
+					zp_colored_print(id, "%l", "CMD_NOT_STUCK")
 			}
 			else
-				zp_colored_print(id, "%L", id, "CMD_NOT")
+				zp_colored_print(id, "%l", "CMD_NOT")
 		}
 		case 5: // Help Menu
 		{
@@ -264,7 +266,7 @@ public menu_main(id, key)
 			if (LibraryExists(LIBRARY_ADMIN_MENU, LibType_Library) && is_user_admin(id))
 				zp_admin_menu_show(id)
 			else
-				zp_colored_print(id, "%L", id, "NO_ADMIN_MENU")
+				zp_colored_print(id, "%l", "NO_ADMIN_MENU")
 		}
 	}
 	
@@ -277,8 +279,9 @@ show_help(id)
 	static motd[1024]
 	new len
 	
-	len += formatex(motd[len], charsmax(motd) - len, "%L", id, "MOTD_INFO11", "Zombie Plague Mod", ZP_VERSION_STR_LONG, "ZP Dev Team")
-	len += formatex(motd[len], charsmax(motd) - len, "%L", id, "MOTD_INFO12")
+	SetGlobalTransTarget(id)
+	len += formatex(motd[len], charsmax(motd) - len, "%l", "MOTD_INFO11", "Zombie Plague Mod", ZP_VERSION_STR_LONG, "ZP Dev Team")
+	len += formatex(motd[len], charsmax(motd) - len, "%l", "MOTD_INFO12")
 	
 	show_motd(id, motd)
 }

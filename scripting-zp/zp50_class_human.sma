@@ -152,7 +152,8 @@ public show_menu_humanclass(id)
 	static menu[128], name[32], description[32], transkey[64]
 	new menuid, itemdata[2], index
 	
-	formatex(menu, charsmax(menu), "%L\r", id, "MENU_HCLASS")
+	SetGlobalTransTarget(id)
+	formatex(menu, charsmax(menu), "%l\r", "MENU_HCLASS")
 	menuid = menu_create(menu, "menu_humanclass")
 	
 	for (index = 0; index < g_HumanClassCount; index++)
@@ -172,9 +173,9 @@ public show_menu_humanclass(id)
 		
 		// ML support for class name + description
 		formatex(transkey, charsmax(transkey), "HUMANDESC %s", name)
-		if (GetLangTransKey(transkey) != TransKey_Bad) formatex(description, charsmax(description), "%L", id, transkey)
+		if (GetLangTransKey(transkey) != TransKey_Bad) formatex(description, charsmax(description), "%l", transkey)
 		formatex(transkey, charsmax(transkey), "HUMANNAME %s", name)
-		if (GetLangTransKey(transkey) != TransKey_Bad) formatex(name, charsmax(name), "%L", id, transkey)
+		if (GetLangTransKey(transkey) != TransKey_Bad) formatex(name, charsmax(name), "%l", transkey)
 		
 		// Class available to player?
 		if (g_ForwardResult >= ZP_CLASS_NOT_AVAILABLE)
@@ -193,17 +194,17 @@ public show_menu_humanclass(id)
 	// No classes to display?
 	if (menu_items(menuid) <= 0)
 	{
-		zp_colored_print(id, "%L", id, "NO_CLASSES")
+		zp_colored_print(id, "%l", "NO_CLASSES")
 		menu_destroy(menuid)
 		return;
 	}
 	
 	// Back - Next - Exit
-	formatex(menu, charsmax(menu), "%L", id, "MENU_BACK")
+	formatex(menu, charsmax(menu), "%l", "MENU_BACK")
 	menu_setprop(menuid, MPROP_BACKNAME, menu)
-	formatex(menu, charsmax(menu), "%L", id, "MENU_NEXT")
+	formatex(menu, charsmax(menu), "%l", "MENU_NEXT")
 	menu_setprop(menuid, MPROP_NEXTNAME, menu)
-	formatex(menu, charsmax(menu), "%L", id, "MENU_EXIT")
+	formatex(menu, charsmax(menu), "%l", "MENU_EXIT")
 	menu_setprop(menuid, MPROP_EXITNAME, menu)
 	
 	// If remembered page is greater than number of pages, clamp down the value
@@ -247,12 +248,13 @@ public menu_humanclass(id, menuid, item)
 	new Float:maxspeed = Float:ArrayGetCell(g_HumanClassSpeed, g_HumanClassNext[id])
 	ArrayGetString(g_HumanClassName, g_HumanClassNext[id], name, charsmax(name))
 	// ML support for class name
+	SetGlobalTransTarget(id)
 	formatex(transkey, charsmax(transkey), "HUMANNAME %s", name)
-	if (GetLangTransKey(transkey) != TransKey_Bad) formatex(name, charsmax(name), "%L", id, transkey)
+	if (GetLangTransKey(transkey) != TransKey_Bad) formatex(name, charsmax(name), "%l", transkey)
 	
 	// Show selected human class
-	zp_colored_print(id, "%L: %s", id, "HUMAN_SELECT", name)
-	zp_colored_print(id, "%L: %d %L: %d %L: %.2fx", id, "ZOMBIE_ATTRIB1", ArrayGetCell(g_HumanClassHealth, g_HumanClassNext[id]), id, "ZOMBIE_ATTRIB2", cs_maxspeed_display_value(maxspeed), id, "ZOMBIE_ATTRIB3", Float:ArrayGetCell(g_HumanClassGravity, g_HumanClassNext[id]))
+	zp_colored_print(id, "%l: %s", "HUMAN_SELECT", name)
+	zp_colored_print(id, "%l: %d %l: %d %l: %.2fx", "ZOMBIE_ATTRIB1", ArrayGetCell(g_HumanClassHealth, g_HumanClassNext[id]), "ZOMBIE_ATTRIB2", cs_maxspeed_display_value(maxspeed), "ZOMBIE_ATTRIB3", Float:ArrayGetCell(g_HumanClassGravity, g_HumanClassNext[id]))
 	
 	// Execute class select post forward
 	ExecuteForward(g_Forwards[FW_CLASS_SELECT_POST], g_ForwardResult, id, index)

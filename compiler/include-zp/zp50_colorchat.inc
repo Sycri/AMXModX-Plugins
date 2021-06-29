@@ -10,6 +10,8 @@
 // --------------
 // zp_colored_print(id, "Class: %L", id, "CLASS_HUMAN")
 // zp_colored_print(0, "Class: %L", LANG_PLAYER, "CLASS_HUMAN")
+// zp_colored_print(id, "Class: %l", "CLASS_HUMAN")
+// zp_colored_print(0, "Class: %l", "CLASS_HUMAN")
 // ----------------------------------------------------------------------------
 
 // Prints a colored message to target (use 0 for everyone), supports ML formatting.

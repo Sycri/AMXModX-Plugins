@@ -106,6 +106,8 @@ public ShowHUD(taskid)
 	// Format classname
 	static class_name[32], transkey[64]
 	new red, green, blue
+
+	SetGlobalTransTarget(ID_SHOWHUD)
 	
 	if (zp_core_is_zombie(player)) // zombies
 	{
@@ -115,14 +117,14 @@ public ShowHUD(taskid)
 		
 		// Nemesis Class loaded?
 		if (LibraryExists(LIBRARY_NEMESIS, LibType_Library) && zp_class_nemesis_get(player))
-			formatex(class_name, charsmax(class_name), "%L", ID_SHOWHUD, "CLASS_NEMESIS")
+			formatex(class_name, charsmax(class_name), "%l", "CLASS_NEMESIS")
 		else
 		{
 			zp_class_zombie_get_name(zp_class_zombie_get_current(player), class_name, charsmax(class_name))
 			
 			// ML support for class name
 			formatex(transkey, charsmax(transkey), "ZOMBIENAME %s", class_name)
-			if (GetLangTransKey(transkey) != TransKey_Bad) formatex(class_name, charsmax(class_name), "%L", ID_SHOWHUD, transkey)
+			if (GetLangTransKey(transkey) != TransKey_Bad) formatex(class_name, charsmax(class_name), "%l", transkey)
 		}
 	}
 	else // humans
@@ -133,14 +135,14 @@ public ShowHUD(taskid)
 		
 		// Survivor Class loaded?
 		if (LibraryExists(LIBRARY_NEMESIS, LibType_Library) && zp_class_survivor_get(player))
-			formatex(class_name, charsmax(class_name), "%L", ID_SHOWHUD, "CLASS_SURVIVOR")
+			formatex(class_name, charsmax(class_name), "%l", "CLASS_SURVIVOR")
 		else
 		{
 			zp_class_human_get_name(zp_class_human_get_current(player), class_name, charsmax(class_name))
 			
 			// ML support for class name
 			formatex(transkey, charsmax(transkey), "HUMANNAME %s", class_name)
-			if (GetLangTransKey(transkey) != TransKey_Bad) formatex(class_name, charsmax(class_name), "%L", ID_SHOWHUD, transkey)
+			if (GetLangTransKey(transkey) != TransKey_Bad) formatex(class_name, charsmax(class_name), "%l", transkey)
 		}
 	}
 	
@@ -154,9 +156,9 @@ public ShowHUD(taskid)
 		set_hudmessage(HUD_STATS_SPEC_R, HUD_STATS_SPEC_G, HUD_STATS_SPEC_B, HUD_SPECT_X, HUD_SPECT_Y, 0, 6.0, 1.1, 0.0, 0.0, -1)
 		
 		if (LibraryExists(LIBRARY_AMMOPACKS, LibType_Library))
-			ShowSyncHudMsg(ID_SHOWHUD, g_MsgSync, "%L: %s^nHP: %d - %L %s - %L %d", ID_SHOWHUD, "SPECTATING", player_name, get_user_health(player), ID_SHOWHUD, "CLASS_CLASS", class_name, ID_SHOWHUD, "AMMO_PACKS1", zp_ammopacks_get(player))
+			ShowSyncHudMsg(ID_SHOWHUD, g_MsgSync, "%l: %s^nHP: %d - %l %s - %l %d", "SPECTATING", player_name, get_user_health(player), "CLASS_CLASS", class_name, "AMMO_PACKS1", zp_ammopacks_get(player))
 		else
-			ShowSyncHudMsg(ID_SHOWHUD, g_MsgSync, "%L: %s^nHP: %d - %L %s - %L $ %d", ID_SHOWHUD, "SPECTATING", player_name, get_user_health(player), ID_SHOWHUD, "CLASS_CLASS", class_name, ID_SHOWHUD, "MONEY1", cs_get_user_money(player))
+			ShowSyncHudMsg(ID_SHOWHUD, g_MsgSync, "%l: %s^nHP: %d - %l %s - %l $ %d", "SPECTATING", player_name, get_user_health(player), "CLASS_CLASS", class_name, "MONEY1", cs_get_user_money(player))
 	}
 	else
 	{
@@ -164,8 +166,8 @@ public ShowHUD(taskid)
 		set_hudmessage(red, green, blue, HUD_STATS_X, HUD_STATS_Y, 0, 6.0, 1.1, 0.0, 0.0, -1)
 		
 		if (LibraryExists(LIBRARY_AMMOPACKS, LibType_Library))
-			ShowSyncHudMsg(ID_SHOWHUD, g_MsgSync, "HP: %d - %L %s - %L %d", get_user_health(ID_SHOWHUD), ID_SHOWHUD, "CLASS_CLASS", class_name, ID_SHOWHUD, "AMMO_PACKS1", zp_ammopacks_get(ID_SHOWHUD))
+			ShowSyncHudMsg(ID_SHOWHUD, g_MsgSync, "HP: %d - %l %s - %l %d", get_user_health(ID_SHOWHUD), "CLASS_CLASS", class_name, "AMMO_PACKS1", zp_ammopacks_get(ID_SHOWHUD))
 		else
-			ShowSyncHudMsg(ID_SHOWHUD, g_MsgSync, "HP: %d - %L %s", get_user_health(ID_SHOWHUD), ID_SHOWHUD, "CLASS_CLASS", class_name)
+			ShowSyncHudMsg(ID_SHOWHUD, g_MsgSync, "HP: %d - %l %s", get_user_health(ID_SHOWHUD), "CLASS_CLASS", class_name)
 	}
 }

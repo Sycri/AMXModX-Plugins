@@ -137,7 +137,7 @@ public zp_fw_gamemodes_end()
 		if (get_pcvar_num(cvar_winner_show_hud))
 		{
 			set_hudmessage(0, 0, 200, HUD_EVENT_X, HUD_EVENT_Y, 0, 0.0, 3.0, 2.0, 1.0, -1)
-			ShowSyncHudMsg(0, g_HudSync, "%L", LANG_PLAYER, "WIN_HUMAN")
+			ShowSyncHudMsg(0, g_HudSync, "%l", "WIN_HUMAN")
 		}
 		
 		if (get_pcvar_num(cvar_winner_sounds))
@@ -154,7 +154,7 @@ public zp_fw_gamemodes_end()
 		if (get_pcvar_num(cvar_winner_show_hud))
 		{
 			set_hudmessage(200, 0, 0, HUD_EVENT_X, HUD_EVENT_Y, 0, 0.0, 3.0, 2.0, 1.0, -1)
-			ShowSyncHudMsg(0, g_HudSync, "%L", LANG_PLAYER, "WIN_ZOMBIE")
+			ShowSyncHudMsg(0, g_HudSync, "%l", "WIN_ZOMBIE")
 		}
 		
 		if (get_pcvar_num(cvar_winner_sounds))
@@ -171,7 +171,7 @@ public zp_fw_gamemodes_end()
 		if (get_pcvar_num(cvar_winner_show_hud))
 		{
 			set_hudmessage(0, 200, 0, HUD_EVENT_X, HUD_EVENT_Y, 0, 0.0, 3.0, 2.0, 1.0, -1)
-			ShowSyncHudMsg(0, g_HudSync, "%L", LANG_PLAYER, "WIN_NO_ONE")
+			ShowSyncHudMsg(0, g_HudSync, "%l", "WIN_NO_ONE")
 		}
 		
 		if (get_pcvar_num(cvar_winner_sounds))

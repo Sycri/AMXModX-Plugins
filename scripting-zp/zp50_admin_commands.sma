@@ -625,7 +625,8 @@ commandStartGameMode(id, gamemodeID)
 		new authid[32], ip[16];
 		get_user_authid(id, authid, charsmax(authid));
 		get_user_ip(id, ip, charsmax(ip), 1);
-		zp_log("ADMIN %s <%s><%s> - %L: %s (Players: %d)", adminName, authid, ip, LANG_SERVER, "CMD_START_GAME_MODE", modeName, getPlayingCount());
+		SetGlobalTransTarget(LANG_SERVER);
+		zp_log("ADMIN %s <%s><%s> - %l: %s (Players: %d)", adminName, authid, ip, "CMD_START_GAME_MODE", modeName, getPlayingCount());
 	}
 }
 
@@ -676,7 +677,8 @@ showActivity(admin, player, const LANG_KEY[])
 		new authid[32], ip[16];
 		get_user_authid(admin, authid, charsmax(authid));
 		get_user_ip(admin, ip, charsmax(ip), 1);
-		zp_log("ADMIN %s <%s><%s> - %s %L (Players: %d)", adminName, authid, ip, playerName, LANG_SERVER, LANG_KEY, getPlayingCount());
+		SetGlobalTransTarget(LANG_SERVER);
+		zp_log("ADMIN %s <%s><%s> - %s %l (Players: %d)", adminName, authid, ip, playerName, LANG_KEY, getPlayingCount());
 	}
 }
 

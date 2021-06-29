@@ -132,7 +132,7 @@ public zp_fw_core_infect_post(id, attacker)
 				new victim_name[32]
 				get_user_name(id, victim_name, charsmax(victim_name))
 				set_hudmessage(HUD_INFECT_R, HUD_INFECT_G, HUD_INFECT_B, HUD_INFECT_X, HUD_INFECT_Y, 0, 0.0, 5.0, 1.0, 1.0, -1)
-				ShowSyncHudMsg(0, g_HudSync, "%L", LANG_PLAYER, "NOTICE_INFECT", victim_name)
+				ShowSyncHudMsg(0, g_HudSync, "%l", "NOTICE_INFECT", victim_name)
 			}
 		}
 		else
@@ -144,7 +144,7 @@ public zp_fw_core_infect_post(id, attacker)
 				get_user_name(attacker, attacker_name, charsmax(attacker_name))
 				get_user_name(id, victim_name, charsmax(victim_name))
 				set_hudmessage(HUD_INFECT_R, HUD_INFECT_G, HUD_INFECT_B, HUD_INFECT_X, HUD_INFECT_Y, 0, 0.0, 5.0, 1.0, 1.0, -1)
-				ShowSyncHudMsg(0, g_HudSync, "%L", LANG_PLAYER, "NOTICE_INFECT2", victim_name, attacker_name)
+				ShowSyncHudMsg(0, g_HudSync, "%l", "NOTICE_INFECT2", victim_name, attacker_name)
 			}
 			
 			// Show infection death notice?

@@ -159,7 +159,7 @@ public zp_fw_gamemodes_start()
 		new name[32]
 		get_user_name(g_TargetPlayer, name, charsmax(name))
 		set_hudmessage(HUD_EVENT_R, HUD_EVENT_G, HUD_EVENT_B, HUD_EVENT_X, HUD_EVENT_Y, 1, 0.0, 5.0, 1.0, 1.0, -1)
-		ShowSyncHudMsg(0, g_HudSync, "%L", LANG_PLAYER, "NOTICE_SURVIVOR", name)
+		ShowSyncHudMsg(0, g_HudSync, "%l", "NOTICE_SURVIVOR", name)
 	}
 }
 

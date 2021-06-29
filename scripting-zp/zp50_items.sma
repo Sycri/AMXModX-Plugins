@@ -240,8 +240,9 @@ show_items_menu(id)
 	static menu[128], name[32], cost, transkey[64]
 	new menuid, index, itemdata[2]
 	
+	SetGlobalTransTarget(id)
 	// Title
-	formatex(menu, charsmax(menu), "%L:\r", id, "MENU_EXTRABUY")
+	formatex(menu, charsmax(menu), "%l:\r", "MENU_EXTRABUY")
 	menuid = menu_create(menu, "menu_extraitems")
 	
 	// Item List
@@ -263,7 +264,7 @@ show_items_menu(id)
 		
 		// ML support for item name
 		formatex(transkey, charsmax(transkey), "ITEMNAME %s", name)
-		if (GetLangTransKey(transkey) != TransKey_Bad) formatex(name, charsmax(name), "%L", id, transkey)
+		if (GetLangTransKey(transkey) != TransKey_Bad) formatex(name, charsmax(name), "%l", transkey)
 		
 		// Item available to player?
 		if (g_ForwardResult >= ZP_ITEM_NOT_AVAILABLE)
@@ -279,17 +280,17 @@ show_items_menu(id)
 	// No items to display?
 	if (menu_items(menuid) <= 0)
 	{
-		zp_colored_print(id, "%L", id, "NO_EXTRA_ITEMS")
+		zp_colored_print(id, "%l", "NO_EXTRA_ITEMS")
 		menu_destroy(menuid)
 		return;
 	}
 	
 	// Back - Next - Exit
-	formatex(menu, charsmax(menu), "%L", id, "MENU_BACK")
+	formatex(menu, charsmax(menu), "%l", "MENU_BACK")
 	menu_setprop(menuid, MPROP_BACKNAME, menu)
-	formatex(menu, charsmax(menu), "%L", id, "MENU_NEXT")
+	formatex(menu, charsmax(menu), "%l", "MENU_NEXT")
 	menu_setprop(menuid, MPROP_NEXTNAME, menu)
-	formatex(menu, charsmax(menu), "%L", id, "MENU_EXIT")
+	formatex(menu, charsmax(menu), "%l", "MENU_EXIT")
 	menu_setprop(menuid, MPROP_EXITNAME, menu)
 	
 	// If remembered page is greater than number of pages, clamp down the value

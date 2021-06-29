@@ -97,7 +97,7 @@ public zp_fw_core_cure_post(id, attacker)
 				new victim_name[32]
 				get_user_name(id, victim_name, charsmax(victim_name))
 				set_hudmessage(HUD_CURE_R, HUD_CURE_G, HUD_CURE_B, HUD_CURE_X, HUD_CURE_Y, 0, 0.0, 5.0, 1.0, 1.0, -1)
-				ShowSyncHudMsg(0, g_HudSync, "%L", LANG_PLAYER, "NOTICE_ANTIDOTE", victim_name)
+				ShowSyncHudMsg(0, g_HudSync, "%l", "NOTICE_ANTIDOTE", victim_name)
 			}
 		}
 		else
@@ -109,7 +109,7 @@ public zp_fw_core_cure_post(id, attacker)
 				get_user_name(attacker, attacker_name, charsmax(attacker_name))
 				get_user_name(id, victim_name, charsmax(victim_name))
 				set_hudmessage(HUD_CURE_R, HUD_CURE_G, HUD_CURE_B, HUD_CURE_X, HUD_CURE_Y, 0, 0.0, 5.0, 1.0, 1.0, -1)
-				ShowSyncHudMsg(0, g_HudSync, "%L", LANG_PLAYER, "NOTICE_ANTIDOTE2", attacker_name, victim_name)
+				ShowSyncHudMsg(0, g_HudSync, "%l", "NOTICE_ANTIDOTE2", attacker_name, victim_name)
 			}
 		}
 	}

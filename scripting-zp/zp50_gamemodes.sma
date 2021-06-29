@@ -356,7 +356,7 @@ public event_round_start()
 	{
 		// Show T-virus HUD notice
 		set_hudmessage(0, 125, 200, HUD_EVENT_X, HUD_EVENT_Y, 0, 0.0, 3.0, 2.0, 1.0, -1)
-		ShowSyncHudMsg(0, g_HudSync, "%L", LANG_PLAYER, "NOTICE_VIRUS_FREE")
+		ShowSyncHudMsg(0, g_HudSync, "%l", "NOTICE_VIRUS_FREE")
 	}
 }
 
