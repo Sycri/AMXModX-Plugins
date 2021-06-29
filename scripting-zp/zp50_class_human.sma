@@ -40,9 +40,6 @@ new g_model_vknife_human[MODEL_MAX_LENGTH] = "models/v_knife.mdl"
 #define HUMANS_DEFAULT_SPEED 1.0
 #define HUMANS_DEFAULT_GRAVITY 1.0
 
-// CS Player PData Offsets (win32)
-const OFFSET_CSMENUCODE = 205
-
 // For class list menu handlers
 #define MENU_PAGE_CLASS g_menu_data[id]
 new g_menu_data[MAXPLAYERS+1]
@@ -214,8 +211,6 @@ public show_menu_humanclass(id)
 	// If remembered page is greater than number of pages, clamp down the value
 	MENU_PAGE_CLASS = min(MENU_PAGE_CLASS, menu_pages(menuid)-1)
 	
-	// Fix for AMXX custom menus
-	set_pdata_int(id, OFFSET_CSMENUCODE, 0)
 	menu_display(id, menuid, MENU_PAGE_CLASS)
 }
 

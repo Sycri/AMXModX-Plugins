@@ -94,9 +94,6 @@ const MENU_KEY_EXIT = 9;
 // Menu keys
 const KEYSMENU = MENU_KEY_1|MENU_KEY_2|MENU_KEY_3|MENU_KEY_4|MENU_KEY_5|MENU_KEY_6|MENU_KEY_7|MENU_KEY_8|MENU_KEY_9|MENU_KEY_0;
 
-// CS Player PData Offsets (win32)
-const OFFSET_CSMENUCODE = 205;
-
 new gCanBuyPrimary;
 new gCanBuySecondary;
 new gCanBuyGrenades;
@@ -334,8 +331,6 @@ showMenuBuyPrimary(id)
 	// 9. Next/Back - 0. Exit
 	len += formatex(menu[len], charsmax(menu) - len, "^n^n\r9.\w %l/%l^n^n\r0.\w %l", "MENU_NEXT", "MENU_BACK", "MENU_EXIT");
 	
-	// Fix for AMXX custom menus
-	set_pdata_int(id, OFFSET_CSMENUCODE, 0);
 	show_menu(id, KEYSMENU, menu, menuTime, "Buy Menu Primary");
 }
 
@@ -366,8 +361,6 @@ showMenuBuySecondary(id)
 	// 0. Exit
 	len += formatex(menu[len], charsmax(menu) - len, "^n^n\r0.\w %l", "MENU_EXIT");
 	
-	// Fix for AMXX custom menus
-	set_pdata_int(id, OFFSET_CSMENUCODE, 0);
 	show_menu(id, KEYSMENU, menu, menuTime, "Buy Menu Secondary");
 }
 
@@ -398,8 +391,6 @@ showMenuBuyGrenades(id)
 	// 0. Exit
 	len += formatex(menu[len], charsmax(menu) - len, "^n^n\r0.\w %l", "MENU_EXIT");
 	
-	// Fix for AMXX custom menus
-	set_pdata_int(id, OFFSET_CSMENUCODE, 0);
 	show_menu(id, KEYSMENU, menu, menuTime, "Buy Menu Grenades");
 }
 

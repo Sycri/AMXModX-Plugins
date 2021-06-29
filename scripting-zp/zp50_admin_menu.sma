@@ -52,9 +52,6 @@ enum
 // Menu keys
 const KEYSMENU = MENU_KEY_1|MENU_KEY_2|MENU_KEY_3|MENU_KEY_4|MENU_KEY_5|MENU_KEY_6|MENU_KEY_7|MENU_KEY_8|MENU_KEY_9|MENU_KEY_0;
 
-// CS Player PData Offsets (win32)
-const OFFSET_CSMENUCODE = 205;
-
 // For player/mode list menu handlers
 #define PL_ACTION gMenuData[id][0]
 #define MENU_PAGE_PLAYERS gMenuData[id][1]
@@ -177,8 +174,6 @@ showMenuAdmin(id)
 	// 0. Exit
 	len += formatex(menu[len], charsmax(menu) - len, "^n\r0.\w %l", "MENU_EXIT");
 	
-	// Fix for AMXX custom menus
-	set_pdata_int(id, OFFSET_CSMENUCODE, 0);
 	show_menu(id, KEYSMENU, menu, -1, "Admin Menu");
 }
 
@@ -266,8 +261,6 @@ showMenuPlayerList(id)
 	// If remembered page is greater than number of pages, clamp down the value
 	MENU_PAGE_PLAYERS = min(MENU_PAGE_PLAYERS, menu_pages(menuid) - 1);
 	
-	// Fix for AMXX custom menus
-	set_pdata_int(id, OFFSET_CSMENUCODE, 0);
 	menu_display(id, menuid, MENU_PAGE_PLAYERS);
 }
 
@@ -313,8 +306,6 @@ showMenuGameModeList(id)
 	// If remembered page is greater than number of pages, clamp down the value
 	MENU_PAGE_GAME_MODES = min(MENU_PAGE_GAME_MODES, menu_pages(menuid) - 1);
 	
-	// Fix for AMXX custom menus
-	set_pdata_int(id, OFFSET_CSMENUCODE, 0);
 	menu_display(id, menuid, MENU_PAGE_GAME_MODES);
 }
 

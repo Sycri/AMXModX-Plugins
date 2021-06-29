@@ -39,9 +39,6 @@ new const ZP_ZOMBIECLASSES_FILE[] = "zp_zombieclasses.ini"
 const ZOMBIE_ALLOWED_WEAPONS_BITSUM = (1<<CSW_KNIFE)|(1<<CSW_HEGRENADE)|(1<<CSW_FLASHBANG)|(1<<CSW_SMOKEGRENADE)|(1<<CSW_C4)
 const ZOMBIE_DEFAULT_ALLOWED_WEAPON = CSW_KNIFE
 
-// CS Player PData Offsets (win32)
-const OFFSET_CSMENUCODE = 205
-
 // For class list menu handlers
 #define MENU_PAGE_CLASS g_menu_data[id]
 new g_menu_data[MAXPLAYERS+1]
@@ -230,8 +227,6 @@ public show_menu_zombieclass(id)
 	// If remembered page is greater than number of pages, clamp down the value
 	MENU_PAGE_CLASS = min(MENU_PAGE_CLASS, menu_pages(menuid)-1)
 	
-	// Fix for AMXX custom menus
-	set_pdata_int(id, OFFSET_CSMENUCODE, 0)
 	menu_display(id, menuid, MENU_PAGE_CLASS)
 }
 

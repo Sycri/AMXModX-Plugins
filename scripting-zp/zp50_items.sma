@@ -19,9 +19,6 @@
 // Extra Items file
 new const ZP_EXTRAITEMS_FILE[] = "zp_extraitems.ini"
 
-// CS Player PData Offsets (win32)
-const OFFSET_CSMENUCODE = 205
-
 #define MAXPLAYERS 32
 
 // For item list menu handlers
@@ -300,8 +297,6 @@ show_items_menu(id)
 	// If remembered page is greater than number of pages, clamp down the value
 	MENU_PAGE_ITEMS = min(MENU_PAGE_ITEMS, menu_pages(menuid)-1)
 	
-	// Fix for AMXX custom menus
-	set_pdata_int(id, OFFSET_CSMENUCODE, 0)
 	menu_display(id, menuid, MENU_PAGE_ITEMS)
 }
 
